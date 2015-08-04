@@ -1,0 +1,33 @@
+{
+  "name": "jquery-slider",
+  "version": "0.0.0",
+  "description": "package.json is only use for building the package. see bower.json for more info",
+  "devDependencies": {
+    "jshint": "latest",
+    "uglifyjs": "latest",
+    "bourbon": "~4.2.2",
+    "modernizr-mixin": "~3.0.3",
+    "mathsass": "~0.9.5"
+  },
+  "jshintConfig": {
+    "globals": {
+      "L": false,
+      "$": false,
+			"jQuery": false,
+      "console": false,
+      "DEBUG": false,
+			"document": false,
+			"moment": false,
+			"alert"		: false
+    },
+    "undef": true,
+    "unused": true
+  },
+  "scripts": {
+    "lint": "jshint src/jquery-base-slider.js",
+    "build:css": "sass src/jquery-base-slider.scss dist/jquery-base-slider.min.css --style compressed",
+		"build:js": "uglifyjs src/jquery-base-slider.js -c -m -o dist/jquery-base-slider.min.js",
+    "build": "npm run build:css && npm run build:js",
+    "prebuild:js": "npm run lint"
+  }
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="Generator" content="EditPlus®">
+  <meta name="Author" content="">
+  <meta name="Keywords" content="">
+  <meta name="Description" content="">
+  <title>jquery-time-slider - Example</title>
+
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="moment.min.js"></script>
+	<script type="text/javascript" src="moment-timezone-with-data-2010-2020.min.js"></script>
+
+	<script type="text/javascript" src="autoclick-while-pressed.min.js"></script>
+	<script type="text/javascript" src="jquery.actual.min.js"></script>
+
+	<script type="text/javascript" src="jquery-base-slider.min.js"></script> 
+	<link  href="jquery-base-slider.min.css" rel="stylesheet">
+
+	<script type="text/javascript" src="../src/jquery-time-slider.js"></script>
+
+	<style>
+		.slider-container {
+			width: 400px;
+			height: 140px;
+			border:1px solid red; 
+			padding:4px;
+
+		}
+	</style>
+		
+
+	</head>
+	<body style="margin:0;padding:0;">
+		<div style="position: relative; width:50%;">
+			<div class="slider-container">
+				<input type="text" id="example_01" value="" name="range" />
+			</div>
+			<div class="slider-container">
+				<input type="text" id="example_02" value="4" name="range" />
+			</div>
+			<div class="slider-container">
+				<input type="text" id="example_03" value="4" name="range" />
+			</div>
+		</div>
+<button id="btnPrevFrom">Previous</button>	
+<button id="btnNowFrom">Now</button>	
+<button id="btnNextFrom">Next</button>	
+
+<button id="btnSlider1Format">Update format for slider1</button>	
+
+<br>
+<br>
+<span id="divUtc" style="border:1px solid green; padding: 4px;"></span>	
+<span id="divTz" style="border:1px solid green; padding: 4px;"></span>	
+<span id="divRel" style="border:1px solid green; padding: 4px;"></span>	
+
+	
+	
+	
+	
+	
+	<script type="text/javascript">
+		var timeSlider1 = 
+		$("#example_01").timeSlider({
+			callback: function(result){ console.log('callback',result);},
+			slider: 'small',
+			type: "double",
+			format: { date:'YMD', time:'24', timezone:'local', showUTC: true},
+			display: {
+				from: {
+					tzElement:'divTz', 
+					utcElement:'divUtc', 
+					relativeElement:'divRel'
+				}
+			},
+			buttons: {
+				from: {
+					previousBtn: 'btnPrevFrom',
+					nextBtn: 'btnNextFrom'
+				}
+			},
+			min: -7,
+			max: +15+5*24,
+			from: 0, 
+			to:24,
+			grid: true,
+		}).data('timeSlider');		
+	
+	$('#btnSlider1Format').click( function() { 
+		timeSlider1.options.format.time = timeSlider1.options.format.time=='24' ? '12' : '24';
+		timeSlider1.options.major_ticks_offset = timeSlider1.options.major_ticks_offset ? 0 : -1;
+		timeSlider1.setFormat( { } );
+	});
+
+
+	$("#example_02").timeSlider({
+	    type: "double",
+			format: { date:'YMD', time:'24', showRelative:true },
+			min: -24,
+			max: +48,
+			from: 0, 
+			to:24,
+			grid: true,
+	});
+
+	$("#example_03").timeSlider({
+			callback: function(a,b){ },
+			type: "double",
+			format: { date:'YMD', time:'24', timezone:'local', showUTC: true, showRelative:true },
+			min: -48,
+			max: +72,
+			from: 0, 
+			to:24,
+			buttons: { 
+				from: {
+					previousBtn:'btnPrevFrom',
+					nowBtn: 'btnNowFrom',
+					nextBtn:'btnNextFrom'
+				}
+			},
+	});
+
+	</script>
+	
+	
+	</body>
+</html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+	<head>
+		<title>jquery-autoclick-while-pressed demo</title>
+	</head>
+	<body>
+		<button id="test-button">1</button>
+
+		<script src="jquery-2.0.3.min.js"></script>
+		<script src="../autoclick-while-pressed.min.js"></script>
+		<script>
+			$(function () {
+				var $button = $("#test-button");
+				$button.autoclickWhilePressed({
+					intervalLength: 100,
+					initialDelay: 500
+				}).on("click", function () {
+					$button.text(parseInt($button.text()) + 1);
+				});
+			});
+		</script>
+	</body>
+</html>

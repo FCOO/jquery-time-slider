@@ -1,0 +1,13 @@
+{
+  "name": "jquery-autoclick-while-pressed",
+  "homepage": "https://github.com/silviubogan/jquery-autoclick-while-pressed",
+  "_release": "060bb63221",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "060bb6322187e4bf3801e77ab7c9c3a1d6d16b41"
+  },
+  "_source": "git://github.com/silviubogan/jquery-autoclick-while-pressed.git",
+  "_target": "*",
+  "_originalSource": "silviubogan/jquery-autoclick-while-pressed"
+}
