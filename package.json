@@ -10,9 +10,6 @@
     "moment": "^2.9.0"
   },
   "devDependencies": {
-    "bourbon": "latest",
-    "modernizr-mixin": "latest",
-    "mathsass": "latest",
     "jshint": "latest",
     "uglifyjs": "latest"
   },

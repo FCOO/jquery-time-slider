@@ -101,7 +101,7 @@ options:
 			for (var i=0; i<attrList.length; i++ ){
 				var nextAttrName = attrList[i];
 				if ( $.type( obj[attrName][nextAttrName] ) === 'string' )
-				  obj[attrName][nextAttrName] = $('#' + obj[attrName][nextAttrName]);
+				  obj[attrName][nextAttrName] = $(obj[attrName][nextAttrName]);
 			}
 		}
 		options.display = options.display || {};
@@ -112,15 +112,7 @@ options:
 		options.text.nowUC =  options.text.now.charAt(0).toUpperCase() + options.text.now.slice(1);
 
 		options.values_separator = ' ' + options.text.to + ' ';
-
-		//Setting onChange
-		options.userOnChange = options.onChange || null;
-		options.onChange = function(){ 
-			this.onFunc(this.options.userOnChange);
-			this.updateDisplay();			  
-			
-		};
-
+		
 		//Set min or minMoment and max or maxMoment
 		var valMom = setValueAndMoment( options.min, options.minMoment );
 		options.min = valMom.value; options.minMoment = valMom.m;
@@ -237,15 +229,15 @@ options:
 
 			if (!o.format.dateFormat){
 				//Find the format for the date, where all dates is smaller than dayPx
-				switch (this.options.format.date){
+				switch (o.format.date){
 				  case 'DMY': //Mon, 24. Dec 2014, Mon, 24. Dec 14, 24. Dec 2014, 24. Dec 14, 24/12/2014, 24/12/14				
-											dateFormats = ['ddd, DD. MMM YYYY', 'ddd, DD. MMM YY', 'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY']; 
+											dateFormats = ['dddd, DD. MMMM YYYY', 'ddd, DD. MMMM YYYY', 'ddd, DD. MMM YYYY', 'ddd, DD. MMM YY', 'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY', 'DD/MM', 'DD']; 
 											break;
 				  case 'MDY': //Mon Dec 24, 2014, Mon Dec 24, 14, Dec 24, 2014, Dec 24, 14, 12/24/2014, 12/24/14
-											dateFormats = ['ddd, MMM DD, YYYY', 'ddd, MMM DD, YY', 'MMM DD, YYYY', 'MMM DD, YY', 'MM/DD/YYYY', 'MM/DD/YY']; 
+											dateFormats = ['dddd, MMMM DD, YYYY', 'ddd, MMMM DD, YYYY', 'ddd, MMM DD, YYYY', 'ddd, MMM DD, YY', 'MMM DD, YYYY', 'MMM DD, YY', 'MM/DD/YYYY', 'MM/DD/YY', 'MM/DD', 'DD']; 
 											break;
 				  case 'YMD': //Mon 2014 Dec 2014, Mon 14 Dec 24, 2014 Dec 24, 14 Dec 24, 2014/12/24, 14/12/24
-											dateFormats = ['ddd, YYYY MMM DD',  'ddd, YY MMM DD',  'YYYY MMM DD',  'YY MMM DD',  'YYYY/MM/DD', 'YY/MM/DD']; 
+											dateFormats = ['dddd, YYYY MMMM DD',  'ddd, YYYY MMMM DD',  'ddd, YYYY MMM DD',  'ddd, YY MMM DD',  'YYYY MMM DD',  'YY MMM DD',  'YYYY/MM/DD', 'YY/MM/DD', 'MM/DD', 'DD']; 
 											break;
 				}
 
@@ -269,36 +261,42 @@ options:
 					if (dateFormatOk)
 					  break;
 				}	
+				if (!dateFormatOk)
+					o.format.dateFormat = '';  
+				
+			
 			}
 			
-			//Append the label/text
-			if (midnights === 0){
-				//Special case: No midnights => the date are placed centered
-				this.appendText( o.stepP*((o.max-o.min)/2) , o.min, textOptions );
-			}
-			else {
-				//first day - check if there are space to put a date-label
-				textWidth = this.getTextWidth( o.min, textOptions );
-				if ( valuePx*(firstMidnightValue - o.min) >= textWidth ){
-					//Try to place the date-text under 12 o'clock (noon) but always keep inside the left edge
-					var minTextValue = o.min + textWidth/2/valuePx;
-					this.appendText( o.stepP * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
+			if (o.format.dateFormat){
+				//Append the label/text
+				if (midnights === 0){
+					//Special case: No midnights => the date are placed centered
+					this.appendText( o.stepP*((o.max-o.min)/2) , o.min, textOptions );
 				}
+				else {
+					//first day - check if there are space to put a date-label
+					textWidth = this.getTextWidth( o.min, textOptions );
+					if ( valuePx*(firstMidnightValue - o.min) >= textWidth ){
+						//Try to place the date-text under 12 o'clock (noon) but always keep inside the left edge
+						var minTextValue = o.min + textWidth/2/valuePx;
+						this.appendText( o.stepP * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
+					}
 				
-				//last day - check if there are space to put a date-label
-				textWidth = this.getTextWidth( o.max, textOptions );
-				if ( valuePx*(o.max - lastMidnightValue) >= textWidth ){
-					//Try to place the date-text under 12 o'clock (noon) but always keep inside the right edge
-					var maxTextValue = o.max - textWidth/2/valuePx;
-					this.appendText( o.stepP * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
-				}
+					//last day - check if there are space to put a date-label
+					textWidth = this.getTextWidth( o.max, textOptions );
+					if ( valuePx*(o.max - lastMidnightValue) >= textWidth ){
+						//Try to place the date-text under 12 o'clock (noon) but always keep inside the right edge
+						var maxTextValue = o.max - textWidth/2/valuePx;
+						this.appendText( o.stepP * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
+					}
 
-				//Days between first and last day				
-				if (midnights > 1){
-					value = firstMidnightValue + 12;
-					while (value <= lastMidnightValue){
-						this.appendText( o.stepP*(value-o.min) , value, textOptions );
-						value += 24;
+					//Days between first and last day				
+					if (midnights > 1){
+						value = firstMidnightValue + 12;
+						while (value <= lastMidnightValue){
+							this.appendText( o.stepP*(value-o.min) , value, textOptions );
+							value += 24;
+						}
 					}
 				}
 			}
@@ -353,6 +351,7 @@ options:
 				' ' +
 				(this.options.format.time == '24' ? 'HH:mm' : 'hh:mma');
 
+			this.options.format.dateFormat = '';
 			this.updateDisplay();
 			this.update();
 		},
@@ -360,7 +359,11 @@ options:
 		//updateDisplay - updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
 		updateDisplay: function(){
 			var i, attr, value;
-			function setText( $elem, text ){ if ($elem) $elem.text( text ); }
+			function setText( $elem, text ){ 
+				//if ($elem) $elem.text( text ); 
+				if ($elem) 
+					$elem.each( function(){ $(this).text( text ); } );
+			}
 
 			for (i=0; i<2; i++){
 				value = i ? this.result.to : this.result.from;
@@ -371,6 +374,8 @@ options:
 
 			}
 		},
+
+		preCallback: function(){ this.updateDisplay(); }
 	};
 	window.TimeSlider.prototype = $.extend( window.BaseSlider.prototype, window.TimeSlider.prototype );
 }(jQuery, this, document));

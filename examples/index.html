@@ -52,10 +52,13 @@
 
 <br>
 <br>
-<span id="divUtc" style="border:1px solid green; padding: 4px;"></span>	
-<span id="divTz" style="border:1px solid green; padding: 4px;"></span>	
-<span id="divRel" style="border:1px solid green; padding: 4px;"></span>	
-
+<span class="divUtc" style="border:1px solid green; padding: 4px;"></span>	
+<span class="divTz" style="border:1px solid green; padding: 4px;"></span>	
+<span class="divRel" style="border:1px solid green; padding: 4px;"></span>	
+<br>
+<span class="divUtc" style="border:1px solid green; padding: 4px;"></span>	
+<span class="divTz" style="border:1px solid green; padding: 4px;"></span>	
+<span class="divRel" style="border:1px solid green; padding: 4px;"></span>	
 	
 	
 	
@@ -65,14 +68,15 @@
 		var timeSlider1 = 
 		$("#example_01").timeSlider({
 			callback: function(result){ console.log('callback',result);},
+			callback_on_dragging: false,
 			slider: 'small',
 			type: "double",
-			format: { date:'YMD', time:'24', timezone:'local', showUTC: true},
+			format: { date:'DMY', time:'24', timezone:'local', showUTC: true},
 			display: {
 				from: {
-					tzElement:'divTz', 
-					utcElement:'divUtc', 
-					relativeElement:'divRel'
+					tzElement:'.divTz', 
+					utcElement:'.divUtc', 
+					relativeElement:'.divRel'
 				}
 			},
 			buttons: {
@@ -82,16 +86,20 @@
 				}
 			},
 			min: -7,
-			max: +15+5*24,
+			max: +15 + 0*24,
 			from: 0, 
 			to:24,
 			grid: true,
 		}).data('timeSlider');		
 	
 	$('#btnSlider1Format').click( function() { 
-		timeSlider1.options.format.time = timeSlider1.options.format.time=='24' ? '12' : '24';
-		timeSlider1.options.major_ticks_offset = timeSlider1.options.major_ticks_offset ? 0 : -1;
-		timeSlider1.setFormat( { } );
+//		timeSlider1.options.format.time = timeSlider1.options.format.time=='24' ? '12' : '24';
+//		timeSlider1.options.major_ticks_offset = timeSlider1.options.major_ticks_offset ? 0 : -1;
+		var newFormat = {
+			//time: timeSlider1.options.format.time=='24' ? '12' : '24',
+			date: timeSlider1.options.format.date=='YMD' ? 'DMY' : 'YMD',
+		}
+		timeSlider1.setFormat( newFormat );
 	});
 
 

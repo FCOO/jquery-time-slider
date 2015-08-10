@@ -5,28 +5,18 @@
   "authors": [
     "Niels Holt <niels@steenbuchholt.dk>"
   ],
-  "description": "Description from README.md",
+  "description": "A extention to jquery-base-slider with selection of time and date",
   "main": [
-    "dist/jquery-time-slider.min.js",
-    "dist/jquery-time-slider.min.css"
+    "dist/jquery-time-slider.min.js"
   ],
   "repository": {
     "type": "git",
     "url": "git://github.com/NielsHolt/jquery-time-slider.git"
   },
   "dependencies": {
-    "jquery": "^1.9",
-    "moment": "^2.9.0",
-    "moment-timezone": "^0.3.1",
-    "jquery-autoclick-while-pressed": "silviubogan/jquery-autoclick-while-pressed",
-    "jquery.actual": "dreamerslab/jquery.actual#~1.0.16",
-    "jquery-base-slider": "NielsHolt/jquery-base-slider#~2.2.1"
-  },
-  "devDependencies": {
-    "bourbon": "~4.2.2",
-    "modernizr-mixin": "~3.0.3",
-    "mathsass": "~0.9.5",
-    "jQuery-repeatedclick-plugin": "alexandrz/jQuery-repeatedclick-plugin"
+    "moment": "latest",
+    "moment-timezone": "latest",
+    "jquery-base-slider": "NielsHolt/jquery-base-slider#latest"
   },
   "license": "MIT",
   "ignore": [
