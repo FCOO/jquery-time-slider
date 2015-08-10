@@ -377,5 +377,5 @@ options:
 
 		preCallback: function(){ this.updateDisplay(); }
 	};
-	window.TimeSlider.prototype = $.extend( window.BaseSlider.prototype, window.TimeSlider.prototype );
+	window.TimeSlider.prototype = $.extend( {}, window.BaseSlider.prototype, window.TimeSlider.prototype );
 }(jQuery, this, document));
