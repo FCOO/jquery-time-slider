@@ -84,15 +84,13 @@ options:
 	}
 
 	
-	var plugin_count = 0;
+	var plugin_count = 1000;
 
 	window.TimeSlider = function (input, options, plugin_count) {
 		//Setting default options
 		options = $.extend({
 			grid: true,
 			gridDistances : [1, 2, 3, 6, 12, 24, 48],
-
-			
 		}, options);
 
 		//Setting display- and text-options
@@ -230,14 +228,14 @@ options:
 			if (!o.format.dateFormat){
 				//Find the format for the date, where all dates is smaller than dayPx
 				switch (o.format.date){
-				  case 'DMY': //Mon, 24. Dec 2014, Mon, 24. Dec 14, 24. Dec 2014, 24. Dec 14, 24/12/2014, 24/12/14				
-											dateFormats = ['dddd, DD. MMMM YYYY', 'ddd, DD. MMMM YYYY', 'ddd, DD. MMM YYYY', 'ddd, DD. MMM YY', 'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY', 'DD/MM', 'DD']; 
+				  case 'DMY': //																															Mon, 24. Dec 2014,		Mon, 24. Dec 14,		24. Dec 2014,   24. Dec 14,   24/12/2014,   24/12/14,   24/12			24	
+											dateFormats = [/*'dddd, DD. MMMM YYYY', 'ddd, DD. MMMM YYYY', */'ddd, DD. MMM YYYY',	'ddd, DD. MMM YY',	'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY', 'DD/MM', 'DD']; 
 											break;
-				  case 'MDY': //Mon Dec 24, 2014, Mon Dec 24, 14, Dec 24, 2014, Dec 24, 14, 12/24/2014, 12/24/14
-											dateFormats = ['dddd, MMMM DD, YYYY', 'ddd, MMMM DD, YYYY', 'ddd, MMM DD, YYYY', 'ddd, MMM DD, YY', 'MMM DD, YYYY', 'MMM DD, YY', 'MM/DD/YYYY', 'MM/DD/YY', 'MM/DD', 'DD']; 
+				  case 'MDY': //																															Mon Dec 24, 2014,			Mon Dec 24, 14,			Dec 24, 2014,		Dec 24, 14,		12/24/2014,		12/24/14,		12/24		 24
+											dateFormats = [/*'dddd, MMMM DD, YYYY', 'ddd, MMMM DD, YYYY', */'ddd, MMM DD, YYYY',	'ddd, MMM DD, YY',	'MMM DD, YYYY', 'MMM DD, YY', 'MM/DD/YYYY', 'MM/DD/YY', 'MM/DD', 'DD']; 
 											break;
-				  case 'YMD': //Mon 2014 Dec 2014, Mon 14 Dec 24, 2014 Dec 24, 14 Dec 24, 2014/12/24, 14/12/24
-											dateFormats = ['dddd, YYYY MMMM DD',  'ddd, YYYY MMMM DD',  'ddd, YYYY MMM DD',  'ddd, YY MMM DD',  'YYYY MMM DD',  'YY MMM DD',  'YYYY/MM/DD', 'YY/MM/DD', 'MM/DD', 'DD']; 
+				  case 'YMD': //																														 Mon 2014 Dec 2014,			Mon 14 Dec 24,		2014 Dec 24,		14 Dec 24,		2014/12/24,		14/12/24		12/24			24
+											dateFormats = [/*'dddd, YYYY MMMM DD',  'ddd, YYYY MMMM DD', */'ddd, YYYY MMM DD',		'ddd, YY MMM DD',	'YYYY MMM DD',	'YY MMM DD',	'YYYY/MM/DD',	'YY/MM/DD',	'MM/DD',	'DD']; 
 											break;
 				}
 
@@ -352,19 +350,17 @@ options:
 				(this.options.format.time == '24' ? 'HH:mm' : 'hh:mma');
 
 			this.options.format.dateFormat = '';
-			this.updateDisplay();
 			this.update();
+			this.updateDisplay();
 		},
 		
 		//updateDisplay - updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
 		updateDisplay: function(){
 			var i, attr, value;
 			function setText( $elem, text ){ 
-				//if ($elem) $elem.text( text ); 
 				if ($elem) 
 					$elem.each( function(){ $(this).text( text ); } );
 			}
-
 			for (i=0; i<2; i++){
 				value = i ? this.result.to : this.result.from;
 				attr	= i ? this.options.display.to : this.options.display.from;
