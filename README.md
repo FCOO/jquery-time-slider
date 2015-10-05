@@ -8,17 +8,19 @@ There are tree different types:
 	3. Time period 
 	4. Relative time period (eq. `Now - 3 hours to Now + 10 hours`)
  
-
 ## Installation
 ### bower
 `bower install https://github.com/NielsHolt/jquery-time-slider.git --save`
 
-## Use
+## Demo
+http://NielsHolt.github.io/jquery-time-slider/examples/ 
+
+## Usage
     $('#timeSliderId').timeSlider( options )
 
 where `options` are descript below
 
-## Settings
+## options
 
 The `options are the same as in [jquery-base-slider](https://github.com/NielsHolt/jquery-base-slider) with the following extensions 
 
@@ -42,12 +44,7 @@ The `options are the same as in [jquery-base-slider](https://github.com/NielsHol
 </table>
 
 
-
-
-### TOFO: Exsample
-```
-```
-
+## Methods
 
 ## Copyright and License
 This plugin is licensed under the [MIT license](https://github.com/NielsHolt/jquery-time-slider/LICENSE).

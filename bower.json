@@ -14,9 +14,10 @@
     "url": "git://github.com/NielsHolt/jquery-time-slider.git"
   },
   "dependencies": {
+    "datetime-format": "NielsHolt/datetime-format#latest",
+    "jquery-base-slider": "NielsHolt/jquery-base-slider#latest",
     "moment": "latest",
-    "moment-timezone": "latest",
-    "jquery-base-slider": "NielsHolt/jquery-base-slider#latest"
+    "moment-timezone": "latest"
   },
   "license": "MIT",
   "ignore": [
