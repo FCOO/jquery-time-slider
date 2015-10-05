@@ -5,10 +5,10 @@ A plugin to create sliders with selection of time.
 
 There are four different types:
 
-	1. Simple time selection
-	2. Relative time selection (eq. `Now + 5 hours`)
-	3. Time period 
-	4. Relative time period (eq. `Now - 3 hours to Now + 10 hours`)
+1. Simple time selection
+2. Relative time selection (eq. `Now + 5 hours`)
+3. Time period 
+4. Relative time period (eq. `Now - 3 hours to Now + 10 hours`)
  
 ## Installation
 ### bower
