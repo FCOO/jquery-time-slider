@@ -3,6 +3,7 @@ A extention to jquery-base-slider with selection of time and date
 
 A plugin to create sliders with selection of time. 
 There are tree different types:
+
 	1. Simple time selection
 	2. Relative time selection (eq. `Now + 5 hours`)
 	3. Time period 
