@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 /*.bak
-=======
-.idea
-.sass-cache
->>>>>>> master
-bower_components
+/node_modules/
+/bower_components/
+/.sass-cache/

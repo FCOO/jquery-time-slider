@@ -1,14 +1,16 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html lang="en" style="font-size:100%">
+<html lang="en" style="font-size:200%">
  <head>
-  <meta charset="UTF-8">
-  <meta name="Generator" content="EditPlus">
-  <meta name="Author" content="">
-  <meta name="Keywords" content="">
-  <meta name="Description" content="">
+	<meta charset="iso-8859-1" />
+	<meta charset="iso-8859-1" /> <!-- OR "utf-8" -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv='x-dns-prefetch-control' content='on'>
+	<meta name='copyright' content='FCOO'>
+	<meta name='owner' content='FCOO'>
   <title>jquery-time-slider - Example</title>
 
-	<link  href="jquery-base-slider.min.css" rel="stylesheet">
+  <link  href="bower_components.css" rel="stylesheet">	
+
 	<style>
 		.slider-container {
 			width: 400px;
@@ -62,18 +64,8 @@
 
 	
 	
-	<script type="text/javascript" src="jquery.min.js"></script>
-	<script type="text/javascript" src="moment.min.js"></script>
-	<script type="text/javascript" src="moment-timezone-with-data-2010-2020.min.js"></script>
-
-	<script type="text/javascript" src="autoclick-while-pressed.min.js"></script>
-
-	<script type="text/javascript" src="jquery-base-slider.min.js"></script>
-
-
-	<script type="text/javascript" src="datetime-format.min.js"></script>
-
-	<script type="text/javascript" src="../src/jquery-time-slider.js"></script>
+	<script src="bower_components.js"></script>
+	<script src="../src/jquery-time-slider.js"></script>
 
 	<script type="text/javascript">
 		$("#example_01").timeSlider({

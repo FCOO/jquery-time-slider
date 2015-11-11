@@ -1,0 +1,46 @@
+{
+/**********************************************************************
+bower_main.json
+Use by `Gruntfile.js` to retrieve and build the included bower components.
+
+Contains of tree entities
+
+exclude:
+List of components you want to exclude.
+	
+dependencies:
+Unfortunately not all Bower components list their dependencies. 
+If components concatenate in the wrong order, use this option to manually specify dependencies for those components. 
+	
+mainFiles:
+Some Bower components don�t list their main files or (more likely) don�t have bower.json file at all. 
+In this case bower-concat will try to guess main file but sometimes it can�t or choose wrong one. 
+You could explicitly define main files for that components.
+See https://www.npmjs.com/package/grunt-bower-concat
+
+Example
+	{
+		"dependencies": {
+			"package_name": "jquery",
+			"package_name": ["jquery", "another_package_name"]
+		},
+		"exclude": [
+			"package_name_to_exclude",
+			"another_package_name_to_exclude"
+		],
+		"mainFiles": {
+			"package_name1": "src/package_name1.min.js",
+			"package_name2": ["dist/package_name2.js", "dist/package_name2.css"]
+		},
+	}
+***************************************************************************************/	
+	
+	"dependencies": {
+	},
+	
+	"exclude": [
+	],
+
+	"mainFiles": {
+	}
+}

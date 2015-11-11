@@ -1,7 +1,7 @@
 {
   "name": "jquery-time-slider",
-  "version": "3.1.2",
-  "homepage": "https://github.com/NielsHolt/jquery-time-slider",
+  "version": "3.2.0",
+  "homepage": "https://github.com/FCOO/jquery-time-slider",
   "authors": [
     "Niels Holt <niels@steenbuchholt.dk>"
   ],
@@ -11,11 +11,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/NielsHolt/jquery-time-slider.git"
+    "url": "git://github.com/FCOO/jquery-time-slider.git"
   },
   "dependencies": {
     "datetime-format": "NielsHolt/datetime-format#latest",
-    "jquery-base-slider": "NielsHolt/jquery-base-slider#latest",
+    "jquery-base-slider": "FCOO/jquery-base-slider#latest",
     "moment": "latest",
     "moment-timezone": "latest"
   },

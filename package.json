@@ -1,44 +1,36 @@
 {
   "name": "jquery-time-slider",
-  "version": "0.0.0",
+  "version": "3.2.0",
   "description": "package.json is only use for building the package. see bower.json for more info",
-  "main": "dist/jquery-time-slider.min.js",
-	"author": "Niels Holt <niels@steenbuchholt.dk>",
+  "author": "Niels Holt nho@fcoo.dk",
   "license": "MIT",
-  "dependencies": {
-    "jquery": "^1.9",
-    "moment": "^2.9.0"
-  },
   "devDependencies": {
-    "jshint": "latest",
-    "uglifyjs": "latest"
+    "grunt-bower-concat": "latest",
+    "grunt-continue": "latest",
+    "grunt-contrib-clean": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-copy": "latest",
+    "grunt-contrib-cssmin": "latest",
+    "grunt-contrib-jshint": "latest",
+    "grunt-contrib-rename": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-exec": "latest",
+    "grunt-jsonmin": "latest",
+    "grunt-prompt": "latest",
+    "grunt-release": "latest",
+    "grunt-sass": "latest",
+    "grunt-text-replace": "latest",
+    "load-grunt-tasks": "latest",
+    "main-bower-files": "latest",
+    "semver": "latest",
+    "strip-json-comments": "latest"
   },
   "jshintConfig": {
-    "globals": {
-      "L": false,
-      "$": false,
-			"jQuery": false,
-      "console": false,
-      "DEBUG": false,
-			"document": false,
-			"moment": false,
-			"alert"		: false
-    },
-    "undef": true,
-    "unused": true
-  },
-  "scripts": {
-    "lint": "jshint src/jquery-time-slider.js",
-		"build:js": "uglifyjs src/jquery-time-slider.js -c -m -o dist/jquery-time-slider.min.js",
-    "build": "npm run build:js",
-    "prebuild:js": "npm run lint"
+    "jshintrc": true
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/NielsHolt/jquery-time-slider.git"
+    "url": "https://github.com/FCOO/jquery-time-slider.git"
   },
-  "bugs": {
-    "url": "https://github.com/NielsHolt/jquery-time-slider/issues"
-  },
-  "homepage": "https://github.com/NielsHolt/jquery-time-slider"
+  "homepage": "https://github.com/FCOO/jquery-time-slider"
 }

@@ -1,0 +1,7 @@
+{   
+	//Used by `Gruntfile.js` to define the type of application etc.
+
+	"isApplication"    : false, //true for stand-alone applications. false for packages/plugins
+	"haveStyleSheet"   : false,	//true if the packages have css and/or scss-files
+	"exitOnJSHintError": true   //if false any error in JSHint will not exit the task     
+}
