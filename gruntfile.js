@@ -24,6 +24,7 @@ var NIELS = function(){
 
 	grunt.log.writeln('**************************************************');
 	var shell = require('shelljs');
+//	var shell_code = shell.exec('git push origin HEAD', {silent:false}).code;
 	var shell_code = shell.exec('git xstatus', {silent:false}).code;
 	grunt.log.writeln('**************************************************');
 	grunt.log.error();//'shell_code='+shell_code);
