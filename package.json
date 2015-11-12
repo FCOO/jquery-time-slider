@@ -23,6 +23,7 @@
     "load-grunt-tasks": "latest",
     "main-bower-files": "latest",
     "semver": "latest",
+    "shelljs": "^0.5.3",
     "strip-json-comments": "latest"
   },
   "jshintConfig": {

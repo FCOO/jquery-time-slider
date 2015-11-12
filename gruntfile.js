@@ -14,6 +14,29 @@ module.exports = function(grunt) {
 			return defaultContents;
 	}
 
+
+var NIELS = function(){
+//grunt.registerTask('niels', function(){
+	var colors = ['white', 'black', 'grey', 'blue', 'cyan', 'green', 'magenta', 'red', 'yellow', 'rainbow'];
+	colors.forEach(function (color) {
+		grunt.log.writeln('testing'[color]);
+	  grunt.log.writeln('testing bold'[color].bold);
+	});
+
+	grunt.log.writeln('**************************************************');
+	var shell = require('shelljs');
+	var shell_code = shell.exec('git xstatus', {silent:false}).code;
+	grunt.log.writeln('**************************************************');
+	grunt.log.error();//'shell_code='+shell_code);
+	grunt.log.writeln('**************************************************'['red']);
+	grunt.fail.warn('Something went wrong.');
+}
+//);
+
+grunt.registerTask('niels', NIELS);
+
+
+
 	//*******************************************************
 	// Variables to define the type of repository
 	var gruntfile_setup =	readFile('Gruntfile_setup.json', true, {	
@@ -356,7 +379,7 @@ module.exports = function(grunt) {
 				additionalFiles	: ['package.json'],
 
 				add			: true, 
-				addFiles: ['.'],
+				addFiles: ['-A'],
 
 				commit	: true, 
 				push		: true,			
@@ -372,7 +395,7 @@ module.exports = function(grunt) {
 				tagMessage		: 'Version <%= version %>', 
 
 				//beforeBump = optional grunt tasks to run before file versions are bumped 
-				beforeBump		: [],
+				beforeBump		: ['niels'],
 
 				//afterBump = optional grunt tasks to run after file versions are bumped 
 				afterBump			: ['replace:dist_indexhtml_version'],
