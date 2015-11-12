@@ -14,6 +14,7 @@ module.exports = function(grunt) {
 			return defaultContents;
 	}
 
+
 var NIELS = function(){
 //grunt.registerTask('niels', function(){
 	var colors = ['white', 'black', 'grey', 'blue', 'cyan', 'green', 'magenta', 'red', 'yellow', 'rainbow'];
@@ -33,6 +34,8 @@ var NIELS = function(){
 //);
 
 grunt.registerTask('niels', NIELS);
+
+
 
 	//*******************************************************
 	// Variables to define the type of repository
@@ -65,6 +68,7 @@ grunt.registerTask('niels', NIELS);
 		//only for test: grunt.log.writeln('-'+txt+'-');
 	};
 
+
 	//writelnColor(msg, color) writeln msg in color
 	function writelnColor(/*msg, color*/){ 
 		for(var i=0; i<arguments.length; i=i+2)
@@ -79,7 +83,7 @@ grunt.registerTask('niels', NIELS);
 
 	//writelnRed(msg) writeln msg in red
 	function writelnRed(msg){ writelnColor(msg, 'red'); };
-
+	
 	//merge: Merge all the options given into a new object
 	function merge(){
 		var result = {};
@@ -119,7 +123,7 @@ grunt.registerTask('niels', NIELS);
 	if (isApplication){
 		//Read the contents for the <HEAD>..</HEAD> and <BODY</BODY>
 		head_contents = readFile('src/head.html', false, '');
-		body_contents = readFile('src/body.html', false, '<body>BODY IS MISSING</body>');
+		body_contents = readFile('src/body.html', false, '<body>u src/body.html IS MISSING</body>');
 	}			
 
 	//***********************************************
@@ -315,7 +319,7 @@ grunt.registerTask('niels', NIELS);
 							message	: 'Build/compile the '+(isApplication ? 'application' : 'packages')+'?', // Question to ask the user, function needs to return a string, 
 						},
 		        {
-		          config:  'newVersion',
+							config:  'newVersion',
 		          type:    'list',
 		          message: 'Current version of "' + name +'" is ' + currentVersion + '. Select new release version:',
 		          choices: [
@@ -349,7 +353,7 @@ grunt.registerTask('niels', NIELS);
 		        },
 					]
 				}
-			}, //end of prompt.version
+			}, //end of prompt.github
 
 			continue: {
 		    options: {
@@ -357,6 +361,7 @@ grunt.registerTask('niels', NIELS);
 							config	: 'continue',	
 							type		: 'confirm', 
 							message	: 'Continue?', 
+				
 					}]
 				}
 			}, //end of prompt.continue
@@ -469,13 +474,13 @@ grunt.registerTask('niels', NIELS);
 	//CREATE THE "DEFAULT" TAST
 	//*********************************************************
 	grunt.registerTask('default', function() {
-		writelnYellow('*************************************************************************');
-		writelnYellow('Run one of the following commands:');
-		writelnColor('>grunt check  ', 'white', '=> Check the syntax of all .js and .scss files', 'yellow');
-		writelnColor('>grunt dev    ', 'white', '=> Creates a development version', 'yellow');
-		writelnColor('>grunt prod   ', 'white', '=> Creates a production version in /dist', 'yellow');
-		writelnColor('>grunt github ', 'white', '=> Create a new Github release incl. new version and tag', 'yellow');
-		writelnYellow('*************************************************************************');
+			writelnYellow('*************************************************************************');
+			writelnYellow('Run one of the following commands:');
+			writelnColor('>grunt check  ', 'white', '=> Check the syntax of all .js and .scss files', 'yellow');
+			writelnColor('>grunt dev    ', 'white', '=> Creates a development version', 'yellow');
+			writelnColor('>grunt prod   ', 'white', '=> Creates a production version in /dist', 'yellow');
+			writelnColor('>grunt github ', 'white', '=> Create a new Github release incl. new version and tag', 'yellow');
+			writelnYellow('*************************************************************************');
 	});
 
 	//*********************************************************
@@ -495,7 +500,6 @@ grunt.registerTask('niels', NIELS);
 	//_github_confirm: write all selected action
 	grunt.registerTask('_github_confirm', function() {  
 		githubTasks = [];
-
 		grunt.log.writeln();
 		writelnYellow('**************************************************');
 		writelnYellow('Actions:');
@@ -503,7 +507,6 @@ grunt.registerTask('niels', NIELS);
 			writelnYellow('- Build/compile the '+(isApplication ? 'application' : 'packages'));
 			githubTasks.push('prod');
 		}
-
 
 		if (grunt.config('newVersion') != 'none'){
 			writelnYellow('- Commit all files and create new tag="'+semver.inc(currentVersion, grunt.config('newVersion'))+'"');
@@ -545,6 +548,7 @@ grunt.registerTask('niels', NIELS);
 
 	//_github_run_tasks: if confirm is true => run the github tasks (githubTasks)
 	grunt.registerTask('_github_run_tasks', function() {  
+grunt.log.writeln('HER', grunt.config('prompt.continue'));
 		if (grunt.config('continue'))
 			grunt.task.run(githubTasks);
 	});

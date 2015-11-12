@@ -14,25 +14,6 @@ module.exports = function(grunt) {
 			return defaultContents;
 	}
 
-var NIELS = function(){
-//grunt.registerTask('niels', function(){
-	var colors = ['white', 'black', 'grey', 'blue', 'cyan', 'green', 'magenta', 'red', 'yellow', 'rainbow'];
-	colors.forEach(function (color) {
-		grunt.log.writeln('testing'[color]);
-	  grunt.log.writeln('testing bold'[color].bold);
-	});
-
-	grunt.log.writeln('**************************************************');
-	var shell = require('shelljs');
-	var shell_code = shell.exec('git xstatus', {silent:false}).code;
-	grunt.log.writeln('**************************************************');
-	grunt.log.error();//'shell_code='+shell_code);
-	grunt.log.writeln('**************************************************'['red']);
-	grunt.fail.warn('Something went wrong.');
-}
-//);
-
-grunt.registerTask('niels', NIELS);
 
 	//*******************************************************
 	// Variables to define the type of repository
@@ -64,21 +45,6 @@ grunt.registerTask('niels', NIELS);
 	grunt.log.header = function(txt){
 		//only for test: grunt.log.writeln('-'+txt+'-');
 	};
-
-	//writelnColor(msg, color) writeln msg in color
-	function writelnColor(/*msg, color*/){ 
-		for(var i=0; i<arguments.length; i=i+2)
-			grunt.log.write(arguments[i][arguments[i+1]]); 
-//			grunt.log.writeln(arguments[i]msg[color]); 
-		grunt.log.writeln(''); 
-
-	}
-
-	//writelnYellow(msg) writeln msg in yellow
-	function writelnYellow(msg){ writelnColor(msg, 'yellow'); };
-
-	//writelnRed(msg) writeln msg in red
-	function writelnRed(msg){ writelnColor(msg, 'red'); };
 
 	//merge: Merge all the options given into a new object
 	function merge(){
@@ -407,7 +373,7 @@ grunt.registerTask('niels', NIELS);
 				tagMessage		: 'Version <%= version %>', 
 
 				//beforeBump = optional grunt tasks to run before file versions are bumped 
-				beforeBump		: ['niels'],
+				beforeBump		: [],
 
 				//afterBump = optional grunt tasks to run after file versions are bumped 
 				afterBump			: ['replace:dist_indexhtml_version'],
@@ -469,13 +435,13 @@ grunt.registerTask('niels', NIELS);
 	//CREATE THE "DEFAULT" TAST
 	//*********************************************************
 	grunt.registerTask('default', function() {
-		writelnYellow('*************************************************************************');
-		writelnYellow('Run one of the following commands:');
-		writelnColor('>grunt check  ', 'white', '=> Check the syntax of all .js and .scss files', 'yellow');
-		writelnColor('>grunt dev    ', 'white', '=> Creates a development version', 'yellow');
-		writelnColor('>grunt prod   ', 'white', '=> Creates a production version in /dist', 'yellow');
-		writelnColor('>grunt github ', 'white', '=> Create a new Github release incl. new version and tag', 'yellow');
-		writelnYellow('*************************************************************************');
+			grunt.log.writeln('*************************************************************************');
+			grunt.log.writeln('Run one of the following commands:');
+			grunt.log.writeln('>grunt check  => Check the syntax of all .js and .scss files');
+			grunt.log.writeln('>grunt dev    => Creates a development version');
+			grunt.log.writeln('>grunt prod   => Creates a production version in /dist');
+			grunt.log.writeln('>grunt github => Create a new Github release incl. new version and tag');
+			grunt.log.writeln('*************************************************************************');
 	});
 
 	//*********************************************************
@@ -495,18 +461,16 @@ grunt.registerTask('niels', NIELS);
 	//_github_confirm: write all selected action
 	grunt.registerTask('_github_confirm', function() {  
 		githubTasks = [];
-
-		grunt.log.writeln();
-		writelnYellow('**************************************************');
-		writelnYellow('Actions:');
+		grunt.log.writeln('**************************************************');
+		grunt.log.writeln('Actions:');
 		if (grunt.config('build')){
-			writelnYellow('- Build/compile the '+(isApplication ? 'application' : 'packages'));
+			grunt.log.writeln('- Build/compile the '+(isApplication ? 'application' : 'packages'));
 			githubTasks.push('prod');
 		}
 
 
 		if (grunt.config('newVersion') != 'none'){
-			writelnYellow('- Commit all files and create new tag="'+semver.inc(currentVersion, grunt.config('newVersion'))+'"');
+			grunt.log.writeln('- Commit all files and create new tag="v'+semver.inc(currentVersion, grunt.config('newVersion'))+'"');
 
 		var postMessage = '" -m "' + 
 											(grunt.config('commitMessage') === '' ? '' : grunt.config('commitMessage') + '" -m "') +
@@ -517,7 +481,7 @@ grunt.registerTask('niels', NIELS);
 			githubTasks.push('release:'+grunt.config('newVersion'));
 		}	
 		else {
-			writelnYellow('- Commit all files');
+			grunt.log.writeln('- Commit all files');
 
 			grunt.config.set('release.options.commitMessage', grunt.config('commitMessage') || '* No message *');
 			grunt.config.set('release.options.bump', false);
@@ -530,16 +494,19 @@ grunt.registerTask('niels', NIELS);
 		}
 
 		if (grunt.config('ghpages'))
-			writelnYellow('- Merge "master" branch into "gh-pages" branch');
+			grunt.log.writeln('- Merge "master" branch into "gh-pages" branch');
 		else
 			grunt.config.set('release.options.afterRelease', []); //Remove all git merge commands
 
 		if (grunt.config('newVersion') != 'none')
-			writelnYellow('- Push all branches and tags to GitHub');
+			grunt.log.writeln('- Push all branches and tags to GitHub');
 		else
-			writelnYellow('- Push all branches to GitHub');
+			grunt.log.writeln('- Push all branches to GitHub');
 	
-		writelnYellow('**************************************************');
+
+
+
+		grunt.log.writeln('**************************************************');
 	});
 
 
