@@ -14,27 +14,7 @@ module.exports = function(grunt) {
 			return defaultContents;
 	}
 
-var NIELS = function(){
-//grunt.registerTask('niels', function(){
-	var colors = ['white', 'black', 'grey', 'blue', 'cyan', 'green', 'magenta', 'red', 'yellow', 'rainbow'];
-	colors.forEach(function (color) {
-		grunt.log.writeln('testing'[color]);
-	  grunt.log.writeln('testing bold'[color].bold);
-	});
-
-	grunt.log.writeln('**************************************************');
-	var shell = require('shelljs');
-//	var shell_code = shell.exec('git push origin HEAD', {silent:false}).code;
-	var shell_code = shell.exec('git xstatus', {silent:false}).code;
-	grunt.log.writeln('**************************************************');
-	grunt.log.error();//'shell_code='+shell_code);
-	grunt.log.writeln('**************************************************'['red']);
-	grunt.fail.warn('Something went wrong.');
-}
-//);
-
-grunt.registerTask('niels', NIELS);
-
+	
 	//*******************************************************
 	// Variables to define the type of repository
 	var gruntfile_setup =	readFile('Gruntfile_setup.json', true, {	
@@ -70,9 +50,7 @@ grunt.registerTask('niels', NIELS);
 	function writelnColor(/*msg, color*/){ 
 		for(var i=0; i<arguments.length; i=i+2)
 			grunt.log.write(arguments[i][arguments[i+1]]); 
-//			grunt.log.writeln(arguments[i]msg[color]); 
 		grunt.log.writeln(''); 
-
 	}
 
 	//writelnYellow(msg) writeln msg in yellow
@@ -97,6 +75,27 @@ grunt.registerTask('niels', NIELS);
 		return mask;
 	}
 
+
+	//runCmd 
+	function runCmd(cmd, msg){
+//		var cmd = 'git push origin HEAD';
+//		var msg = 'En meddellelse';
+		grunt.log.writeln(cmd['grey']);
+		var shell = require('shelljs'),
+				result = shell.exec(cmd, {silent:true});
+
+		if (result.code === 0){
+			grunt.log.writeln(result.output['white']);
+		//grunt.log.ok(msg || cmd);		  
+		}
+		else {
+			grunt.log.writeln();
+			grunt.log.writeln(result.output['yellow']);
+			grunt.fail.warn('"'+cmd+'" failed.');
+		}
+	}
+
+	
 	var src_to_src_files				= { expand: true,	cwd: 'src',				dest: 'src'				},	//src/**/*.* => src/**/*.*
 			temp_to_temp_files			= { expand: true,	cwd: 'temp',			dest: 'temp'			},	//temp/**/*.* => temp/**/*.*
 			temp_to_temp_dist_files	=	{ expand: true,	cwd: 'temp',			dest: 'temp_dist'	},	//temp/**/*.* => temp_dist/**/*.*
@@ -123,6 +122,14 @@ grunt.registerTask('niels', NIELS);
 		body_contents = readFile('src/body.html', false, '<body>BODY IS MISSING</body>');
 	}			
 
+	//***********************************************
+	//Register github-tasks
+	grunt.registerTask('git_add_all'					, function(){ runCmd('git add -A'									); });
+	grunt.registerTask('git_checkout_master'	, function(){ runCmd('git checkout master'				); });
+	grunt.registerTask('git_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
+	grunt.registerTask('git_merge_master'			,	function(){ runCmd('git merge master'						); });
+	grunt.registerTask('git_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
+	
 	//***********************************************
 	grunt.initConfig({
 		//** clean **
@@ -274,11 +281,11 @@ grunt.registerTask('niels', NIELS);
 		exec: {
 			bower_update: 'bower update',
 			npm_install	: 'npm install',
-			git_add_all					: 'git add -A',
-			git_checkout_master	: 'git checkout master',
-			git_checkout_ghpages: 'git checkout "gh-pages"',
-			git_merge_master		: 'git merge master',
-			git_push_ghpages		: 'git push "origin" gh-pages'		
+//			git_add_all					: 'git add -A',
+//			git_checkout_master	: 'git checkout master',
+//			git_checkout_ghpages: 'git checkout "gh-pages"',
+//			git_merge_master		: 'git merge master',
+//			git_push_ghpages		: 'git push "origin" gh-pages'		
 		},
 
 		// ** replace **
@@ -414,14 +421,14 @@ grunt.registerTask('niels', NIELS);
 				afterBump			: ['replace:dist_indexhtml_version'],
 
 				//beforeRelease = optional grunt tasks to run after release version is bumped up but before release is packaged 
-				beforeRelease	: [ 'exec:git_add_all' ],					
+				beforeRelease	: [ 'git_add_all' ],					
 					
 				//afterRelease = optional grunt tasks to run after release is packaged 
 				afterRelease	: [
-					'exec:git_checkout_ghpages',
-					'exec:git_merge_master',
-					'exec:git_checkout_master',
-					'exec:git_push_ghpages'
+					'git_checkout_ghpages',
+					'git_merge_master',
+					'git_checkout_master',
+					'git_push_ghpages'
 				],
 
 				//updateVars = optional grunt config objects to update (this will update/set the version property on the object specified) 
