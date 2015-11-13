@@ -340,6 +340,7 @@ module.exports = function(grunt) {
 
 		
 		// ** grunt-release **
+/*
 		release: {
 			options: {
 				bump						: true, 
@@ -384,7 +385,7 @@ module.exports = function(grunt) {
 
 			}
 		}
-
+*/
 	});//end of grunt.initConfig({...
 
 	//****************************************************************
@@ -447,34 +448,6 @@ module.exports = function(grunt) {
 		'_github_run_tasks'
 	]	);
 
-	//***********************************************
-
-	grunt.registerTask('new'			,	function(){ 
-
-
-//		runCmd('git checkout "gh-pages"'		);
-//		runCmd('git merge master'						);
-//		runCmd('git checkout master'				);
-		//runCmd('git push "origin" gh-pages'	);
-
-/*
-      .then(ifEnabled('bump', bump))
-      .then(ifEnabled('afterBump', runTasks('afterBump')))
-      .then(ifEnabled('beforeRelease', runTasks('beforeRelease')))
-      .then(ifEnabled('changelog', changelog))
-      .then(ifEnabled('add', add))
-      .then(ifEnabled('commit', commit))
-      .then(ifEnabled('tag', tag))
-      .then(ifEnabled('push', push))
-      .then(ifEnabled('pushTags', pushTags))
-      .then(ifEnabled('npm', publish))
-      .then(ifEnabled('github', githubRelease))
-      .then(ifEnabled('afterRelease', runTasks('afterRelease')))
-*/
-
-	
-
-	});		
 
 	/**************************************************
 	_github_confirm: write all selected action
@@ -483,7 +456,7 @@ module.exports = function(grunt) {
 		grunt.log.writeln();
 		writelnYellow('**************************************************');
 		writelnYellow('git status:');
-		runCmd('git status');
+		runCmd('git status', true);
 		writelnYellow('Actions:');
 		if (grunt.config('build'))
 			writelnYellow('- Build/compile the '+(isApplication ? 'application' : 'packages'));
@@ -511,6 +484,12 @@ module.exports = function(grunt) {
 	_github_run_tasks: Run all the needed github-commands
 	*******************************************************/
 	grunt.registerTask('_github_run_tasks', function() {  
+		function writeHeader(header){
+			grunt.log.writeln('');
+			grunt.log.writeln('******************************************');
+			writelnYellow(header.toUpperCase());
+		};
+
 		if (!grunt.config('continue'))
 			return 0;
 
@@ -535,13 +514,13 @@ module.exports = function(grunt) {
 
 		//Build application/packages
 		if (grunt.config('build')){
-			writelnYellow('Build/compile the '+(isApplication ? 'application' : 'packages'));
+			writeHeader('Build/compile the '+(isApplication ? 'application' : 'packages'));
 			runCmd('grunt prod', true);
 		};
 
 		//Bump bower.json and packages.json
 		if (newVersion){
-			writelnYellow('Bump \'version: "'+newVersion+'"\' to bower.json and package.json');
+			writeHeader('Bump \'version: "'+newVersion+'"\' to bower.json and package.json');
 			var files = ['bower.json', 'package.json'], file, json;
 			for (var i=0; i<files.length; i++ ){
 				file = files[i];
@@ -554,7 +533,7 @@ module.exports = function(grunt) {
 
 
 		//add, commit adn tag 
-		writelnYellow('Commit all files' + (newVersion ? ' and create new tag="'+newVersion+'"' : ''));
+		writeHeader('Commit all files' + (newVersion ? ' and create new tag="'+newVersion+'"' : ''));
 
 		//git add all
 		runCmd('git add -A');
@@ -566,20 +545,18 @@ module.exports = function(grunt) {
 		if (newVersion)
 			runCmd('git tag ' + newVersion + tagMessage);
 		
+		//git push (and push tag)
+		writeHeader('Push all branches '+(newVersion ? 'and tags ' : '')+'to GitHub');
 
-//ok      return run('git commit ' + message, 'Committed all files');
-//ok      return run('git tag ' + tagName + ' -m "'+ tagMessage +'"', 'created new git tag: ' + tagName);
+		runCmd('git push "origin" HEAD');
 
-
-		writelnYellow('Push all branches '+(newVersion ? 'and tags ' : '')+'to GitHub');
-
-//todo      run('git push ' + options.remote + ' HEAD', 'pushed to remote');
-//todo      run('git push ' + options.remote + ' ' + tagName, 'pushed new tag '+ config.newVersion +' to remote');
+		if (newVersion)
+			runCmd('git push "origin" ' + newVersion);
 
 	
 		//Merge "master" into "gh-pages"
 		if (grunt.config('ghpages')){
-			writelnYellow('Merge "master" branch into "gh-pages" branch');
+			writeHeader('Merge "master" branch into "gh-pages" branch');
 			runCmd('git checkout "gh-pages"');
 			runCmd('git merge master');
 			runCmd('git checkout master');
