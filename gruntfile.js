@@ -78,8 +78,7 @@ module.exports = function(grunt) {
 
 	//runCmd 
 	function runCmd(cmd, msg){
-//		var cmd = 'git push origin HEAD';
-//		var msg = 'En meddellelse';
+		grunt.log.writeln('HER');
 		grunt.log.writeln(cmd['grey']);
 		var shell = require('shelljs'),
 				result = shell.exec(cmd, {silent:true});
