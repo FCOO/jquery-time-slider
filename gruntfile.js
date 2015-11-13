@@ -122,22 +122,6 @@ module.exports = function(grunt) {
 	}			
 
 	//***********************************************
-	//Register github-tasks
-	grunt.registerTask('XXgit_add_all'					, function(){ runCmd('git add -A'									); });
-	grunt.registerTask('XXgit_checkout_master'	, function(){ runCmd('git checkout master'				); });
-	grunt.registerTask('XXgit_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
-	grunt.registerTask('XXgit_merge_master'			,	function(){ runCmd('git merge master'						); });
-	grunt.registerTask('XXgit_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
-
-	grunt.registerTask('new'			,	function(){ 
-		runCmd('git checkout "gh-pages"'		); });
-		runCmd('git merge master'						); });
-		runCmd('git checkout master'				); });
-		//runCmd('git push "origin" gh-pages'	); });		
-	
-	});		
-	
-	//***********************************************
 	grunt.initConfig({
 		//** clean **
 		clean: {
@@ -333,63 +317,22 @@ module.exports = function(grunt) {
 		            {	value: 'minor',		name: 'Minor : ' + semver.inc(currentVersion, 'minor') + ' Add functionality in a backwards-compatible manner.' },
 		            { value: 'major',		name:	'Major : ' + semver.inc(currentVersion, 'major') + ' Incompatible API changes.'},
 		            { value: 'none',		name:	'None  : No new version. Just commit and push.'},
-/* custom version not implemented		            
-								{ value: 'custom',	name: 'Custom: ?.?.? Specify version...'}
-*/
 		          ]
 		        },
-/* custom version not implemented
-						{
-		          config	: 'newVersion',
-				      type		: 'input',
-						  message	: 'What specific version would you like',
-		          when		: function (answers)	{ return answers['newVersion'] === 'custom'; },
-		          validate: function (value)		{ return semver.valid(value) || 'Must be a valid semver, such as 1.2.3'; }
-		        },
-*/
-						{
-							config	: 'ghpages', 
-							type		: 'confirm', 
-							message	: 'Merge "master" branch into "gh-pages" branch?', 
-						},
-		        {
-		          config	: 'commitMessage',
-				      type		: 'input',
-						  message	: 'Message/description for new version:',
-		        },
+						{	config: 'ghpages',				type: 'confirm',	message: 'Merge "master" branch into "gh-pages" branch?'},
+		        { config: 'commitMessage',	type: 'input',		message: 'Message/description for new version:'	        },
 					]
 				}
-			}, //end of prompt.version
+			}, //end of prompt.github
 
 			continue: {
 		    options: {
-		      questions: [{
-							config	: 'continue',	
-							type		: 'confirm', 
-							message	: 'Continue?', 
-					}]
+		      questions: [
+						{ config: 'continue',	type: 'confirm', message: 'Continue?' }
+					]
 				}
 			}, //end of prompt.continue
 
-			
-	/*		
-			target: {
-				options: {
-					questions: [
-						{	
-							config: 'config.name', // arbitrary name or config for any other grunt task
-							type: 'input', // list, checkbox, confirm, input, password
-							message: 'String|function()', // Question to ask the user, function needs to return a string,
-							default: 'default-value', // default value if nothing is entered
-							choices: 'Array|function(answers)',
-							validate: function(value){return true;}, // return true if valid, error message if invalid. works only with type:input 
-							filter:  function(value){return value}, // modify the answer
-							when: function(answers){return true} // only ask this question when this function returns true
-						}
-					]
-				}
-			},
-*/
 		},
 
 		
@@ -417,33 +360,25 @@ module.exports = function(grunt) {
 				tagMessage		: 'Version <%= version %>', 
 
 				//beforeBump = optional grunt tasks to run before file versions are bumped 
-				beforeBump		: ['niels'],
+				beforeBump		: [],
 
 				//afterBump = optional grunt tasks to run after file versions are bumped 
 				afterBump			: ['replace:dist_indexhtml_version'],
 
 				//beforeRelease = optional grunt tasks to run after release version is bumped up but before release is packaged 
-				beforeRelease	: [ 'XXgit_add_all' ],					
+				beforeRelease	: [ 'git_add_all' ],					
 					
 				//afterRelease = optional grunt tasks to run after release is packaged 
 				afterRelease	: [
-					'XXgit_checkout_ghpages',
-					'XXgit_merge_master',
-					'XXgit_checkout_master',
-					'XXgit_push_ghpages'
+					'git_checkout_ghpages',
+					'git_merge_master',
+					'git_checkout_master',
+					'git_push_ghpages'
 				],
 
 				//updateVars = optional grunt config objects to update (this will update/set the version property on the object specified) 
 				updateVars		: ['bwr']
 
-/*************************
-//github: {..} obmitted  
-				github: {
-					apiRoot				: 'https://github.com',  
-					repo					: 'fcoo/dette-er-en-github-test',
-					accessTokenVar: 'GITHUB_ACCESS_TOKEN' //ENVIRONMENT VARIABLE that contains GitHub Access Token 
-				}
-**************************/
 			}
 		}
 
@@ -502,6 +437,48 @@ module.exports = function(grunt) {
 	//*********************************************************
 	//CREATE THE "GITHUB" TAST
 	//*********************************************************
+	grunt.registerTask('github', [
+		'prompt:github',
+		'_github_confirm',
+		'prompt:continue',
+		'_github_run_tasks'
+	]	);
+
+	//***********************************************
+	//Register github-tasks
+	grunt.registerTask('git_add_all'					, function(){ runCmd('git add -A'									); });
+	grunt.registerTask('git_checkout_master'	, function(){ runCmd('git checkout master'				); });
+	grunt.registerTask('git_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
+	grunt.registerTask('git_merge_master'			,	function(){ runCmd('git merge master'						); });
+	grunt.registerTask('git_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
+
+	grunt.registerTask('new'			,	function(){ 
+
+
+//		runCmd('git checkout "gh-pages"'		);
+//		runCmd('git merge master'						);
+//		runCmd('git checkout master'				);
+		//runCmd('git push "origin" gh-pages'	);
+
+/*
+      .then(ifEnabled('bump', bump))
+      .then(ifEnabled('afterBump', runTasks('afterBump')))
+      .then(ifEnabled('beforeRelease', runTasks('beforeRelease')))
+      .then(ifEnabled('changelog', changelog))
+      .then(ifEnabled('add', add))
+      .then(ifEnabled('commit', commit))
+      .then(ifEnabled('tag', tag))
+      .then(ifEnabled('push', push))
+      .then(ifEnabled('pushTags', pushTags))
+      .then(ifEnabled('npm', publish))
+      .then(ifEnabled('github', githubRelease))
+      .then(ifEnabled('afterRelease', runTasks('afterRelease')))
+*/
+
+	
+
+	});		
+
 	//_github_confirm: write all selected action
 	grunt.registerTask('_github_confirm', function() {  
 		githubTasks = [];
@@ -553,21 +530,25 @@ module.exports = function(grunt) {
 	});
 
 
-	//_github_run_tasks: if confirm is true => run the github tasks (githubTasks)
+	//_github_run_tasks: if confirm is true => run the github tasks
 	grunt.registerTask('_github_run_tasks', function() {  
-		if (grunt.config('continue'))
+		if (grunt.config('continue')){
 			grunt.task.run(githubTasks);
+
+			if (grunt.config('build')){
+				grunt.log.writeln('Building/compiling the '+(isApplication ? 'application' : 'packages'));
+				grunt.task.run('prod');
+			}
+
+
+
+
+grunt.log.writeln('GODT'['green']);
+
+
+
+		}
 	});
-
-	
-	grunt.registerTask('github', [
-		'prompt:github',
-		'_github_confirm',
-		'prompt:continue',
-		'_github_run_tasks'
-	]	);
-
-
 
 	
 	//*********************************************************

@@ -1,6 +1,6 @@
 {
   "name": "jquery-time-slider",
-  "version": "3.2.10",
+  "version": "3.2.11",
   "description": "package.json is only use for building the package. see bower.json for more info",
   "author": "Niels Holt nho@fcoo.dk",
   "license": "MIT",
@@ -24,7 +24,8 @@
     "main-bower-files": "latest",
     "semver": "latest",
     "shelljs": "^0.5.3",
-    "strip-json-comments": "latest"
+    "strip-json-comments": "latest",
+    "wordwrap": "^1.0.0"
   },
   "jshintConfig": {
     "jshintrc": true
