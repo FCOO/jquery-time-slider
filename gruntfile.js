@@ -46,8 +46,8 @@ module.exports = function(grunt) {
 		//only for test: grunt.log.writeln('-'+txt+'-');
 	};
 
-	//writelnColor(msg, color) writeln msg in color
-	function writelnColor(/*msg, color*/){ 
+	//writelnColor(msg, color, mgs2, color2,..,msgN, colorN) writeln msg in color
+	function writelnColor(){ 
 		for(var i=0; i<arguments.length; i=i+2)
 			grunt.log.write(arguments[i][arguments[i+1]]); 
 		grunt.log.writeln(''); 
@@ -409,7 +409,7 @@ module.exports = function(grunt) {
 
 	grunt.loadNpmTasks('grunt-exec');
 
-	grunt.loadNpmTasks('grunt-release');
+//	grunt.loadNpmTasks('grunt-release');
 
 	grunt.loadNpmTasks('grunt-prompt');
 
@@ -486,7 +486,7 @@ module.exports = function(grunt) {
 	grunt.registerTask('_github_run_tasks', function() {  
 		function writeHeader(header){
 			grunt.log.writeln('');
-			grunt.log.writeln('******************************************');
+			writelnYellow('**************************************************');
 			writelnYellow(header.toUpperCase());
 		};
 
