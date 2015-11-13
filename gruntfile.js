@@ -128,6 +128,14 @@ module.exports = function(grunt) {
 	grunt.registerTask('XXgit_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
 	grunt.registerTask('XXgit_merge_master'			,	function(){ runCmd('git merge master'						); });
 	grunt.registerTask('XXgit_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
+
+	grunt.registerTask('new'			,	function(){ 
+		runCmd('git checkout "gh-pages"'		); });
+		runCmd('git merge master'						); });
+		runCmd('git checkout master'				); });
+		//runCmd('git push "origin" gh-pages'	); });		
+	
+	});		
 	
 	//***********************************************
 	grunt.initConfig({
