@@ -123,11 +123,11 @@ module.exports = function(grunt) {
 
 	//***********************************************
 	//Register github-tasks
-	grunt.registerTask('git_add_all'					, function(){ runCmd('git add -A'									); });
-	grunt.registerTask('git_checkout_master'	, function(){ runCmd('git checkout master'				); });
-	grunt.registerTask('git_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
-	grunt.registerTask('git_merge_master'			,	function(){ runCmd('git merge master'						); });
-	grunt.registerTask('git_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
+	grunt.registerTask('XXgit_add_all'					, function(){ runCmd('git add -A'									); });
+	grunt.registerTask('XXgit_checkout_master'	, function(){ runCmd('git checkout master'				); });
+	grunt.registerTask('XXgit_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
+	grunt.registerTask('XXgit_merge_master'			,	function(){ runCmd('git merge master'						); });
+	grunt.registerTask('XXgit_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
 	
 	//***********************************************
 	grunt.initConfig({
@@ -279,12 +279,7 @@ module.exports = function(grunt) {
 		// ** exec **
 		exec: {
 			bower_update: 'bower update',
-			npm_install	: 'npm install',
-//			git_add_all					: 'git add -A',
-//			git_checkout_master	: 'git checkout master',
-//			git_checkout_ghpages: 'git checkout "gh-pages"',
-//			git_merge_master		: 'git merge master',
-//			git_push_ghpages		: 'git push "origin" gh-pages'		
+			npm_install	: 'npm install'
 		},
 
 		// ** replace **
@@ -420,14 +415,14 @@ module.exports = function(grunt) {
 				afterBump			: ['replace:dist_indexhtml_version'],
 
 				//beforeRelease = optional grunt tasks to run after release version is bumped up but before release is packaged 
-				beforeRelease	: [ 'git_add_all' ],					
+				beforeRelease	: [ 'XXgit_add_all' ],					
 					
 				//afterRelease = optional grunt tasks to run after release is packaged 
 				afterRelease	: [
-					'git_checkout_ghpages',
-					'git_merge_master',
-					'git_checkout_master',
-					'git_push_ghpages'
+					'XXgit_checkout_ghpages',
+					'XXgit_merge_master',
+					'XXgit_checkout_master',
+					'XXgit_push_ghpages'
 				],
 
 				//updateVars = optional grunt config objects to update (this will update/set the version property on the object specified) 
