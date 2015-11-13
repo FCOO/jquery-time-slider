@@ -76,20 +76,23 @@ module.exports = function(grunt) {
 	}
 
 
-	//runCmd 
-	function runCmd(cmd, msg){
-		grunt.log.writeln('HER');
-		grunt.log.writeln(cmd['grey']);
+	//runCmd. useCmdOutput = true => the command output direct to std 
+	function runCmd(cmd, useCmdOutput){
+		if (!useCmdOutput)
+		  grunt.log.writeln(cmd['grey']);
+
 		var shell = require('shelljs'),
-				result = shell.exec(cmd, {silent:true});
+				result = shell.exec(cmd, {silent:!useCmdOutput});
 
 		if (result.code === 0){
-			grunt.log.writeln(result.output['white']);
-		//grunt.log.ok(msg || cmd);		  
+			if (!useCmdOutput)
+			  grunt.log.writeln(result.output['white']);
 		}
 		else {
-			grunt.log.writeln();
-			grunt.log.writeln(result.output['yellow']);
+			if (!useCmdOutput){
+				grunt.log.writeln();
+				grunt.log.writeln(result.output['yellow']);
+			}
 			grunt.fail.warn('"'+cmd+'" failed.');
 		}
 	}
@@ -445,12 +448,6 @@ module.exports = function(grunt) {
 	]	);
 
 	//***********************************************
-	//Register github-tasks
-	grunt.registerTask('git_add_all'					, function(){ runCmd('git add -A'									); });
-	grunt.registerTask('git_checkout_master'	, function(){ runCmd('git checkout master'				); });
-	grunt.registerTask('git_checkout_ghpages'	, function(){ runCmd('git checkout "gh-pages"'		); });
-	grunt.registerTask('git_merge_master'			,	function(){ runCmd('git merge master'						); });
-	grunt.registerTask('git_push_ghpages'			,	function(){ runCmd('git push "origin" gh-pages'	); });		
 
 	grunt.registerTask('new'			,	function(){ 
 
@@ -479,75 +476,127 @@ module.exports = function(grunt) {
 
 	});		
 
-	//_github_confirm: write all selected action
+	/**************************************************
+	_github_confirm: write all selected action
+	**************************************************/
 	grunt.registerTask('_github_confirm', function() {  
-		githubTasks = [];
-
 		grunt.log.writeln();
 		writelnYellow('**************************************************');
+		writelnYellow('git status:');
+		runCmd('git status');
 		writelnYellow('Actions:');
-		if (grunt.config('build')){
+		if (grunt.config('build'))
 			writelnYellow('- Build/compile the '+(isApplication ? 'application' : 'packages'));
-			githubTasks.push('prod');
-		}
-
-
-		if (grunt.config('newVersion') != 'none'){
-			writelnYellow('- Commit all files and create new tag="'+semver.inc(currentVersion, grunt.config('newVersion'))+'"');
-
-		var postMessage = '" -m "' + 
-											(grunt.config('commitMessage') === '' ? '' : grunt.config('commitMessage') + '" -m "') +
-											'Released by '+bwr.authors+' ' +todayStr;
-			grunt.config.set('release.options.commitMessage', 'Release <%= version %>' + postMessage);
-			grunt.config.set('release.options.tagMessage',		'Version <%= version %>' + postMessage);
-
-			githubTasks.push('release:'+grunt.config('newVersion'));
-		}	
-		else {
+		if (grunt.config('newVersion') == 'none')
 			writelnYellow('- Commit all files');
-
-			grunt.config.set('release.options.commitMessage', grunt.config('commitMessage') || '* No message *');
-			grunt.config.set('release.options.bump', false);
-			grunt.config.set('release.options.beforeBump', []);
-			grunt.config.set('release.options.afterBump', []);
-			grunt.config.set('release.options.tag', false);
-			grunt.config.set('release.options.pushTags', false);
-			
-			githubTasks.push('release');
+		else {
+			var newVersion = semver.inc(currentVersion, grunt.config('newVersion'));
+			writelnYellow('- Bump \'version: "'+newVersion+'"\' to bower.json and package.json');
+			writelnYellow('- Commit all files and create new tag="'+newVersion+'"');
 		}
-
 		if (grunt.config('ghpages'))
 			writelnYellow('- Merge "master" branch into "gh-pages" branch');
 		else
 			grunt.config.set('release.options.afterRelease', []); //Remove all git merge commands
 
-		if (grunt.config('newVersion') != 'none')
-			writelnYellow('- Push all branches and tags to GitHub');
-		else
+		if (grunt.config('newVersion') == 'none')
 			writelnYellow('- Push all branches to GitHub');
-	
+		else
+			writelnYellow('- Push all branches and tags to GitHub');
 		writelnYellow('**************************************************');
 	});
 
 
-	//_github_run_tasks: if confirm is true => run the github tasks
+	/*******************************************************
+	_github_run_tasks: Run all the needed github-commands
+	*******************************************************/
 	grunt.registerTask('_github_run_tasks', function() {  
-		if (grunt.config('continue')){
-			grunt.task.run(githubTasks);
+		if (!grunt.config('continue'))
+			return 0;
 
-			if (grunt.config('build')){
-				grunt.log.writeln('Building/compiling the '+(isApplication ? 'application' : 'packages'));
-				grunt.task.run('prod');
+		//Get new version and commit ang tag messages
+		var newVersion		=	grunt.config('newVersion') == 'none' ? '' : semver.inc(currentVersion, grunt.config('newVersion')),
+				promptMessage	= grunt.config('commitMessage') || '',
+				commitMessage,
+				tagMessage;
+
+		if (newVersion){
+			//Create commitMessage and tagMessage
+			var postMessage = '';
+			if (promptMessage)
+				postMessage += '-m "' + promptMessage + '" ';
+			postMessage += '-m "Released by '+bwr.authors+' ' +todayStr +'"';
+
+			commitMessage = ' -m "Release '  + newVersion + '" ' + postMessage; 
+			tagMessage		= ' -m "Version '  + newVersion + '" ' + postMessage; 
+		} 
+		else 
+			commitMessage = '-m "' + (promptMessage || '* No message *') +'"';
+
+		//Build application/packages
+		if (grunt.config('build')){
+			writelnYellow('Build/compile the '+(isApplication ? 'application' : 'packages'));
+			runCmd('grunt prod', true);
+		};
+
+		//Bump bower.json and packages.json
+		if (newVersion){
+			writelnYellow('Bump \'version: "'+newVersion+'"\' to bower.json and package.json');
+			var files = ['bower.json', 'package.json'], file, json;
+			for (var i=0; i<files.length; i++ ){
+				file = files[i];
+				json = grunt.file.readJSON(file);
+				json.version = newVersion;
+				grunt.file.write(file, JSON.stringify(json, null, '  ') + '\n');
+				grunt.log.writeln(file+'-OK');
 			}
+		} 
 
 
+		//add, commit adn tag 
+		writelnYellow('Commit all files' + (newVersion ? ' and create new tag="'+newVersion+'"' : ''));
+
+		//git add all
+		runCmd('git add -A');
+
+		//git commit
+		runCmd('git commit' + commitMessage);
+		
+		//git tag
+		if (newVersion)
+			runCmd('git tag ' + newVersion + tagMessage);
+		
+
+//ok      return run('git commit ' + message, 'Committed all files');
+//ok      return run('git tag ' + tagName + ' -m "'+ tagMessage +'"', 'created new git tag: ' + tagName);
 
 
-grunt.log.writeln('GODT'['green']);
+		writelnYellow('Push all branches '+(newVersion ? 'and tags ' : '')+'to GitHub');
 
+//todo      run('git push ' + options.remote + ' HEAD', 'pushed to remote');
+//todo      run('git push ' + options.remote + ' ' + tagName, 'pushed new tag '+ config.newVersion +' to remote');
 
-
+	
+		//Merge "master" into "gh-pages"
+		if (grunt.config('ghpages')){
+			writelnYellow('Merge "master" branch into "gh-pages" branch');
+			runCmd('git checkout "gh-pages"');
+			runCmd('git merge master');
+			runCmd('git checkout master');
+			runCmd('git push "origin" gh-pages');		
 		}
+
+
+
+		
+		
+
+		
+		
+		
+		
+		
+		
 	});
 
 	
