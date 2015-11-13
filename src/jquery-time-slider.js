@@ -107,7 +107,7 @@ options:
 		  //Use options.step_offset_moment to calculate step_offset
 			var value = setValueAndMoment( undefined, moment(options.step_offset_moment) ).value;
 			options.step_offset = (value - options.min) % options.step;
-		}			
+		}  
 
 		//Create BaseSlider
 		window.BaseSlider.call(this, input, options, plugin_count );
