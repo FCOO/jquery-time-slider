@@ -29,12 +29,12 @@
 
 	"globals": {
 		"jQuery"		: true,
-		"moment"		: true,
 		"console"		: false,
 		"module"		: true,
 		"document"	: false,
 		"L"					: true,
 		"$"					: false,
+		"moment"		: false,
 		"_"					: false,
 		"DEBUG"			: false,
 		"alert"			: false

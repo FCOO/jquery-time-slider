@@ -69,13 +69,14 @@ options:
 	var plugin_count = 1000;
 
 	window.TimeSlider = function (input, options, plugin_count) {
+		this.VERSION = "{VERSION}";
+
 		//Setting default options
 		options = $.extend({
 			grid: true,
 			gridDistances : [1, 2, 3, 6, 12, 24, 48],
 			step_offset_moment: null
 		}, options);
-
 
 		this.dateTimeFormat = new window.DateTimeFormat();
 

@@ -1,6 +1,6 @@
 {
   "name": "jquery-time-slider",
-  "version": "3.2.20",
+  "version": "3.3.0",
   "description": "package.json is only use for building the package. see bower.json for more info",
   "author": "Niels Holt nho@fcoo.dk",
   "license": "MIT",
@@ -17,7 +17,6 @@
     "grunt-exec": "latest",
     "grunt-jsonmin": "latest",
     "grunt-prompt": "latest",
-    "grunt-release": "latest",
     "grunt-sass": "latest",
     "grunt-text-replace": "latest",
     "load-grunt-tasks": "latest",

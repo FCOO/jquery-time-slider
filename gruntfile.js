@@ -14,7 +14,6 @@ module.exports = function(grunt) {
 			return defaultContents;
 	}
 
-	
 	//*******************************************************
 	// Variables to define the type of repository
 	var gruntfile_setup =	readFile('Gruntfile_setup.json', true, {	
@@ -298,7 +297,6 @@ module.exports = function(grunt) {
 		    overwrite		: true,
 				replacements: [{ from: '{VERSION}', to: bwr.version }]
 		  }
-
 		}, 
 
 		// ** grunt-prompt **
@@ -334,58 +332,8 @@ module.exports = function(grunt) {
 						{ config: 'continue',	type: 'confirm', message: 'Continue?' }
 					]
 				}
-			}, //end of prompt.continue
-
-		},
-
-		
-		// ** grunt-release **
-/*
-		release: {
-			options: {
-				bump						: true, 
-				file						: 'bower.json',  
-				additionalFiles	: ['package.json'],
-
-				add			: true, 
-				addFiles: ['-A'],
-
-				commit	: true, 
-				push		: true,			
-
-				tag			: true, 
-				tagName	: '<%= version %>', 
-				pushTags: true,	
-
-				npm			: false, 
-				npmtag	: false, 
-
-				commitMessage	: 'Release <%= version %>',
-				tagMessage		: 'Version <%= version %>', 
-
-				//beforeBump = optional grunt tasks to run before file versions are bumped 
-				beforeBump		: [],
-
-				//afterBump = optional grunt tasks to run after file versions are bumped 
-				afterBump			: ['replace:dist_indexhtml_version'],
-
-				//beforeRelease = optional grunt tasks to run after release version is bumped up but before release is packaged 
-				beforeRelease	: [ 'git_add_all' ],					
-					
-				//afterRelease = optional grunt tasks to run after release is packaged 
-				afterRelease	: [
-					'git_checkout_ghpages',
-					'git_merge_master',
-					'git_checkout_master',
-					'git_push_ghpages'
-				],
-
-				//updateVars = optional grunt config objects to update (this will update/set the version property on the object specified) 
-				updateVars		: ['bwr']
-
-			}
+			} //end of prompt.continue
 		}
-*/
 	});//end of grunt.initConfig({...
 
 	//****************************************************************
@@ -408,8 +356,6 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-bower-concat');
 
 	grunt.loadNpmTasks('grunt-exec');
-
-//	grunt.loadNpmTasks('grunt-release');
 
 	grunt.loadNpmTasks('grunt-prompt');
 
@@ -531,7 +477,6 @@ module.exports = function(grunt) {
 			}
 		} 
 
-
 		//add, commit adn tag 
 		writeHeader('Commit all files' + (newVersion ? ' and create new tag="'+newVersion+'"' : ''));
 
@@ -557,23 +502,11 @@ module.exports = function(grunt) {
 		//Merge "master" into "gh-pages"
 		if (grunt.config('ghpages')){
 			writeHeader('Merge "master" branch into "gh-pages" branch');
-			runCmd('git checkout "gh-pages"');
+			runCmd('git checkout -B "gh-pages"');
 			runCmd('git merge master');
 			runCmd('git checkout master');
 			runCmd('git push "origin" gh-pages');		
 		}
-
-
-
-		
-		
-
-		
-		
-		
-		
-		
-		
 	});
 
 	
