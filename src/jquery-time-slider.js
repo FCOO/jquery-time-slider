@@ -67,6 +67,8 @@ options:
 
 	
 	var plugin_count = 1000;
+	var defaultOptionsFormat = {date: 'DMY', time: '24', showRelative: false, timezone: 'utc', showUTC: false};
+
 
 	window.TimeSlider = function (input, options, plugin_count) {
 		this.VERSION = "{VERSION}";
@@ -77,6 +79,8 @@ options:
 			gridDistances : [1, 2, 3, 6, 12, 24, 48],
 			step_offset_moment: null
 		}, options);
+
+		options.format = $.extend( defaultOptionsFormat, options.format );
 
 		this.dateTimeFormat = new window.DateTimeFormat();
 
@@ -347,7 +351,7 @@ options:
 
 		//setFormat
 		setFormat: function( format ){
-			this.options.format = $.extend( {date: 'DMY', time: '24', showRelative: false, timezone: 'utc', showUTC: false}, this.options.format, format  );
+			this.options.format = $.extend( defaultOptionsFormat, this.options.format, format  );
 
 			//Update this.dateTimeFormat
 			this._setDateTimeFormat();
