@@ -182,12 +182,12 @@ options:
 			var o = this.options,
 					value,
 					valueP = 0,
-					valuePx = o.stepPx/o.step,
+					valueRem = o.stepRem/o.step,
 					midnights = 0,
 					isFirstMidnight = true,
 					firstMidnightValue = 0,
 					lastMidnightValue = 0,
-					dayPx, 
+					dayRem, 
 					values = [],
 					dateFormats,
 					dateFormatOk,
@@ -217,15 +217,15 @@ options:
 				valueP += o.oneP; 
 			}
 
-			//Find the max width (in px) of a date-label = dayPx
-			dayPx = valuePx * (
-								midnights === 0 ?	o.max - o.min :
-								midnights == 1 ?	Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
+			//Find the max width (in rem) of a date-label = dayRem
+			dayRem =	valueRem * (
+									midnights === 0 ?	o.max - o.min :
+									midnights == 1 ?	Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
 																	24
-							) - 6; //6 = margin
+								) - this.pxToRem(6); //6 = margin
 
 			if (!o.format.dateFormat){
-				//Find the format for the date, where all dates is smaller than dayPx
+				//Find the format for the date, where all dates is smaller than dayRem
 				switch (this.dateTimeFormat.options.date){
 				  case 'DMY': //																															Mon, 24. Dec 2014,		Mon, 24. Dec 14,		24. Dec 2014,   24. Dec 14,   24/12/2014,   24/12/14,   24/12			24	
 											dateFormats = [/*'dddd, DD. MMMM YYYY', 'ddd, DD. MMMM YYYY', */'ddd, DD. MMM YYYY',	'ddd, DD. MMM YY',	'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY', 'DD/MM', 'DD']; 
@@ -245,12 +245,12 @@ options:
 					value += 24;
 				}
 
-				//Checking if all dates dispalyed in dayFormat are samller thae the max width for a day = dayPx. Setting this._prettify_text will force getTextWidth to use the text directly
+				//Checking if all dates dispalyed in dayFormat are samller thae the max width for a day = dayRem. Setting this._prettify_text will force getTextWidth to use the text directly
 				for (var i=0; i<dateFormats.length; i++ ){
 					o.format.dateFormat = dateFormats[i];
 					dateFormatOk = true;
 					for (var j=0; j<values.length; j++ ){
-						if (this.getTextWidth( values[j], textOptions ) > dayPx){
+						if (this.getTextWidth( values[j], textOptions ) > dayRem){
 							dateFormatOk = false;
 							break;
 						}
@@ -271,17 +271,17 @@ options:
 				else {
 					//first day - check if there are space to put a date-label
 					textWidth = this.getTextWidth( o.min, textOptions );
-					if ( valuePx*(firstMidnightValue - o.min) >= textWidth ){
+					if ( valueRem*(firstMidnightValue - o.min) >= textWidth ){
 						//Try to place the date-text under 12 o'clock (noon) but always keep inside the left edge
-						var minTextValue = o.min + textWidth/2/valuePx;
+						var minTextValue = o.min + textWidth/2/valueRem;
 						this.appendText( o.oneP * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
 					}
 				
 					//last day - check if there are space to put a date-label
 					textWidth = this.getTextWidth( o.max, textOptions );
-					if ( valuePx*(o.max - lastMidnightValue) >= textWidth ){
+					if ( valueRem*(o.max - lastMidnightValue) >= textWidth ){
 						//Try to place the date-text under 12 o'clock (noon) but always keep inside the right edge
-						var maxTextValue = o.max - textWidth/2/valuePx;
+						var maxTextValue = o.max - textWidth/2/valueRem;
 						this.appendText( o.oneP * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
 					}
 

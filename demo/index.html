@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html lang="en" style="font-size:100%">
+<html lang="en" style="font-size:16px">
  <head>
 	<meta charset="iso-8859-1" />
 	<meta charset="iso-8859-1" /> <!-- OR "utf-8" -->
@@ -13,23 +13,42 @@
 
 	<style>
 		.slider-container {
-			width: 400px;
+			width: 25rem;
 			height: 8rem;
-			border:1px solid red; 
-			padding:4px;
+			border:0.12rem solid red; 
+			padding:0.25rem;
 		}
 		.date-box {
 			display: inline-block;
-			border:1px solid green; 
-			padding: 4px;
-			width: 7.5rem;
+			border:0.12rem solid green; 
+			padding: 0.25rem;
+			width: 6.5rem;
 		}
-	</style>
+		h4 { 
+			margin		: 0;
+			font-size	: 120%; 
+		}
+		button {
+			font-size: 0.8rem; 
+		}		
+		</style>
 		
 
 	</head>
-	<body style="margin:0;padding:0;">
-		<div style="position: relative; width:50%;">
+	<body style="">
+		<h4>Scale</h4>
+		<div>
+			<input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</label>
+			<input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</label>
+	    <input type="radio" class="scaleRadio" name="options" id="option3" value="100" autocomplete="off" checked>100%</label>
+		  <input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</label>
+			<input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</label>
+	    <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</label>
+		</div>
+		<br><br>
+
+		
+		<div style="position: relative; width:90%;">
 			<div class="slider-container">
 				<input type="text" id="example_01" value="4" name="range" />
 			</div>
@@ -68,6 +87,13 @@
 	<script src="../src/jquery-time-slider.js"></script>
 
 	<script type="text/javascript">
+		$('.scaleRadio').on( 'change', function(event) {
+			var percent = 16*parseInt($(event.target).attr('value'))/100;
+			$('html').css('font-size', percent+'px');
+		});
+
+
+
 		$("#example_01").timeSlider({
 //			format: { date:'DMY', time:'24', timezone:'local'/'Asia/Tokyo' },
 			format: { date:'DMY', time:'24', timezone:'local', showUTC: true},
