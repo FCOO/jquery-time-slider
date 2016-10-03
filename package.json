@@ -5,29 +5,8 @@
   "author": "Niels Holt nho@fcoo.dk",
   "license": "MIT",
   "devDependencies": {
-    "grunt-bower-concat": "latest",
-    "grunt-continue": "latest",
-    "grunt-contrib-clean": "latest",
-    "grunt-contrib-concat": "latest",
-    "grunt-contrib-copy": "latest",
-    "grunt-contrib-cssmin": "latest",
-    "grunt-contrib-jshint": "latest",
-    "grunt-contrib-rename": "latest",
-    "grunt-contrib-uglify": "latest",
-    "grunt-exec": "latest",
-    "grunt-jsonmin": "latest",
-    "grunt-prompt": "latest",
-    "grunt-sass": "latest",
-    "grunt-text-replace": "latest",
-    "load-grunt-tasks": "latest",
-    "main-bower-files": "latest",
-    "semver": "latest",
-    "shelljs": "^0.5.3",
-    "strip-json-comments": "latest",
-    "wordwrap": "^1.0.0"
-  },
-  "jshintConfig": {
-    "jshintrc": true
+        "grunt"                  : "^1.0.0",
+        "grunt-fcoo-grunt-plugin": "^2.0.0"
   },
   "repository": {
     "type": "git",
