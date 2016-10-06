@@ -46,10 +46,31 @@
 	    <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</label>
 		</div>
 		<br><br>
-
-		
 		<div style="position: relative; width:90%;">
 			<div class="slider-container">
+
+                <select id="timezone">
+                    <optgroup label="Standard">
+                        <option value="local" selected="selected">Local</option>
+                        <option value="utc">UTC</option>
+                    </optgroup>
+                    <optgroup label="Europe">
+                        <option value="Europe/Copenhagen">Europe / Copenhagen</option>
+                        <option value="Europe/London">Europe / London</option>
+                    </optgroup>
+                    <optgroup label="Atlantic">
+                        <option value="Atlantic/Faeroe">Faeroe</option>
+                        <option value="Atlantic/Reykjavik">Iceland</option>
+                    </optgroup>
+                    <optgroup label="Greenland">
+                        <option value="America/Godthab">West Greenland / Nuuk</option>
+                        <option value="America/Scoresbysund">East Greenland / Ittoqqortoormiit</option>
+                        <option value="America/Danmarkshavn">East Greenland / Danmarkshavn</option>
+                        <option value="America/Thule">Thule Air Base</option>
+                    </optgroup>
+                </select>
+
+
 				<input type="text" id="example_01" value="4" name="range" />
 			</div>
 			<div class="slider-container">
@@ -84,29 +105,56 @@
 	
 	
 	<script src="bower_components.js"></script>
+	<script src="da.js"></script>
+	<script src="en-gb.js"></script>
 	<script src="../src/jquery-time-slider.js"></script>
 
 	<script type="text/javascript">
+
+
+        moment.sfAddTimezone([
+            { id:'Atlantic/Faeroe' },
+            { id:'Europe/Copenhagen' },
+            { id:'Europe/London' },
+            { id:'America/Thule' },
+            { id:'America/Scoresbysund', name:"East Greenland/Ittoqqortoormiit" },
+            { id:'America/Godthab', name:"West Greenland/Nuuk" },
+            { id:'America/Danmarkshavn', name:"East Greenland/Danmarkshavn" },
+            { id:'Atlantic/Reykjavik', name:"Iceland" }
+        ] );
+
+        $('#timezone option').each( function( index, elem ){
+            var timezone = moment.sfGetTimezone( elem.value );
+            if (timezone)
+                $(elem).text( timezone.fullName );  
+        });
+
+        $('#timezone').on('change', function(event){
+            var timezoneId = event.target.options[event.target.selectedIndex].value;
+            moment.sfSetFormat({ timezone: timezoneId });
+            timeSlider1.setFormat();
+        });
+
+
 		$('.scaleRadio').on( 'change', function(event) {
 			var percent = 16*parseInt($(event.target).attr('value'))/100;
 			$('html').css('font-size', percent+'px');
 		});
 
 
-
-		$("#example_01").timeSlider({
-//			format: { date:'DMY', time:'24', timezone:'local'/'Asia/Tokyo' },
-			format: { date:'DMY', time:'24', timezone:'local', showUTC: true},
-			min: -24,
-			max: +48,
-			from: 0, 
-			to:24,
-			grid: true,
-		});
+		var timeSlider1 = 
+		    $("#example_01").timeSlider({
+			    format: { showUTC: true},
+    			min: -4,
+	    		max: +24,
+			    from: 0, 
+    			to:24,
+	    		grid: true,
+			}).data('timeSlider');		
 
 		$("#example_02").timeSlider({
 	    //type: "double",
-			format: { date:'DMY', time:'24', showRelative:true },
+			format: { showRelative:true },
 			min: -24,
 			max: +48,
 			from: 0, 
@@ -114,17 +162,17 @@
 			grid: true,
 		});
 	
-		$("#example_03").timeSlider({
-	    type: "double",
-			format: { date:'DMY', time:'24', showRelative:true },
-			min: -24,
-			max: +48,
-			from: 0, 
-			to:24,
-			grid: true,
-			impact_line: true
-		});
-
+		var timeSlider3 = 
+            $("#example_03").timeSlider({
+        	    type: "double",
+		        	format: { showRelative:true },
+        			min: -24,
+		        	max: +48,
+        			from: 0, 
+		        	to:24,
+        			grid: true,
+		        	impact_line: true
+			}).data('timeSlider');		
 		
 		
 		var timeSlider4 = 
@@ -133,7 +181,7 @@
 				callback_on_dragging: false,
 				slider: 'small',
 				type: "double",
-				format: { date:'DMY', time:'24', timezone:'Asia/Tokyo', showUTC: true},
+				format: { showUTC: true},
 				display: {
 					from: {	tzElement:'.divTz',		utcElement:'.divUtc',		relativeElement:'.divRel'		},
 					to	: {	tzElement:'.divToTz',	utcElement:'.divToUtc',	relativeElement:'.divToRel' }
@@ -149,12 +197,25 @@
 				grid: true,
 			}).data('timeSlider');		
 	
+
+        var lang = 'en_gb';
 		$('#btnSlider1Format').click( function() { 
-			var newFormat = {
-				time: timeSlider4.options.format.time=='24' ? '12' : '24',
-				date: timeSlider4.options.format.date=='YMD' ? 'DMY' : 'YMD',
-			}
-			timeSlider4.setFormat( newFormat );
+            lang = (lang == 'en_gb' ? 'da' : 'en_gb');
+            var isEn = lang == 'en_gb',
+                date = moment.sfGetOptions().date,
+                time = parseInt(moment.sfGetOptions().time);
+            moment.locale(lang);
+            moment.sfSetFormat( { 
+                date: date=='DMY'?'YMD':'DMY', 
+                time: time==24?12:24,
+                text: {
+                    now: isEn ? 'now' : 'nu',
+                    hourAbbr: isEn ? 'h' : 't',
+                    to: isEn ? 'to' : 'til'
+                }
+             } );
+			timeSlider3.setFormat();
+			timeSlider4.setFormat();
 		});
 
 	</script>
