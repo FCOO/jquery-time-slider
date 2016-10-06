@@ -16,33 +16,25 @@ options:
 
     display:
         from:
-            tzElement, utcElement, relativeElement
+            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
         to:
-            tzElement, utcElement, relativeElement
+            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
 
     format:
-        date        : string ('DMY' | 'MDY' | 'YMD')                                    Default = 'DMY'
-        time        : string; ('12 | '24')                                              Default = '24'
         showRelative: boolean; If true the grid etc show the relative time ('Now + 2h') Default = false
-        timezone    : 'local', 'utc' or abbrivation of time zone.                       Default = 'utc'. Only if showRelative == false
         showUTC     : boolean; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
 
-    text:
-        hourAbbr = 'h';
-        minAbbr  = 'm';
-        now      = 'now';
-        to       = 'to';
-
-
-
+    NB: Using moment-simple-format to set and get text and format for date and time
 
 ****************************************************************************/
 
-;(function ($, window, document, undefined) {
+(function ($, window, document, undefined) {
     "use strict";
 
+
     //roundMoment( m ) 
-    function roundMoment( m ){ m.startOf('hour');  return m; }
+    function roundMoment( m ){ return m.startOf('hour');}
+
 
     //valueToMoment
     function valueToMoment ( value ){ 
@@ -66,23 +58,23 @@ options:
     }
 
     
-    var plugin_count = 1000;
-    var defaultOptionsFormat = {date: 'DMY', time: '24', showRelative: false, timezone: 'utc', showUTC: false};
-
+    var plugin_count = 1000,
+        defaultOptions = {
+            grid              : true,
+            gridDistances     : [1, 2, 3, 6, 12, 24, 48],
+            step_offset_moment: null,
+            format: {
+                showRelative: false, 
+                showUTC     : false
+            }
+        };
 
     window.TimeSlider = function (input, options, plugin_count) {
         this.VERSION = "{VERSION}";
 
         //Setting default options
-        options = $.extend({
-            grid: true,
-            gridDistances : [1, 2, 3, 6, 12, 24, 48],
-            step_offset_moment: null
-        }, options);
-
-        options.format = $.extend( defaultOptionsFormat, options.format );
-
-        this.dateTimeFormat = new window.DateTimeFormat();
+        this.options = $.extend( true, {}, defaultOptions, options );
+        this._updateOptionsFormat();
 
         //Setting display- and text-options
         function setAndGet( obj, attrName, attrList ){
@@ -93,37 +85,33 @@ options:
                   obj[attrName][nextAttrName] = $(obj[attrName][nextAttrName]);
             }
         }
-        options.display = options.display || {};
-        setAndGet(options.display, 'from', ['tzElement', 'utcElement', 'relativeElement']);
-        setAndGet(options.display, 'to',   ['tzElement', 'utcElement', 'relativeElement']);
+        this.options.display = this.options.display || {};
+        setAndGet( this.options.display, 'from', ['tzElement', 'utcElement', 'relativeElement']);
+        setAndGet( this.options.display, 'to',   ['tzElement', 'utcElement', 'relativeElement']);
 
-        options.text = $.extend({hourAbbr: 'h', minAbbr: 'm', now:'now', to:'to'}, options.text);
-        options.text.nowUC =  options.text.now.charAt(0).toUpperCase() + options.text.now.slice(1);
-
-        options.values_separator = ' ' + options.text.to + ' ';
-        
         //Set min or minMoment and max or maxMoment
-        var valMom = setValueAndMoment( options.min, options.minMoment );
-        options.min = valMom.value; options.minMoment = valMom.m;
-        valMom = setValueAndMoment( options.max, options.maxMoment );
-        options.max = valMom.value; options.maxMoment = valMom.m;
+        var valMom = setValueAndMoment( this.options.min, this.options.minMoment );
+        this.options.min = valMom.value; this.options.minMoment = valMom.m;
+        valMom = setValueAndMoment( this.options.max, this.options.maxMoment );
+        this.options.max = valMom.value; options.maxMoment = valMom.m;
 
-        if ((options.step > 1) && options.step_offset_moment){
+        if ((this.options.step > 1) && this.options.step_offset_moment){
           //Use options.step_offset_moment to calculate step_offset
-            var value = setValueAndMoment( undefined, moment(options.step_offset_moment) ).value;
-            options.step_offset = (value - options.min) % options.step;
+            var value = setValueAndMoment( undefined, moment( this.options.step_offset_moment ) ).value;
+            this.options.step_offset = (value - this.options.min) % this.options.step;
         }  
 
         //Create BaseSlider
-        window.BaseSlider.call(this, input, options, plugin_count );
+        window.BaseSlider.call(this, input, this.options, plugin_count );
 
         //Set from/fromMoment and to/toMoment
-        this.setFromValue( setValueAndMoment( options.from, options.fromMoment ).value );
+        this.setFromValue( setValueAndMoment( this.options.from, this.options.fromMoment ).value );
+
         if (options.isInterval)
-            this.setToValue( setValueAndMoment( options.to, options.toMoment ).value );
+            this.setToValue( setValueAndMoment( this.options.to, this.options.toMoment ).value );
 
         //Sets the format and create the grids
-        this.setFormat( {}, true );
+        this.setFormat();
     };
 
     //timeSlider as jQuery prototype
@@ -140,28 +128,23 @@ options:
     window.TimeSlider.prototype = {
         //valueToTzMoment
         _valueToTzMoment: function( value, timezone ){
-            return this.dateTimeFormat.tzMoment( valueToMoment(value), timezone );
+            return valueToMoment(value).tzMoment( timezone );
         },
         
         //_valueToFormat - converts value to a moment.format-string or a relative text. If no timezome is given => return relative format
         _valueToFormat: function( value, timezone ){ 
             if (timezone)
-                return this._valueToTzMoment( value, timezone ).format( this.options.display.formatStr );              
+                return this._valueToTzMoment( value, timezone ).format( this.options.format.dateHourFormat );              
             else
-                return this.options.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.text.hourAbbr;
+                return this.options.format.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.format.text.hourAbbr;
         },
-
-        //hhFormat - return the hour of a moment
-        hhFormat    : function( m ){ return m.format( this.options.format.time == '24' ? 'HH' : 'hha' ); },
-
 
         _prettify_relative     : function( value ){ return this._valueToFormat( value ); },
         _prettify_text_relative: function( value ){ return value;                        },
 
         _prettify_absolute: function( value ){ return this._valueToFormat( value, this.options.format.timezone ); },
         _prettify_text_absolute: function( value ){
-            var m = this._valueToTzMoment( value, this.options.format.timezone );
-            return this.hhFormat( m );
+            return this._valueToTzMoment( value, this.options.format.timezone ).hourFormat();
         },
         
         _prettify_text_absolute_date: function( value ){ 
@@ -193,7 +176,6 @@ options:
                     dateFormatOk,
                     textWidth;
 
-            this._setDateTimeFormat();
             this.appendGridContainer();
             this.calcGridMargin();
 
@@ -218,25 +200,18 @@ options:
             }
 
             //Find the max width (in rem) of a date-label = dayRem
-            dayRem =    valueRem * (
-                                    midnights === 0 ?    o.max - o.min :
-                                    midnights == 1 ?    Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
-                                                                    24
+            dayRem = valueRem * (
+                                  midnights === 0 ? o.max - o.min :
+                                  midnights == 1  ? Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
+                                                    24
                                 ) - this.pxToRem(6); //6 = margin
 
             if (!o.format.dateFormat){
                 //Find the format for the date, where all dates is smaller than dayRem
-                switch (this.dateTimeFormat.options.date){
-                    case 'DMY': //                                                       Mon, 24. Dec 2014,        Mon, 24. Dec 14,        24. Dec 2014,   24. Dec 14,   24/12/2014,   24/12/14,   24/12            24    
-                        dateFormats = [/*'dddd, DD. MMMM YYYY', 'ddd, DD. MMMM YYYY', */'ddd, DD. MMM YYYY',    'ddd, DD. MMM YY',    'DD. MMM YYYY', 'DD. MMM YY', 'DD/MM/YYYY', 'DD/MM/YY', 'DD/MM', 'DD']; 
-                        break;
-                  case 'MDY': //                                                                                                                            Mon Dec 24, 2014,            Mon Dec 24, 14,            Dec 24, 2014,        Dec 24, 14,        12/24/2014,        12/24/14,        12/24         24
-                        dateFormats = [/*'dddd, MMMM DD, YYYY', 'ddd, MMMM DD, YYYY', */'ddd, MMM DD, YYYY',    'ddd, MMM DD, YY',    'MMM DD, YYYY', 'MMM DD, YY', 'MM/DD/YYYY', 'MM/DD/YY', 'MM/DD', 'DD']; 
-                        break;
-                  case 'YMD': //                                                                                                                         Mon 2014 Dec 2014,            Mon 14 Dec 24,        2014 Dec 24,        14 Dec 24,        2014/12/24,        14/12/24        12/24            24
-                        dateFormats = [/*'dddd, YYYY MMMM DD',  'ddd, YYYY MMMM DD', */'ddd, YYYY MMM DD',        'ddd, YY MMM DD',    'YYYY MMM DD',    'YY MMM DD',    'YYYY/MM/DD',    'YY/MM/DD',    'MM/DD',    'DD']; 
-                        break;
-                }
+                dateFormats = moment.sfDateFormatList( function( code ){ 
+                                //Include all formats except full weekday or full month
+                                return (code.charAt(0) != 'F') && (code.charAt(1) != 'F');
+                              });
 
                 //Create temp list of all values needed
                 value = o.min;
@@ -309,7 +284,7 @@ options:
             if (this.options.format.showRelative){
                 //Relative time: Set the prettify-functions and create the grid needed
                 this._prettify = this._prettify_relative;
-              this._prettify_text = this._prettify_text_relative;
+                this._prettify_text = this._prettify_text_relative;
                 this.options.major_ticks_offset = 0;
                 this._appendStandardGrid();
             }
@@ -317,20 +292,20 @@ options:
                 //Absolute time: Set the prettify-functions
                 var now = moment();
                 //Create the hour-grid and the date-grid for selected timezone
-              this._prettify = this._prettify_absolute;
-              this._prettify_text = this._prettify_text_absolute;
-                this.options.major_ticks_offset = -1*this.dateTimeFormat.tzMoment( now, this.options.format.timezone ).hours(); 
+                this._prettify = this._prettify_absolute;
+                this._prettify_text = this._prettify_text_absolute;
+                this.options.major_ticks_offset = -1*now.tzMoment( this.options.format.timezone ).hours(); 
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
                 if ((this.options.format.timezone != 'utc') && this.options.format.showUTC){
                     //Create the hour-grid and the date-grid for utc
-                    this.options.major_ticks_offset = -1*this.dateTimeFormat.tzMoment( now, 'utc' ).hours(); 
+                    this.options.major_ticks_offset = -1*now.tzMoment( 'utc' ).hours(); 
                     var saveTimezone = this.options.format.timezone;
                     this.options.format.timezone = 'utc';
                     var textOptions = {italic:true, minor:true}, tickOptions = {color:'#555555'};
-                  this._prettify = this._prettify_absolute;
-                  this._prettify_text = this._prettify_text_absolute;
+                    this._prettify = this._prettify_absolute;
+                    this._prettify_text = this._prettify_text_absolute;
                     this._appendStandardGrid( textOptions, tickOptions );
                     this.appendDateGrid( textOptions, tickOptions );
                     this.options.format.timezone = saveTimezone;
@@ -338,30 +313,35 @@ options:
             }
         },
 
-        //_setDateTimeFormat
-        _setDateTimeFormat: function(){
-            this.dateTimeFormat.setFormat({
-                date            : this.options.format.date,
-                //TODO dateId            : 2,
-                time            : this.options.format.time,
-                timezoneId: this.options.format.timezone,
-            });
+        //_updateOptionsFormat
+        _updateOptionsFormat: function( format ){
+//            this.options.format = $.extend( defaultOptionsFormat, this.options.format, format || {}  );
+            $.extend( true, this.options.format, format || {}  );
+
+            //Merge current moment.simpleFormat.options into this.options.format
+            $.extend( true, this.options.format, moment.sfGetOptions() );
+
+            //Create the format for the label over the 'dragger'
+            this.options.format.dateHourFormat = 
+                (this.options.format.date == 'DMY' ? 'DD-MMM' : 'MMM-DD') + //Dec-24 / 24-Dec
+                ' ' + moment.sfGetTimeFormat();
+
+            //Set dateformat = '' to make appendDateGrid find new format
+            this.options.format.dateFormat = '';
+
+            //Set special versions of moment.simpleFormat.text
+            var now =  this.options.format.text.now;
+            this.options.format.text.nowUC =  now.charAt(0).toUpperCase() + now.slice(1);
+
+            //Set jquery-base-slider options values_separator to use moment.simpleFormat.text.to
+            this.options.values_separator = ' ' + this.options.format.text.to + ' ';
         },
-
-
+            
+            
+            
         //setFormat
         setFormat: function( format ){
-            this.options.format = $.extend( defaultOptionsFormat, this.options.format, format  );
-
-            //Update this.dateTimeFormat
-            this._setDateTimeFormat();
-
-            this.options.display.formatStr = 
-                (this.dateTimeFormat.options.date != 'DMY' ? 'MMM-DD' : 'DD-MMM') + //Dec-24 / 24-Dec
-                ' ' +
-                this.dateTimeFormat.timeFormat;
-
-            this.options.format.dateFormat = '';
+            this._updateOptionsFormat( format );        
             this.update();
             this.updateDisplay();
         },
@@ -375,15 +355,15 @@ options:
             }
             for (i=0; i<2; i++){
                 value = i ? this.result.to : this.result.from;
-                attr    = i ? this.options.display.to : this.options.display.from;
-                setText( attr.tzElement      ,    this._valueToFormat( value, this.options.format.timezone ) );
+                attr  = i ? this.options.display.to : this.options.display.from;
+                setText( attr.tzElement      , this._valueToFormat( value, this.options.format.timezone ) );
                 setText( attr.utcElement     , this._valueToFormat( value, 'utc' ) );
                 setText( attr.relativeElement, this._valueToFormat( value ) );
-
             }
         },
 
         preCallback: function(){ this.updateDisplay(); }
     };
     window.TimeSlider.prototype = $.extend( {}, window.BaseSlider.prototype, window.TimeSlider.prototype );
+
 }(jQuery, this, document));
