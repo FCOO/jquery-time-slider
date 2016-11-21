@@ -89,11 +89,18 @@ options:
         setAndGet( this.options.display, 'from', ['tzElement', 'utcElement', 'relativeElement']);
         setAndGet( this.options.display, 'to',   ['tzElement', 'utcElement', 'relativeElement']);
 
-        //Set min or minMoment and max or maxMoment
-        var valMom = setValueAndMoment( this.options.min, this.options.minMoment );
+        //Set min/minMoment, max/maxMoment, from/fromMoment, and to/toMoment
+        var valMom = setValueAndMoment( this.options.min, this.options.minMoment, 1 );
         this.options.min = valMom.value; this.options.minMoment = valMom.m;
-        valMom = setValueAndMoment( this.options.max, this.options.maxMoment );
+
+        valMom = setValueAndMoment( this.options.max, this.options.maxMoment, 2 );
         this.options.max = valMom.value; options.maxMoment = valMom.m;
+
+        valMom = setValueAndMoment( this.options.from, this.options.fromMoment);
+        this.options.from = valMom.value; options.fromMoment = valMom.m;
+
+        valMom = setValueAndMoment( this.options.to, this.options.toMoment || this.options.maxMoment );
+        this.options.to = valMom.value; options.toMoment = valMom.m;
 
         if ((this.options.step > 1) && this.options.step_offset_moment){
           //Use options.step_offset_moment to calculate step_offset
