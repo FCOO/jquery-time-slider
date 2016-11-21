@@ -102,12 +102,6 @@ options:
         valMom = setValueAndMoment( this.options.to, this.options.toMoment || this.options.maxMoment );
         this.options.to = valMom.value; options.toMoment = valMom.m;
 
-        //Set min or minMoment and max or maxMoment
-        var valMom = setValueAndMoment( this.options.min, this.options.minMoment );
-        this.options.min = valMom.value; this.options.minMoment = valMom.m;
-        valMom = setValueAndMoment( this.options.max, this.options.maxMoment );
-        this.options.max = valMom.value; options.maxMoment = valMom.m;
-
         if ((this.options.step > 1) && this.options.step_offset_moment){
           //Use options.step_offset_moment to calculate step_offset
             var value = setValueAndMoment( undefined, moment( this.options.step_offset_moment ) ).value;
