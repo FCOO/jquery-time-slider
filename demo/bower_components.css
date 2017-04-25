@@ -1,10 +1,10 @@
 /***********************************************
 jquery-base-slider.scss, Description from README.md
 
-	(c) 2015, Niels Holt
+    (c) 2015, Niels Holt
 
-	https://github.com/NielsHolt/jquery-base-slider
-	https://github.com/NielsHolt
+    https://github.com/NielsHolt/jquery-base-slider
+    https://github.com/NielsHolt
 
 There are four different types of sliders:
 default, small, round and range
@@ -24,9 +24,6 @@ COMMON STYLE
 .base-slider {
   position: relative;
   display: block;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
   user-select: none; }
   .base-slider .line {
     position: relative;
@@ -256,19 +253,19 @@ STYLE FOR SPECIFIC TYPE
 ***************************************************************/
 .base-slider.default {
   /****************************************************
-		Special case for no marker and pin: 
-		Adjust all top-position by adding top-margin if the pin is heigher than the slider
-		****************************************************/ }
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
   .base-slider.default .line, .base-slider.default .bar {
     top: 1.645625rem; }
   .base-slider.default .slider {
     width: 0.6875rem;
     height: 1.125rem;
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAASCAYAAACNdSR1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAELSURBVDhPpZJdS0JBEIbHrYN75xeEpCmCIoJ0EYGBvz/wQpECC7JS8+PCi8KLYG2NzXdwTmc1A/G5GfadZ2YPy4m5NYPRlEbjCe2jeJGnUjFHsdfhxL1/LKiQOyOt45v2L8Ys6W06p3QqQQobISaTiU3bBzn68BQCbDTGcFNr7VUgN7IcRYa2Kwhl2dS5e+DvRAXRG3Y2/8fx8l9PCA7fHH2uZuPKq5IDlvE8QRBwsA1yeT6VzmTp6WVM1tqdAZyRow9P1Sp5btz3+t6AiMgBPBWcntBlvcrB4/OMqwzIGX14/IsisKtvum21+bpa+ZxFu/wMRRDKQAaE5s11KDKQo3zZlWt3e1x9nPsBUKqb1FCNlIQAAAAASUVORK5CYII=); }
+    background-image: url("images/slider.default.png"); }
   .base-slider.default .pin {
     top: 1.645625rem; }
   .base-slider.default.active .slider.state_hover, .base-slider.default.active .slider:hover {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAASCAYAAACNdSR1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAFASURBVDhPdZI7SwNBFIXvri4OChq0DPjqLEQLC1EsYiXaCP4J9T9pCgtBEUVREMEgQTGNRFLY+QAttRDUZCcyzrm7N+4MydfM3nvOufNgA2N5enmjUvmGOlFYmKOxkTwFj8+v5r72QNOTE9TX25PK/3x9N6hq9SmrB1s7e2bRJocG+1M5oV5vkFJJ+P3jky7tziGK7ESYgBhRi87mdvgh4Jhh2NxY522xSkBomZVS6ZdLtt/xGO1gc/ZcwH9C0Z3JfsivPbOi7WKRcrkBXv17sBm3jqKIG2KQFX15lXB8dJiuK1XSWrcCAmr0ocMXzs/OsHB6fuUExIg+gC+MurtoZalgt/qxE+5YkIDU0OEj/KIg1k2zu39sSuVbE8cxr6jRF/h/5rhFN3/p4OgsrYjWVpeTiQJHMmDS4cmFMzHBmD8Dxr97yYesYgAAAABJRU5ErkJggg==); }
+    background-image: url("images/slider.default.hover.png"); }
   .base-slider.default .grid {
     top: 2.395625rem; }
   .base-slider.default.ticks-on-line .grid {
@@ -288,19 +285,19 @@ STYLE FOR SPECIFIC TYPE
 
 .base-slider.small {
   /****************************************************
-		Special case for no marker and pin: 
-		Adjust all top-position by adding top-margin if the pin is heigher than the slider
-		****************************************************/ }
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
   .base-slider.small .line, .base-slider.small .bar {
     top: 1.395625rem; }
   .base-slider.small .slider {
     width: 0.8125rem;
     height: 0.9375rem;
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAPCAYAAAA/I0V3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAAHdElNRQfcCgoOIhFLucXpAAAA1klEQVQ4T2OAAg4glgBiBTwYJA9SBwYghoZ/VNF/QhikDqqeQQIkkFvd9//c9bs4MUgeqhFkI4MCiDNl+db/O46cw4lB8lBNIKdCNE1YvOn/qh1HcGKQPIamngXr/89ctQMnBsljaGqfs+Z/36INODFIHkPTok37CGJkTeDQa+qZ+//0lds4MUgeqgkcevB46p269P+zV+8wMEgcqgEeTyAA1zhtzur/v3//gWMQH5sGGIBrnD5vzX8QANH4NMAAikZiNMAAXCOIhvKJAiCFAlAaDTAwAAAamEJoXiBKbAAAAABJRU5ErkJggg==); }
+    background-image: url("images/slider.small.png"); }
   .base-slider.small .pin {
     top: 1.395625rem; }
   .base-slider.small.active .slider.state_hover, .base-slider.small.active .slider:hover {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAPCAYAAAA/I0V3AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAAHdElNRQfcCgoOIhFLucXpAAAA1ElEQVQ4T2OAAg4glgBiBTwYJA9SBwYghoZ/VNF/QhikDqqeQQIkEJHX8X/biWs4MUgeqhFkI4MCiJPQtvT/1PWHcWKQPFQTyKkQTZGNC/83zN+OE4PkMTQF1877n9a9EicGyWNo8q2Y9T+8fgFODJLH0FQ6bSNBjKwJHHoVbbP+bzp6GScGyUM1gUMPHk8dkxb/v/X4FQYGiUM1wOMJBOAap85Z9f/nr99wDOJj0wADcI3T5635DwIgGp8GGEDRSIwGGIBrBNFQPlEApFAASqMBBgYAUX8u2cyxQJIAAAAASUVORK5CYII=); }
+    background-image: url("images/slider.small.hover.png"); }
   .base-slider.small .grid {
     top: 2.208125rem; }
   .base-slider.small.ticks-on-line .grid {
@@ -320,19 +317,19 @@ STYLE FOR SPECIFIC TYPE
 
 .base-slider.round {
   /****************************************************
-		Special case for no marker and pin: 
-		Adjust all top-position by adding top-margin if the pin is heigher than the slider
-		****************************************************/ }
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
   .base-slider.round .line, .base-slider.round .bar {
     top: 1.458125rem; }
   .base-slider.round .slider {
     width: 0.75rem;
     height: 0.75rem;
-    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH3wcTDyQFVe5yLwAAAXlJREFUKM99kr3qqgAAxX/2AQnhRUgINLiDQ4oQtfgCTb5AzT2WQ3O9grQ5RAS1hNXUxRCH+iOBkajhHS507/DnHjjLgTOcD+FL0wH48etU7fd7TqcTURQBoKoq/X6f4XDI42dfABC+NJ1msKuWyyW9Xg/DMFBVFYAoijgej1yvVyaTCYU5EijLsnJdt/J9v3q/39/S9/3Kdd2qLMtK2G631e12Yzwe8z+sVisURaEWBAG6rpPnOXme43kejuPgOA6e5310XdcJgoBGHMdIksTr9QJgvV4zGAwA2Gw22LYNgCRJxHFMA+D5fFKr1QCwLIssywAQRZE0TQEoioJ6vU6j2+0ShiGyLANg2zZJkgAgyzKPxwOAJElQFIWGaZocDodPuFarha7/2SaO44/5crlgWRZCWZbVfD4HoNPpfNvQ/X4HYDab/R1usViQpimiKNJsNgHI85wsy2i320ynUwpzJAj/XmO323E+nwnDEABN0zAMg9Fo9LnGbyGcyS33UrTwAAAAAElFTkSuQmCC"); }
+    background-image: url("images/slider.round.png"); }
   .base-slider.round .pin {
     top: 1.458125rem; }
   .base-slider.round.active .slider.state_hover, .base-slider.round.active .slider:hover {
-    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH3wcTDygUk+sd0QAAAaJJREFUKM9tkk9r0wAAxX9pgs36z3XJdJnNdDPrRqp4sILMFooOetFP4ufxk7iDgojQelAHQ6WxqK2OuGZuTUtqbGpsrIfA6GHv/h7vn+AWDI5et2e9wRTL6tJ3fjD55QIgZxVUrYBpbrC6JHHl3rYgfDiczj7bv9lvNrlz8zK3TJ1rugrAd7vPe8vm3ceflCsVinoaqTeYst9scP/uVR5UTeaxvqayvqaSTVu8bDbI1HeRLKvLbXOZ2s4WURRxHmo7W3ijMZbVRer3bOqPtgnDEIBG64Qne18AePxwk2rpEgBmcYWDp22kiT9AWZQJggCAN5bDjcICAG8/OZQ3sgAoizITf4AE4Ps+opiIlVaTTMLY2sIFEd/3AQj/RghCAknO5Pl2eMKyEquWN5cYDocA5PN5PM8D4NQNSKYvIimaTrvzFSmRi7uXZQzDAMBxnDNyuzNC0QyEZweT2avnL9ByY/QV6dyW7OMpzihFrb7L3HANMqJLLhWRSv4DYPwnwWgs4kcK5UqVop5GmL9Gq9XBPT4i8E7j0DkVRStQKl0/u8Z/ZButschP/3wAAAAASUVORK5CYII="); }
+    background-image: url("images/slider.round.hover.png"); }
   .base-slider.round .grid {
     top: 2.020625rem; }
   .base-slider.round.ticks-on-line .grid {
@@ -352,9 +349,9 @@ STYLE FOR SPECIFIC TYPE
 
 .base-slider.range {
   /****************************************************
-		Special case for no marker and pin: 
-		Adjust all top-position by adding top-margin if the pin is heigher than the slider
-		****************************************************/ }
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
   .base-slider.range .line, .base-slider.range .bar {
     top: 1.270625rem; }
   .base-slider.range .slider {
