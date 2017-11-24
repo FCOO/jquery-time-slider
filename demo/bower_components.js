@@ -10305,6 +10305,394 @@ return jQuery;
 })(jQuery);
 
 ;
+/**
+* Detect Element Resize Plugin for jQuery
+*
+* https://github.com/sdecima/javascript-detect-element-resize
+* Sebastian Decima
+*
+* version: 0.5.3
+**/
+
+(function ( $ ) {
+	var attachEvent = document.attachEvent,
+		stylesCreated = false;
+	
+	var jQuery_resize = $.fn.resize;
+	
+	$.fn.resize = function(callback) {
+		return this.each(function() {
+			if(this == window)
+				jQuery_resize.call(jQuery(this), callback);
+			else
+				addResizeListener(this, callback);
+		});
+	}
+
+	$.fn.removeResize = function(callback) {
+		return this.each(function() {
+			removeResizeListener(this, callback);
+		});
+	}
+	
+	if (!attachEvent) {
+		var requestFrame = (function(){
+			var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
+								function(fn){ return window.setTimeout(fn, 20); };
+			return function(fn){ return raf(fn); };
+		})();
+		
+		var cancelFrame = (function(){
+			var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
+								   window.clearTimeout;
+		  return function(id){ return cancel(id); };
+		})();
+
+		function resetTriggers(element){
+			var triggers = element.__resizeTriggers__,
+				expand = triggers.firstElementChild,
+				contract = triggers.lastElementChild,
+				expandChild = expand.firstElementChild;
+			contract.scrollLeft = contract.scrollWidth;
+			contract.scrollTop = contract.scrollHeight;
+			expandChild.style.width = expand.offsetWidth + 1 + 'px';
+			expandChild.style.height = expand.offsetHeight + 1 + 'px';
+			expand.scrollLeft = expand.scrollWidth;
+			expand.scrollTop = expand.scrollHeight;
+		};
+
+		function checkTriggers(element){
+			return element.offsetWidth != element.__resizeLast__.width ||
+						 element.offsetHeight != element.__resizeLast__.height;
+		}
+		
+		function scrollListener(e){
+			var element = this;
+			resetTriggers(this);
+			if (this.__resizeRAF__) cancelFrame(this.__resizeRAF__);
+			this.__resizeRAF__ = requestFrame(function(){
+				if (checkTriggers(element)) {
+					element.__resizeLast__.width = element.offsetWidth;
+					element.__resizeLast__.height = element.offsetHeight;
+					element.__resizeListeners__.forEach(function(fn){
+						fn.call(element, e);
+					});
+				}
+			});
+		};
+		
+		/* Detect CSS Animations support to detect element display/re-attach */
+		var animation = false,
+			animationstring = 'animation',
+			keyframeprefix = '',
+			animationstartevent = 'animationstart',
+			domPrefixes = 'Webkit Moz O ms'.split(' '),
+			startEvents = 'webkitAnimationStart animationstart oAnimationStart MSAnimationStart'.split(' '),
+			pfx  = '';
+		{
+			var elm = document.createElement('fakeelement');
+			if( elm.style.animationName !== undefined ) { animation = true; }    
+			
+			if( animation === false ) {
+				for( var i = 0; i < domPrefixes.length; i++ ) {
+					if( elm.style[ domPrefixes[i] + 'AnimationName' ] !== undefined ) {
+						pfx = domPrefixes[ i ];
+						animationstring = pfx + 'Animation';
+						keyframeprefix = '-' + pfx.toLowerCase() + '-';
+						animationstartevent = startEvents[ i ];
+						animation = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		var animationName = 'resizeanim';
+		var animationKeyframes = '@' + keyframeprefix + 'keyframes ' + animationName + ' { from { opacity: 0; } to { opacity: 0; } } ';
+		var animationStyle = keyframeprefix + 'animation: 1ms ' + animationName + '; ';
+	}
+	
+	function createStyles() {
+		if (!stylesCreated) {
+			//opacity:0 works around a chrome bug https://code.google.com/p/chromium/issues/detail?id=286360
+			var css = (animationKeyframes ? animationKeyframes : '') +
+					'.resize-triggers { ' + (animationStyle ? animationStyle : '') + 'visibility: hidden; opacity: 0; } ' +
+					'.resize-triggers, .resize-triggers > div, .contract-trigger:before { content: \" \"; display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; } .resize-triggers > div { background: #eee; overflow: auto; } .contract-trigger:before { width: 200%; height: 200%; }',
+				head = document.head || document.getElementsByTagName('head')[0],
+				style = document.createElement('style');
+			
+			style.type = 'text/css';
+			if (style.styleSheet) {
+				style.styleSheet.cssText = css;
+			} else {
+				style.appendChild(document.createTextNode(css));
+			}
+
+			head.appendChild(style);
+			stylesCreated = true;
+		}
+	}
+	
+	window.addResizeListener = function(element, fn){
+		if (attachEvent) element.attachEvent('onresize', fn);
+		else {
+			if (!element.__resizeTriggers__) {
+				if (getComputedStyle(element).position == 'static') element.style.position = 'relative';
+				createStyles();
+				element.__resizeLast__ = {};
+				element.__resizeListeners__ = [];
+				(element.__resizeTriggers__ = document.createElement('div')).className = 'resize-triggers';
+				element.__resizeTriggers__.innerHTML = '<div class="expand-trigger"><div></div></div>' +
+																						'<div class="contract-trigger"></div>';
+				element.appendChild(element.__resizeTriggers__);
+				resetTriggers(element);
+				element.addEventListener('scroll', scrollListener, true);
+				
+				/* Listen for a css animation to detect element display/re-attach */
+				animationstartevent && element.__resizeTriggers__.addEventListener(animationstartevent, function(e) {
+					if(e.animationName == animationName)
+						resetTriggers(element);
+				});
+			}
+			element.__resizeListeners__.push(fn);
+		}
+	};
+	
+	window.removeResizeListener = function(element, fn){
+		if (attachEvent) element.detachEvent('onresize', fn);
+		else {
+			element.__resizeListeners__.splice(element.__resizeListeners__.indexOf(fn), 1);
+			if (!element.__resizeListeners__.length) {
+					element.removeEventListener('scroll', scrollListener);
+					element.__resizeTriggers__ = !element.removeChild(element.__resizeTriggers__);
+			}
+		}
+	}
+}( jQuery ));
+;
+/*!
+ * jQuery Mousewheel 3.1.13
+ *
+ * Copyright jQuery Foundation and other contributors
+ * Released under the MIT license
+ * http://jquery.org/license
+ */
+
+(function (factory) {
+    if ( typeof define === 'function' && define.amd ) {
+        // AMD. Register as an anonymous module.
+        define(['jquery'], factory);
+    } else if (typeof exports === 'object') {
+        // Node/CommonJS style for Browserify
+        module.exports = factory;
+    } else {
+        // Browser globals
+        factory(jQuery);
+    }
+}(function ($) {
+
+    var toFix  = ['wheel', 'mousewheel', 'DOMMouseScroll', 'MozMousePixelScroll'],
+        toBind = ( 'onwheel' in document || document.documentMode >= 9 ) ?
+                    ['wheel'] : ['mousewheel', 'DomMouseScroll', 'MozMousePixelScroll'],
+        slice  = Array.prototype.slice,
+        nullLowestDeltaTimeout, lowestDelta;
+
+    if ( $.event.fixHooks ) {
+        for ( var i = toFix.length; i; ) {
+            $.event.fixHooks[ toFix[--i] ] = $.event.mouseHooks;
+        }
+    }
+
+    var special = $.event.special.mousewheel = {
+        version: '3.1.12',
+
+        setup: function() {
+            if ( this.addEventListener ) {
+                for ( var i = toBind.length; i; ) {
+                    this.addEventListener( toBind[--i], handler, false );
+                }
+            } else {
+                this.onmousewheel = handler;
+            }
+            // Store the line height and page height for this particular element
+            $.data(this, 'mousewheel-line-height', special.getLineHeight(this));
+            $.data(this, 'mousewheel-page-height', special.getPageHeight(this));
+        },
+
+        teardown: function() {
+            if ( this.removeEventListener ) {
+                for ( var i = toBind.length; i; ) {
+                    this.removeEventListener( toBind[--i], handler, false );
+                }
+            } else {
+                this.onmousewheel = null;
+            }
+            // Clean up the data we added to the element
+            $.removeData(this, 'mousewheel-line-height');
+            $.removeData(this, 'mousewheel-page-height');
+        },
+
+        getLineHeight: function(elem) {
+            var $elem = $(elem),
+                $parent = $elem['offsetParent' in $.fn ? 'offsetParent' : 'parent']();
+            if (!$parent.length) {
+                $parent = $('body');
+            }
+            return parseInt($parent.css('fontSize'), 10) || parseInt($elem.css('fontSize'), 10) || 16;
+        },
+
+        getPageHeight: function(elem) {
+            return $(elem).height();
+        },
+
+        settings: {
+            adjustOldDeltas: true, // see shouldAdjustOldDeltas() below
+            normalizeOffset: true  // calls getBoundingClientRect for each event
+        }
+    };
+
+    $.fn.extend({
+        mousewheel: function(fn) {
+            return fn ? this.bind('mousewheel', fn) : this.trigger('mousewheel');
+        },
+
+        unmousewheel: function(fn) {
+            return this.unbind('mousewheel', fn);
+        }
+    });
+
+
+    function handler(event) {
+        var orgEvent   = event || window.event,
+            args       = slice.call(arguments, 1),
+            delta      = 0,
+            deltaX     = 0,
+            deltaY     = 0,
+            absDelta   = 0,
+            offsetX    = 0,
+            offsetY    = 0;
+        event = $.event.fix(orgEvent);
+        event.type = 'mousewheel';
+
+        // Old school scrollwheel delta
+        if ( 'detail'      in orgEvent ) { deltaY = orgEvent.detail * -1;      }
+        if ( 'wheelDelta'  in orgEvent ) { deltaY = orgEvent.wheelDelta;       }
+        if ( 'wheelDeltaY' in orgEvent ) { deltaY = orgEvent.wheelDeltaY;      }
+        if ( 'wheelDeltaX' in orgEvent ) { deltaX = orgEvent.wheelDeltaX * -1; }
+
+        // Firefox < 17 horizontal scrolling related to DOMMouseScroll event
+        if ( 'axis' in orgEvent && orgEvent.axis === orgEvent.HORIZONTAL_AXIS ) {
+            deltaX = deltaY * -1;
+            deltaY = 0;
+        }
+
+        // Set delta to be deltaY or deltaX if deltaY is 0 for backwards compatabilitiy
+        delta = deltaY === 0 ? deltaX : deltaY;
+
+        // New school wheel delta (wheel event)
+        if ( 'deltaY' in orgEvent ) {
+            deltaY = orgEvent.deltaY * -1;
+            delta  = deltaY;
+        }
+        if ( 'deltaX' in orgEvent ) {
+            deltaX = orgEvent.deltaX;
+            if ( deltaY === 0 ) { delta  = deltaX * -1; }
+        }
+
+        // No change actually happened, no reason to go any further
+        if ( deltaY === 0 && deltaX === 0 ) { return; }
+
+        // Need to convert lines and pages to pixels if we aren't already in pixels
+        // There are three delta modes:
+        //   * deltaMode 0 is by pixels, nothing to do
+        //   * deltaMode 1 is by lines
+        //   * deltaMode 2 is by pages
+        if ( orgEvent.deltaMode === 1 ) {
+            var lineHeight = $.data(this, 'mousewheel-line-height');
+            delta  *= lineHeight;
+            deltaY *= lineHeight;
+            deltaX *= lineHeight;
+        } else if ( orgEvent.deltaMode === 2 ) {
+            var pageHeight = $.data(this, 'mousewheel-page-height');
+            delta  *= pageHeight;
+            deltaY *= pageHeight;
+            deltaX *= pageHeight;
+        }
+
+        // Store lowest absolute delta to normalize the delta values
+        absDelta = Math.max( Math.abs(deltaY), Math.abs(deltaX) );
+
+        if ( !lowestDelta || absDelta < lowestDelta ) {
+            lowestDelta = absDelta;
+
+            // Adjust older deltas if necessary
+            if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
+                lowestDelta /= 40;
+            }
+        }
+
+        // Adjust older deltas if necessary
+        if ( shouldAdjustOldDeltas(orgEvent, absDelta) ) {
+            // Divide all the things by 40!
+            delta  /= 40;
+            deltaX /= 40;
+            deltaY /= 40;
+        }
+
+        // Get a whole, normalized value for the deltas
+        delta  = Math[ delta  >= 1 ? 'floor' : 'ceil' ](delta  / lowestDelta);
+        deltaX = Math[ deltaX >= 1 ? 'floor' : 'ceil' ](deltaX / lowestDelta);
+        deltaY = Math[ deltaY >= 1 ? 'floor' : 'ceil' ](deltaY / lowestDelta);
+
+        // Normalise offsetX and offsetY properties
+        if ( special.settings.normalizeOffset && this.getBoundingClientRect ) {
+            var boundingRect = this.getBoundingClientRect();
+            offsetX = event.clientX - boundingRect.left;
+            offsetY = event.clientY - boundingRect.top;
+        }
+
+        // Add information to the event object
+        event.deltaX = deltaX;
+        event.deltaY = deltaY;
+        event.deltaFactor = lowestDelta;
+        event.offsetX = offsetX;
+        event.offsetY = offsetY;
+        // Go ahead and set deltaMode to 0 since we converted to pixels
+        // Although this is a little odd since we overwrite the deltaX/Y
+        // properties with normalized deltas.
+        event.deltaMode = 0;
+
+        // Add event and delta to the front of the arguments
+        args.unshift(event, delta, deltaX, deltaY);
+
+        // Clearout lowestDelta after sometime to better
+        // handle multiple device types that give different
+        // a different lowestDelta
+        // Ex: trackpad = 3 and mouse wheel = 120
+        if (nullLowestDeltaTimeout) { clearTimeout(nullLowestDeltaTimeout); }
+        nullLowestDeltaTimeout = setTimeout(nullLowestDelta, 200);
+
+        return ($.event.dispatch || $.event.handle).apply(this, args);
+    }
+
+    function nullLowestDelta() {
+        lowestDelta = null;
+    }
+
+    function shouldAdjustOldDeltas(orgEvent, absDelta) {
+        // If this is an older event and the delta is divisable by 120,
+        // then we are assuming that the browser is treating this as an
+        // older mouse wheel event and that we should divide the deltas
+        // by 40 to try and get a more usable deltaFactor.
+        // Side note, this actually impacts the reported scroll distance
+        // in older browsers and can cause scrolling to be slower than native.
+        // Turn this off by setting $.event.special.mousewheel.settings.adjustOldDeltas to false.
+        return special.settings.adjustOldDeltas && orgEvent.type === 'mousewheel' && absDelta % 120 === 0;
+    }
+
+}));
+
+;
 /****************************************************************************
     jquery-base-slider, Description from README.md
 
@@ -10317,64 +10705,119 @@ return jQuery;
 (function ($, window, document, undefined) {
     "use strict";
 
-    //Polifil for Array.indexOf
-    if (!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function(elt /*, from*/)
-    {
-      var len = this.length >>> 0;
+    /************************************
+    DEFAULT OPTIONS
+    ************************************/
+    var defaultOptions = {
+        //Type and slider
+        type        : "single",  // Choose single or double, could be "single" - for one handle, or "double" for two handles
+        slider      : "default", // Choose slider type, could be "default","small","round", "range", or '"fixed"
+        read_only   : false,     // Locks slider and makes it inactive.
+        disable     : false,     // Locks slider and makes it disable ("dissy")
+        fixed_handle: false,     // Special version where the slider is fixed and the grid are moved left or right to select value. slider is set to "single"
+                                 // A value for options.width OR options.value_distances must be provided
+        clicable    : true,      // Allows click on lables and line. Default = true except for fixed_handle:true where default = false
+        mousewheel  : false,     // Only for type:'single': Adds mousewheel-event to the parent-element of the slider. Works best if the parent-element only contains the slider and has a fixed height and width
 
-      var from = Number(arguments[1]) || 0;
-      from = (from < 0) ? Math.ceil(from) : Math.floor(from);
-      if (from < 0)
-        from += len;
+        //Dimensions (only for options.fixed_handle: true)
+        width          : 0, // The total width of the slider (in px for rem = 16px)
+        value_distances: 3, // The distance between each values on the slider (in px for rem = 16px). Width will be value_distances*( max - min )
 
-      for (; from < len; from++)
-      {
-        if (from in this &&
-            this[from] === elt)
-          return from;
-      }
-      return -1;
+        //Ranges and value
+        min : 10,           // Set slider minimum value
+        max : 100,          // Set slider maximum value
+        from: null,         // Set start position for left handle (or for single handle)
+        to  : null,         // Set start position for right handle
+
+        from_fixed: false,  // Fix position of left (or single) handle.
+        from_min  : null,   // Set minimum limit for left handle.
+        from_max  : null,   // Set the maximum limit for left handle
+
+        to_fixed: false,    // Fix position of right handle.
+        to_min  : null,     // Set the minimum limit for right handle
+        to_max  : null,     // Set the maximum limit for right handle
+
+        pin_value: null,    // The value for the pin. Use  setPin( value [, color] )  to change the value dynamical
+        pin_color: 'black', // The color of the pin. Use  setPin( value , color )  to change the color dynamical
+
+        //Steps
+        step        : 1,    // Set sliders step. Always > 0. Could be fractional.
+        step_offset : 0,    // When  step  > 1: Offset for the allowed values. Eq. Min=0, max=100, step=5, step_offset=3 => allowed values=3,8,13,...,92,97 (3+N*5)<br>Only tested for  type="single"
+        min_interval: 0,    // Set minimum diapason between sliders. Only in "double" type
+        max_interval: 0,    // Set maximum diapason between sliders. Only in "double" type
+
+        keyboard_shift_step_factor: 5,  //Factor when pressing etc. shift-left compare to left
+        keyboard_page_step_factor : 20, //Step-factor when pressing pgUp or PgDn
+
+        //Slide-line
+        impact_line        : false, // The line on a double slider is coloured as<br>green-[slider]-yellow-[slider]-red
+        impact_line_reverse: false, // The line on a double slider is colored as<br>red-[slider]-yellow-[slider]-green
+        bar_color          : null,  // The color of the bar
+        hide_bar_color     : false, // The bar gets same color as the line
+
+        //Grid (ticks and text)
+        grid              : false,                      // Enables grid of values.
+        major_ticks       : null,                       // Nummber of  step  between major ticks. Default=null=> Calculated automatic
+        major_ticks_offset: 0,                          // Offset for the values where a major ticks is placed. Eq. Min=0, max=100 => major ticks on values=0,10,20,..,90,100. With  major_ticks_offset:4  the major ticks would be placed on values=4,14,24,...,84,94
+        hide_minor_ticks  : false,                      // Hide minor ticks.
+        gridDistances     : [1, 2, 5, 10, 20, 50, 100], // Distance between major ticks. E.g. Slider with hours could use [1, 2, 4, 12, 24]
+        ticks_on_line     : false,                      // Place the ticks in the (first) grid on the line with the sliders.
+        major_ticks_factor: 1,                          // Not documented
+
+        grid_colors       : null, //Array of { [fromValue, ]value, color } to set colors on the bar. If no fromValue is given the the previous value is used.
+                                  //If value == null or < min => A triangle is added to the left indicating 'below min'.
+                                  //If value > max            =>  A triangle is added to the right indicating 'above max'.
+
+
+        //Labels above slider
+        hide_min_max: true,     // Hides min and max labels
+        hide_from_to: false,    // Hide from and to labels
+        marker_frame: false,    // Frame the from- and to-marker
+
+        //Adjust text and labels
+        prettify        : null,  // Set up your prettify function. Can be anything. For example, you can set up unix time as slider values and than transform them to cool looking dates.
+        prettify_text   : null,  // As  prettify  but for the text/labels in the grid.
+        prefix          : "",    // Set prefix for values. Will be set up right before the number: $100
+        postfix         : "",    // Set postfix for values. Will be set up right after the number: 100k
+        max_postfix     : "",    // Special postfix, used only for maximum value. Will be showed after handle will reach maximum right position. For example 0 - 100+
+        decorate_both   : true,  // Used for "double" type and only if prefix or postfix was set up. Determine how to decorate close values. For example: $10k - $100k or $10 - 100k
+        decorate_text   : false, // The text/labels in the grid also gets  prefix  and/or  postfix
+        values_separator: " - ", // Text between min and max value when labels are combined. values_separator:" to " => "12 to 24"
+
+        //Callback
+        callback            : null, // Is called when the  from  or  to  value are changed.
+        callback_on_dragging: true, // If false the callback-function is only called when dragging the sliding is finish.
+        callback_delay      : 500,  // If  callback_on_dragging  is false the  callback  is called when the slider has been on the same tick for  callback_delay  milliseconds. Set to zero to avoid any callback before mouseup-event
+
+        //Buttons
+        buttons      : {from: {}, to: {} }, // JSON-record with id or buttons for first, previous, (now,) next, and last value = {from: {buttonList}, to: {buttonList}}, where
+                                            //  {buttonList} = {
+                                            //      firstBtn   : element or string,
+                                            //      previousBtn: element or string,
+                                            //      nowBtn     : element or string,
+                                            //      nextBtn    : element or string,
+                                            //      lastBtn    : element or string
+                                            //  }
+
+        buttons_attr : ['firstBtn', 'previousBtn', 'nowBtn', 'nextBtn', 'lastBtn'], //Internal
+        buttons_delta: [-99, -1, 0, +1, +99], //Internal
+
+        //Methods
+        onStart : null, // Callback. Is called on slider start.
+        onChange: null, // Callback. IS called on each values change.
+        onFinish: null, // Callback. Is called than user releases handle.
+        onUpdate: null  // Callback. Is called than slider is modified by external methods  update  or  reset
     };
-  }
 
 
-
-
-
-    //Original irs.slider - with modifications
+    /************************************
+    BaseSlider
+    ************************************/
     var plugin_count = 0;
-
-  // Template
-    var base_html =
-        '<span class="bs">' +
-            '<span class="line" tabindex="-1">'+
-                '<span class="line-left"></span>'+
-            '</span>' +
-            '<span class="marker-min">0</span>'+
-            '<span class="marker-max">1</span>' +
-            '<span class="marker-from">0</span>'+
-            '<span class="marker-to">0</span>'+
-            '<span class="marker-single">0</span>' +
-        '</span>' +
-        '<span class="grid"></span>' +
-        '<span class="bar"></span>';
-
-    var single_html =
-        '<span class="slider single"></span>';
-
-    var double_html =
-        '<span class="slider from"></span>' +
-        '<span class="slider to"></span>';
-
-    var pin_html =
-        '<span class="slider pin"></span>';
-
-    // Core
-    //var BaseSlider = function (input, options, plugin_count) {
     window.BaseSlider = function (input, options, plugin_count) {
         this.input = input;
         this.plugin_count = plugin_count;
+
         this.current_plugin = 0;
         this.old_from = 0;
         this.old_to = 0;
@@ -10388,103 +10831,28 @@ return jQuery;
         this.is_click = false;
         this.is_repeating_click = false;
 
-        this.$cache = {
-            win: $(window),
-            body: $(document.body),
-            input: $(input),
-            cont: null,
-            rs: null,
-            min: null,
-            max: null,
-            from: null,
-            to: null,
-            single: null,
-            bar: null,
-            line: null,
-            s_single: null,
-            s_pin: null,
-            s_from: null,
-            s_to: null,
-            grid: null,
-            grid_labels: [],
-            buttons: {
-                from: {},
-                to  : {}
-            }
+        this.cache = {
+            $win   : $(window),
+            $body  : $(document.body),
+            $input : $(this.input),
+            buttons: { from: {}, to: {} }
         };
 
         // get config from options
-        this.options = $.extend({
-            type: "single",
-            slider: "default",
+        this.options = $.extend( {}, defaultOptions, options );
 
-            isInterval: (options.type == 'double'),
+        if (this.options.fixed_handle){
+            this.options.type = 'single';
+            if (options.clicable === undefined)
+                this.options.clicable = false;
+        }
 
-            pin_value: null,
+        this.options.isSingle = (this.options.type == 'single');
+        this.options.isInterval = (this.options.type == 'double');
 
-            min: 10,
-            max: 100,
-            from: null,
-            to: null,
-            step: 1,
-            step_offset: 0,
-
-            min_interval: 0,
-            max_interval: 0,
-
-            p_values: [],
-
-            from_fixed: false,
-            from_min: null,
-            from_max: null,
-
-            to_fixed: false,
-            to_min: null,
-            to_max: null,
-
-            prettify: null,
-            prettify_text: null,
-
-
-            marker_frame: false,
-
-            impact_line: false,
-            impact_line_reverse: false,
-            hide_bar_color: false,
-            bar_color: null,
-
-            callback_on_dragging: true,
-            callback_delay: 500,
-
-            grid: false,
-            hide_minor_ticks: false,
-            major_ticks: null, // => calculated automatic
-            major_ticks_offset: 0,
-            major_ticks_factor: 1,
-
-            ticks_on_line: false,
-            hide_min_max: true,
-            hide_from_to: false,
-
-            prefix: "",
-            postfix: "",
-            max_postfix: "",
-            decorate_both: true,
-            values_separator: " - ",
-
-            disable: false,
-
-            buttons_attr : ['firstBtn', 'previousBtn', 'nowBtn', 'nextBtn', 'lastBtn'],
-            buttons_delta: [-99, -1, 0, +1, +99],
-            buttons      : {from: {}, to: {} },
-
-            gridDistances: [1, 2, 5, 10, 20, 50, 100],
-
-            onStart : null,
-            onChange: null,
-            onFinish: null,
-            onUpdate: null
-        }, options);
+        if (this.options.isInterval){
+            this.options.mousewheel = false;
+        }
 
         this.validate();
 
@@ -10498,9 +10866,7 @@ return jQuery;
         if (this.options.gridDistances.indexOf(this.options.step) == -1)
             this.options.gridDistances.push(this.options.step);
 
-
         this.options.has_pin = (this.options.pin_value !== null);
-        this.options.p_keyboard_step = 100*this.options.step / (this.options.max - this.options.min);
 
         this.coords = {
             // left
@@ -10534,12 +10900,11 @@ return jQuery;
             true_min: 0,
             true_max: 0,
 
-            // grid
-            grid_gap: 0,
         };
 
         this.result = {
-            input: this.$cache.input,
+            $input: this.cache.$input,
+            input: this.cache.$input,  //Backward compatibility
             slider: null,
 
             min: this.options.min,
@@ -10579,12 +10944,12 @@ return jQuery;
 
     window.BaseSlider.prototype = {
         init: function (is_update) {
-            this.options.total= this.options.max - this.options.min;
-            this.options.oneP = this.toFixed(100 / this.options.total);
-            this.options.stepP= this.options.step*this.options.oneP; //this.toFixed(o.step / (total / 100));
+            this.options.total = this.options.max - this.options.min;
+            this.options.oneP  = this.toFixed(100 / this.options.total);
+            this.options.stepP = this.options.step*this.options.oneP;
 
             var factor = 100/this.options.total;
-            this.coords.p_step = this.options.step * factor;
+            this.coords.p_step        = this.options.step * factor;
             this.coords.p_step_offset = this.options.step == 1 ? 0 : this.options.step_offset * factor;
 
             this.coords.true_min = this.options.min + this.options.step_offset;
@@ -10611,207 +10976,265 @@ return jQuery;
                 this.onUpdate();
 
             } else {
-
                 this.force_redraw = true;
                 this.calc(true);
                 this.onStart();
             }
-
             this.drawHandles();
         },
 
         //append
         append: function () {
-            this.$cache.container = $('<span class="base-slider ' + this.options.slider + ' js-base-slider-' + this.plugin_count + '"></span>');
-            this.$cache.input.before(this.$cache.container);
+            function $span( className, $parent ){
+                var result = $('<span/>');
+                if (className)
+                    result.addClass( className );
+                if ($parent)
+                  result.appendTo( $parent );
+                return result;
+            }
 
-            this.$cache.input.prop("readonly", true);
-            this.$cache.cont = this.$cache.input.prev();
-            this.result.slider = this.$cache.cont;
+            //this.cache.$container = $span( 'base-slider-container ' + this.options.slider + ' js-base-slider-' + this.plugin_count );
+            this.cache.$container = $('<div/>');
+            this.cache.$container.addClass('base-slider-container ' + this.options.slider + ' js-base-slider-' + this.plugin_count );
 
-            this.$cache.cont.html(base_html);
-            this.$cache.bs = this.$cache.cont.find(".bs");
-            this.$cache.min = this.$cache.cont.find(".marker-min");
-            this.$cache.max = this.$cache.cont.find(".marker-max");
-            this.$cache.from = this.$cache.cont.find(".marker-from");
-            this.$cache.to = this.$cache.cont.find(".marker-to");
-            this.$cache.single = this.$cache.cont.find(".marker-single");
-            this.$cache.bar = this.$cache.cont.find(".bar");
-            this.$cache.line = this.$cache.cont.find(".line");
-            this.$cache.lineLeft = this.$cache.cont.find(".line-left");
-            this.$cache.grid = this.$cache.cont.find(".grid");
+            this.cache.$input.before(this.cache.$container);
+            this.cache.$input.prop("readonly", true);
 
-            if (this.options.type === "single") {
-                this.$cache.cont.append(single_html);
-                this.$cache.s_single = this.$cache.cont.find(".single");
-                this.$cache.from.css('visibility', 'hidden');
-                this.$cache.to.css('visibility', 'hidden');
-                this.$cache.lineLeft.remove();
-            } else {
-                //Add from and to slider
-                this.$cache.cont.append(double_html);
-                this.$cache.s_from = this.$cache.cont.find(".from");
-                this.$cache.s_to = this.$cache.cont.find(".to");
 
-                if (this.options.has_pin){
-                    this.$cache.cont.append(pin_html);
-                    this.$cache.s_pin = this.$cache.cont.find(".slider.pin");
+            this.result.slider = this.cache.$container; //For backward compatibility
+            this.result.$slider = this.cache.$container;
+
+            //Put inside outer-container if options.fixed_handle
+            if (this.options.fixed_handle){
+                this.cache.$container.wrap('<div/>');
+                this.cache.$fullWidthContainer = this.cache.$container.parent();
+                this.cache.$fullWidthContainer.addClass('base-slider-container-full-width');
+
+                //Sets the width of the container with full width
+                var width = this.options.width || this.options.value_distances*(this.options.max - this.options.min);
+
+                this.cache.$fullWidthContainer.width( Math.ceil(this.pxToRem(width))+'rem' );
+
+
+                this.cache.$fullWidthContainer.wrap('<div/>');
+                this.cache.$outerContainer = this.cache.$fullWidthContainer.parent();
+                this.cache.$outerContainer.addClass('base-slider-container-outer');
+
+                //Update the slider when $outerContainer is resized
+                var _this = this;
+                this.cache.$outerContainer.resize( function(){
+                    _this.force_redraw = true;
+                    _this.drawHandles();
+                });
+
+            }
+
+            /* Create structure
+            <span class="bs">
+                <span class="line" tabindex="-1">
+                    <span class="line-left"></span>
+                </span>
+                <span class="marker-min">0</span>
+                <span class="marker-max">1</span>
+                <span class="marker-from">0</span>
+                <span class="marker-to">0</span>
+                <span class="marker-single">0</span>
+            </span>
+            <span class="grid"></span>
+            <span class="bar"></span>
+            */
+
+            this.cache.$bs = $span('bs', this.cache.$container);
+            this.cache.$line = $span('line', this.cache.$bs).prop('tabindex', -1);
+
+            if (this.options.isInterval)
+                this.cache.$lineLeft = $span('line-left', this.cache.$line);
+
+            if (!this.options.hide_from_to) {
+                this.cache.$single = $span('marker-single', this.cache.$bs);
+                if (this.options.isInterval){
+                    this.cache.$from   = $span('marker-from',   this.cache.$bs);
+                    this.cache.$to     = $span('marker-to',     this.cache.$bs);
                 }
+            }
+
+            this.cache.$min = $span('marker-min', this.cache.$bs);
+            this.cache.$max = $span('marker-max', this.cache.$bs);
+
+            if (this.options.grid)
+                this.cache.$grid = $span('grid', this.cache.$container);
+
+            this.cache.$bar = $span('bar', this.cache.$container);
+
+            if (this.options.isSingle){
+                this.cache.$s_single = $span('slider single', this.cache.$container);
+            }
+            else {
+                //Add from and to slider
+                this.cache.$s_from = $span('slider from', this.cache.$container);
+                this.cache.$s_to   = $span('slider to', this.cache.$container);
 
                 //Add classs if it is a (reverse) impact-line
                 if (this.options.impact_line)
-                    this.$cache.cont.addClass("impact-line");
+                    this.cache.$container.addClass("impact-line");
 
                 if (this.options.impact_line_reverse)
-                    this.$cache.cont.addClass("impact-line-reverse");
+                    this.cache.$container.addClass("impact-line-reverse");
             }
 
-            if (this.options.hide_from_to) {
-                this.$cache.from.hide();
-                this.$cache.to.hide();
-                this.$cache.single.hide();
-            }
 
+            if (this.options.has_pin)
+                this.cache.$s_pin = $span('slider pin', this.cache.$container);
 
             //Add class to set bar color same as line
             if (this.options.hide_bar_color)
-                this.$cache.bar.addClass('hide-bar-color');
+                this.cache.$bar.addClass('hide-bar-color');
 
             //Set alternative bar color
             if (this.options.bar_color)
-                this.$cache.bar.css('background-color', this.options.bar_color);
+                this.cache.$bar.css('background-color', this.options.bar_color);
 
             //Add class to set border and stick on to- from and current-label
             if (this.options.marker_frame)
-                this.$cache.container.addClass('marker-frame');
+                this.cache.$container.addClass('marker-frame');
 
             //Adjust top-position if no marker is displayed
             if (this.options.hide_min_max && this.options.hide_from_to)
-                this.$cache.container.addClass("no-marker");
+                this.cache.$container.addClass("no-marker");
 
             //Adjust top-position of first grid if tick must be on the slider
             if (this.options.ticks_on_line)
-                this.$cache.container.addClass("ticks-on-line");
+                this.cache.$container.addClass("ticks-on-line");
 
 
             //Speciel case: Adjust top-position of line etc. if it is a range-slider with no marker and with a pin!
             if (this.options.has_pin)
-                this.$cache.container.addClass("has-pin");
+                this.cache.$container.addClass("has-pin");
 
             //Append buttons
             function getButton( id ){ return $.type( id ) === 'string' ? $('#' +  id ) : id; }
             this.options.buttons.from = this.options.buttons.from || {};
-            this.options.buttons.to        = this.options.buttons.to || {};
+            this.options.buttons.to   = this.options.buttons.to || {};
             for (var i=0; i<this.options.buttons_attr.length; i++ ){
                 var attrName = this.options.buttons_attr[i];
-                this.$cache.buttons.from[ attrName ]    = getButton( this.options.buttons.from[ attrName ] );
-                this.$cache.buttons.to    [ attrName ]    = getButton( this.options.buttons.to    [ attrName ] );
+                this.cache.buttons.from[ attrName ] = getButton( this.options.buttons.from[ attrName ] );
+                this.cache.buttons.to[ attrName ]   = getButton( this.options.buttons.to  [ attrName ] );
             }
 
             //Append grid(s)
             this.currentGridContainer = null;
-            if (this.options.grid){
+            if (this.options.grid)
                 this.appendGrid();
-            } else {
-                this.$cache.grid.remove();
-            }
 
+            //Add classes to control display
             if (this.options.disable) {
-                this.$cache.cont.addClass("disabled");
-                this.$cache.input.prop('disabled', true);
-            } else
+                this.cache.$container.addClass("disabled");
+                this.cache.$input.prop('disabled', true);
+            }
+            else
                 if (this.options.read_only){
-                    this.$cache.cont.addClass("read-only");
-                    this.$cache.input.prop('disabled', true);
-                } else {
-                    this.$cache.cont.addClass("active");
-                    this.$cache.input.prop('disabled', false);
+                    this.cache.$container.addClass("read-only");
+                    this.cache.$input.prop('disabled', true);
+                }
+                else {
+                    if (!this.options.fixed_handle)
+                        this.cache.$container.addClass("active");
+                    this.cache.$input.prop('disabled', false);
                     this.bindEvents();
                 }
+            if (!this.options.clicable)
+                this.cache.$container.addClass("not-clicable");
         },
 
+        //_offEvents
+        _offEvents: function( $elem, eventNames ){
+            if (!$elem) return;
+            var count = this.plugin_count;
+            $.each( eventNames.split(' '), function( index, eventName ){
+                $elem.off( eventName + ".irs_" + count );
+            });
+        },
 
         //remove
         remove: function () {
-            this.$cache.cont.remove();
-            this.$cache.cont = null;
+            this.cache.$container.remove();
+            this.cache.$container = null;
 
-            this.$cache.line.off("keydown.irs_" + this.plugin_count);
+            this._offEvents( this.cache.$line, "keydown" );
+            this._offEvents( this.cache.$body, "touchmove mousemove" );
 
-            this.$cache.body.off("touchmove.irs_" + this.plugin_count);
-            this.$cache.body.off("mousemove.irs_" + this.plugin_count);
-
-            this.$cache.win.off("touchend.irs_" + this.plugin_count);
-            this.$cache.win.off("mouseup.irs_" + this.plugin_count);
+            this._offEvents( this.cache.$win, "touchend mouseup" );
 
             //Unbind click on buttons
             var id, i, attrName, $btn;
-            for (id in this.$cache.buttons)
+            for (id in this.cache.buttons)
                 for (i=0; i<this.options.buttons_attr.length; i++ ){
                     attrName = this.options.buttons_attr[i];
-                    $btn = this.$cache.buttons[id][attrName];
-                    if ($btn)
-                      $btn.off(
-                            "mousedown.irs_" + this.plugin_count +
-                            " mouseup.irs_" + this.plugin_count +
-                            " mouseleave.irs_" + this.plugin_count +
-                            " click.irs_" + this.plugin_count
-                        );
+                    $btn = this.cache.buttons[id][attrName];
+                    this._offEvents( $btn, 'mousedown mouseup mouseleave click' );
                 }
+        },
 
+        //_onEvents
+        _onEvents: function( $elem, eventNames, func, param ){
+            if (!$elem) return;
+            var count = this.plugin_count,
+                f = param ? $.proxy( func, this, param) : $.proxy( func, this );
 
-            this.$cache.grid_labels = [];
+            $.each( eventNames.split(' '), function( index, eventName ){
+                $elem.on( eventName + ".irs_" + count,  f );
+            });
         },
 
         //bindEvents
         bindEvents: function () {
-            this.$cache.body.on("touchmove.irs_" + this.plugin_count, $.proxy(this.pointerMove, this) ); /* this.pointerMove.bind(this) */
-            this.$cache.body.on("mousemove.irs_" + this.plugin_count, $.proxy( this.pointerMove, this) );    /*    this.pointerMove.bind(this) */
+            this._onEvents( this.cache.$body, "touchmove mousemove",  this.pointerMove );
 
-            this.$cache.win.on("touchend.irs_" + this.plugin_count,    $.proxy( this.pointerUp, this) );    /*    this.pointerUp.bind(this) */
-            this.$cache.win.on("mouseup.irs_" + this.plugin_count,    $.proxy( this.pointerUp, this) );    /*    this.pointerUp.bind(this) */
+            this._onEvents( this.cache.$win,  "touchend mouseup",     this.pointerUp );
 
-            this.$cache.line.on("touchstart.irs_" + this.plugin_count,    $.proxy( this.pointerClick, this, "click") ); /* this.pointerClick.bind(this, "click") */
-            this.$cache.line.on("mousedown.irs_" + this.plugin_count,        $.proxy( this.pointerClick, this, "click") ); /* this.pointerClick.bind(this, "click") */
-
-            this.$cache.bar.on("touchstart.irs_" + this.plugin_count,    $.proxy( this.pointerClick, this, "click") ); /* this.pointerClick.bind(this, "click") */
-            this.$cache.bar.on("mousedown.irs_" + this.plugin_count,    $.proxy( this.pointerClick, this, "click") ); /* this.pointerClick.bind(this, "click") */
-
-            if (this.options.type === "single") {
-                this.$cache.s_single.on("touchstart.irs_" + this.plugin_count,    $.proxy( this.pointerDown, this, "single") );    /*    this.pointerDown.bind(this, "single")        */
-                this.$cache.s_single.on("mousedown.irs_" + this.plugin_count,        $.proxy( this.pointerDown, this, "single") );    /*    this.pointerDown.bind(this, "single")        */
-            } else {
-                this.$cache.s_from.on("touchstart.irs_" + this.plugin_count,    $.proxy( this.pointerDown, this, "from") );    /*    this.pointerDown.bind(this, "from")    */
-                this.$cache.s_from.on("mousedown.irs_" + this.plugin_count,        $.proxy( this.pointerDown, this, "from") );    /*    this.pointerDown.bind(this, "from")    */
-                this.$cache.s_to.on("mousedown.irs_" + this.plugin_count,        $.proxy( this.pointerDown, this, "to") );    /*    this.pointerDown.bind(this, "to")    */
-                this.$cache.s_to.on("touchstart.irs_" + this.plugin_count,    $.proxy( this.pointerDown, this, "to") );    /*    this.pointerDown.bind(this, "to")    */
+            if (this.options.clicable){
+                this._onEvents( this.cache.$line, "touchstart mousedown", this.pointerClick, "click" );
+                this._onEvents( this.cache.$bar,  "touchstart mousedown", this.pointerClick, "click" );
             }
 
-            this.$cache.line.on("keydown.irs_" + this.plugin_count, $.proxy( this.key, this, "keyboard") );    /*    this.key.bind(this, "keyboard")    */
+            if (this.options.fixed_handle)
+                this._onEvents( this.cache.$fullWidthContainer, "touchstart mousedown", this.pointerDown, "single" );
+            else
+                this._onEvents( this.cache.$s_single, "touchstart mousedown", this.pointerDown, "single" );
+
+            if (this.options.mousewheel){
+                //Add horizontal sliding with mousewheel
+                if (this.options.fixed_handle)
+                    this._onEvents( this.cache.$outerContainer, 'mousewheel', this.mousewheel );
+                else
+                    this._onEvents( this.cache.$container.parent(), 'mousewheel', this.mousewheel );
+            }
+
+            this._onEvents( this.cache.$s_from,   "touchstart mousedown", this.pointerDown, "from" );
+            this._onEvents( this.cache.$s_to,     "touchstart mousedown", this.pointerDown, "to" );
+
+            this._onEvents( this.cache.$line, "keydown", this.key, "keyboard" );
 
             //Bind click on buttons
             var id, i, attrName, delta, $btn;
-            for (id in this.$cache.buttons)
+            for (id in this.cache.buttons)
                 for (i=0; i<this.options.buttons_attr.length; i++ ){
                     attrName = this.options.buttons_attr[i];
                     delta = this.options.buttons_delta[i];
 
-                    $btn = this.$cache.buttons[id][attrName];
+                    $btn = this.cache.buttons[id][attrName];
+                    this._onEvents( $btn, 'mousedown',  this.startRepeatingClick );
+                    this._onEvents( $btn, 'mouseup',    this.endRepeatingClick );
+                    this._onEvents( $btn, 'mouseleave', this.endRepeatingClick, true );
+                    this._onEvents( $btn, 'click',      this.buttonClick,       {id:id, delta:delta} );
 
-                    if ($btn){
-                        $btn
-                            .on("mousedown.irs_" + this.plugin_count,        $.proxy( this.startRepeatingClick, this )                )    /* this.startRepeatingClick.bind(this)    */
-                            .on("mouseup.irs_" + this.plugin_count,            $.proxy( this.endRepeatingClick, this )                    )    /* this.endRepeatingClick.bind(this)    */
-                            .on("mouseleave.irs_" + this.plugin_count,    $.proxy( this.endRepeatingClick, this, true )        )    /*    this.endRepeatingClick.bind(this, true)    */
-                            .on("click.irs_" + this.plugin_count,                $.proxy( this.buttonClick, this, {id:id, delta:delta} ) );    /*    this.buttonClick.bind(this, {id:id, delta:delta})    */
-
-                        if ( $btn.autoclickWhilePressed && (Math.abs(delta) == 1) && (!$btn.data('auto-click-when-pressed-added')) )
-                            $btn.data('auto-click-when-pressed-added', true);
-                            $btn.autoclickWhilePressed();
+                    if ( $btn && $btn.autoclickWhilePressed && (Math.abs(delta) == 1) && (!$btn.data('auto-click-when-pressed-added')) ){
+                        $btn.data('auto-click-when-pressed-added', true);
+                        $btn.autoclickWhilePressed();
                     }
                 }
         },
-
 
         //adjustResult - adjust this.resut before onStart,..,callback is called
         adjustResult: function(){
@@ -10823,7 +11246,6 @@ return jQuery;
             this.adjustResult();
             if (func && typeof func === "function")
                 func.call(this, this.result);
-
         },
 
         //onCallback
@@ -10854,11 +11276,11 @@ return jQuery;
                 if (this.delayTimeout)
                     window.clearTimeout(this.delayTimeout);
                 var _this = this;
-                this.delayTimeout = window.setTimeout( function () {
-                                                            _this.onCallback();
-                                                        }, this.options.callback_delay);
+                this.delayTimeout = window.setTimeout(
+                                        function () { _this.onCallback(); },
+                                        this.options.callback_delay
+                                    );
             }
-
 
             if ( this.options.callback_on_dragging || (!this.is_repeating_click && !this.dragging) )
                 this.onCallback();
@@ -10928,39 +11350,48 @@ return jQuery;
                         this.setFromValue( value );
         },
 
+        //mousewheel
+        mousewheel: function( e, delta ){
+            return this._moveByKeyboardOrMouseWheel({
+                event         : e,
+                delta         : 1,
+                shiftDelta    : 2,
+                ctrlShiftDelta: 3,
+                sign          : delta
+
+            });
+        },
 
         //pointerMove
         pointerMove: function (e) {
-            if (!this.dragging) {
-                return;
-            }
+            if (!this.dragging) return;
 
             var x = e.pageX || e.originalEvent.touches && e.originalEvent.touches[0].pageX;
+
+            if (this.options.fixed_handle)
+                //Convert direction of mouse moving
+                x = this.coords.x_start - (x - this.coords.x_start);
 
             this.coords.x_pointer = this.pxToRem(x) - this.coords.x_gap;
 
             this.calc();
-            this.drawHandles();
 
+            this.drawHandles();
         },
 
         //pointerUp
         pointerUp: function (e) {
-            if (this.current_plugin !== this.plugin_count) {
-                return;
-            }
+            if (this.current_plugin !== this.plugin_count) return;
 
-            if (this.is_active) {
+            if (this.is_active)
                 this.is_active = false;
-            } else {
+            else
                 return;
-            }
 
-            if ($.contains(this.$cache.cont[0], e.target) || this.dragging) {
+            if ($.contains(this.cache.$container[0], e.target) || this.dragging)
                 this.onFinish();
-            }
 
-            this.$cache.cont.find(".state_hover").removeClass("state_hover");
+            this.cache.$container.find(".state_hover").removeClass("state_hover");
 
             this.force_redraw = true;
             this.dragging = false;
@@ -10970,122 +11401,184 @@ return jQuery;
         pointerDown: function (target, e) {
             e.preventDefault();
             var x = e.pageX || e.originalEvent.touches && e.originalEvent.touches[0].pageX;
-            if (e.button === 2) {
-                return;
-            }
+            if (e.button === 2) return;
+
             this.current_plugin = this.plugin_count;
             this.target = target;
             this.is_active = true;
             this.dragging = true;
-
-            this.coords.x_gap = this.pxToRem(this.$cache.bs.offset().left);
+            this.coords.x_gap = this.pxToRem(this.cache.$bs.offset().left);
             this.coords.x_pointer = this.pxToRem(x) - this.coords.x_gap;
             this.calcPointer();
+
 
             switch (target) {
                 case "single":
                     this.coords.p_gap = this.toFixed(this.coords.p_pointer - this.coords.p_single);
+
+                    if (this.options.fixed_handle)
+                        //Save initial mouse position to calc reverse mouse movment
+                        this.coords.x_start = x;
                     break;
+
                 case "from":
                     this.coords.p_gap = this.toFixed(this.coords.p_pointer - this.coords.p_from);
-                    this.$cache.s_from.addClass("state_hover");
-                    this.$cache.s_from.addClass("type_last");
-                    this.$cache.s_to.removeClass("type_last");
+                    this.cache.$s_from.addClass("state_hover");
+                    this.cache.$s_from.addClass("type_last");
+                    this.cache.$s_to.removeClass("type_last");
                     break;
+
                 case "to":
                     this.coords.p_gap = this.toFixed(this.coords.p_pointer - this.coords.p_to);
-                    this.$cache.s_to.addClass("state_hover");
-                    this.$cache.s_to.addClass("type_last");
-                    this.$cache.s_from.removeClass("type_last");
+                    this.cache.$s_to.addClass("state_hover");
+                    this.cache.$s_to.addClass("type_last");
+                    this.cache.$s_from.removeClass("type_last");
                     break;
+
                 case "both":
                     this.coords.p_gap_left = this.toFixed(this.coords.p_pointer - this.coords.p_from);
                     this.coords.p_gap_right = this.toFixed(this.coords.p_to - this.coords.p_pointer);
-                    this.$cache.s_to.removeClass("type_last");
-                    this.$cache.s_from.removeClass("type_last");
+                    this.cache.$s_to.removeClass("type_last");
+                    this.cache.$s_from.removeClass("type_last");
                     break;
             }
 
-            this.$cache.line.trigger("focus");
+            this.cache.$line.trigger("focus");
         },
 
         //pointerClick
         pointerClick: function (target, e) {
             e.preventDefault();
             var x = e.pageX || e.originalEvent.touches && e.originalEvent.touches[0].pageX;
-            if (e.button === 2) {
-                return;
-            }
+            if (e.button === 2) return;
+
             this.current_plugin = this.plugin_count;
             this.target = target;
             this.is_click = true;
-            this.coords.x_gap = this.pxToRem(this.$cache.bs.offset().left);
+            this.coords.x_gap = this.pxToRem(this.cache.$bs.offset().left);
             this.coords.x_pointer = +(this.pxToRem(x) - this.coords.x_gap).toFixed();
 
             this.force_redraw = true;
             this.calc(true);
             this.drawHandles();
 
-            this.$cache.line.trigger("focus");
+            this.cache.$line.trigger("focus");
         },
 
-        //key
+        //key - event keydown
         key: function (target, e) {
-            if (this.current_plugin !== this.plugin_count || e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) {
-                return;
-            }
+            if (this.current_plugin !== this.plugin_count || e.altKey || e.metaKey) return;
+
+            var options;
+
             switch (e.which) {
                 case 83: // W
                 case 65: // A
                 case 40: // DOWN
                 case 37: // LEFT
-                    e.preventDefault();
-                    this.moveByKey(false);
+                    options = {delta: 1, shiftDelta: 2, ctrlShiftDelta: 3, sign: -1};
                     break;
                 case 87: // S
                 case 68: // D
                 case 38: // UP
                 case 39: // RIGHT
-                    e.preventDefault();
-                    this.moveByKey(true);
+                    options = {delta: 1, shiftDelta: 2, ctrlShiftDelta: 3, sign: +1};
                     break;
+                case 33: // page up
+                    options = {delta: 3, shiftDelta: 99, sign: -1};
+                    break;
+                case 34: // page down
+                    options = {delta: 3, shiftDelta: 99, sign: +1};
+                    break;
+                case 35: // end
+                    options = {delta: 99, sign: +1};
+                    break;
+                case 36: // home
+                    options  = {delta: 99, sign: -1};
+                    break;
+                default:
+                    options = {delta: 0};
             }
-            return true;
+
+            options.event = e;
+
+            if (options.delta)
+                return this._moveByKeyboardOrMouseWheel( options );
         },
 
-        // Move by key beta
-        // TODO: refactor than have plenty of time
-        moveByKey: function (right) {
-            var p = this.coords.p_pointer;
-            if (right) {
-                p += this.options.p_keyboard_step;
-            } else {
-                p -= this.options.p_keyboard_step;
+
+        //_moveByKeyboardOrMouseWheel options = { sign, delta, shiftDelta, ctrlShiftDelta, event }
+        _moveByKeyboardOrMouseWheel: function( options ){
+            /*
+            Setting delta:
+                +/-  1: step = this.options.step
+                +/-  2: step = this.options.keyboard_shift_step_factor * this.options.step
+                +/-  3: step = this.options.keyboard_page_step_factor * this.options.step
+                +/- 99: To the end/start
+            */
+            var delta = options.delta;
+
+            //If shift XOR ctrl is pressed..
+            if ((options.event.ctrlKey && !options.event.shiftKey) || (!options.event.ctrlKey && options.event.shiftKey))
+                delta = options.shiftDelta || delta;
+
+            //If shift AND ctrl is pressed..
+            if (options.event.ctrlKey && options.event.shiftKey)
+                delta = options.ctrlShiftDelta || options.shiftDelta || delta;
+
+            delta = options.sign*delta;
+
+            //If the slider has two handle (this.options.isInterval == true) both handles are moved euqal distance to keep the distance between them constant
+
+            //oldValue = original value depending on type and direction
+            var oldValue =  (this.options.isSingle || (delta < 0)) ? this.result.from : this.result.to,
+                newValue;
+            switch (delta){
+                case -99: newValue = this.options.min; break;
+                case  99: newValue = this.options.max; break;
+                case  +1: newValue = oldValue + this.options.step; break;
+                case  -1: newValue = oldValue - this.options.step; break;
+                case  +2: newValue = oldValue + this.options.keyboard_shift_step_factor * this.options.step; break;
+                case  -2: newValue = oldValue - this.options.keyboard_shift_step_factor * this.options.step; break;
+                case  +3: newValue = oldValue + this.options.keyboard_page_step_factor * this.options.step; break;
+                case  -3: newValue = oldValue - this.options.keyboard_page_step_factor * this.options.step; break;
             }
-            this.coords.x_pointer = this.toFixed(this.coords.w_rs / 100 * p);
-            this.is_key = true;
-            this.calc();
+            if (this.options.isSingle)
+                this.setFromValue( newValue );
+            else {
+                //Adjust newValue to range
+                newValue = this.adjustValue( newValue );
 
-            this.force_redraw = true;
-            this.drawHandles();
+                //Find delta-value
+                var deltaValue = newValue - oldValue;
+                if (delta > 0){
+                    this.setToValue( newValue );
+                    this.setFromValue( this.result.from + deltaValue );
+                }
+                else {
+                    this.setFromValue( newValue );
+                    this.setToValue( this.result.to + deltaValue );
+                }
+            }
 
+            event.preventDefault();
+            return true;
         },
 
         //setMinMax
         setMinMax: function () {
-            if (!this.options) {
-                return;
-            }
-            if (this.options.hide_min_max) {
-                this.$cache.min.hide();
-                this.$cache.max.hide();
-                return;
-            }
-            this.$cache.min.html(this.decorate(this._prettify(this.options.min), this.options.min));
-            this.$cache.max.html(this.decorate(this._prettify(this.options.max), this.options.max));
+            if (!this.options) return;
 
-            this.labels.w_min = this.getOuterWidth(this.$cache.min);
-            this.labels.w_max = this.getOuterWidth(this.$cache.max);
+            if (this.options.hide_min_max) {
+                this.cache.$min.hide();
+                this.cache.$max.hide();
+                return;
+            }
+            this.cache.$min.html(this.decorate(this._prettify(this.options.min), this.options.min));
+            this.cache.$max.html(this.decorate(this._prettify(this.options.max), this.options.max));
+
+            this.labels.w_min = this.getOuterWidth(this.cache.$min);
+            this.labels.w_max = this.getOuterWidth(this.cache.$max);
         },
 
 
@@ -11147,8 +11640,7 @@ return jQuery;
         },
 
         setPin: function( value, color ) {
-            if (!this.options.has_pin)
-                return;
+            if (!this.options.has_pin) return;
 
             value = Math.min( this.options.max, value );
             value = Math.max( this.options.min, value );
@@ -11157,9 +11649,9 @@ return jQuery;
             this.target = "base";
             this.calc(true);
 
-            this.$cache.s_pin.css({
-                left    : this.coords.p_pin_value + "%",
-                color    : color || 'black'
+            this.cache.$s_pin.css({
+                left : this.coords.p_pin_value + "%",
+                color: color || 'black'
             });
         },
 
@@ -11167,13 +11659,13 @@ return jQuery;
         //pxToRem
         pxToRem: function( valuePx, inclUnit ){
             var fontSize = $('html').css('font-size') || $('body').css('font-size') || '16',
-                    result = valuePx / parseFloat( fontSize );
+                result = valuePx / parseFloat( fontSize );
             return inclUnit ? result + 'rem' : result;
         },
 
         //getInnerWidth
         getInnerWidth: function( $element, inclUnit, factor ){
-            return this.pxToRem( (factor ? factor : 1)*$element.innerWidth(), inclUnit );
+            return this.pxToRem( (factor ? factor : 1)*($element ? $element.innerWidth() : 0), inclUnit );
         },
 
         //getOuterWidth
@@ -11183,42 +11675,42 @@ return jQuery;
 
         //getCoords_w_rs
         getCoords_w_rs: function(){
-            var result = this.getInnerWidth(this.$cache.container); //Bug fixed - didn't work in Chrome: this.$cache.bs.outerWidth(false);
+            var result = this.getInnerWidth( this.cache.$fullWidthContainer ? this.cache.$fullWidthContainer : this.cache.$container);
             this.coords.w_rs = result ? result : this.coords.w_rs;
-
         },
 
         //calc
         calc: function (update) {
-            if (!this.options) {
-                return;
-            }
+            if (!this.options) return;
+
             if (update) {
                 this.getCoords_w_rs();
-                if (this.options.type === "single") {
-                    this.coords.w_handle = this.getOuterWidth(this.$cache.s_single);
-                } else {
-                    this.coords.w_handle = this.getOuterWidth(this.$cache.s_from);
-                }
+
+                this.calcHandleWidth();
+
+                this.coords.w_container = this.getInnerWidth(this.cache.$container);
+                this.coords.w_outerContainer = this.getInnerWidth(this.cache.$outerContainer);
+
             }
-            if (!this.coords.w_rs) {
-                return;
-            }
+            if (!this.coords.w_rs) return;
+
             this.calcPointer();
+
             this.coords.p_handle = this.toFixed(this.coords.w_handle / this.coords.w_rs * 100);
             var real_width = 100 - this.coords.p_handle,
-            real_x = this.toFixed(this.coords.p_pointer - this.coords.p_gap);
+                real_x     = this.toFixed(this.coords.p_pointer     - this.coords.p_gap),
+                real_x_raw = this.toFixed(this.coords.p_pointer_raw - this.coords.p_gap);
 
             if (this.target === "click") {
                 real_x = this.toFixed(this.coords.p_pointer - (this.coords.p_handle / 2));
                 this.target = this.chooseHandle(real_x);
             }
 
-            if (real_x < 0) {
+            if (real_x < 0)
                 real_x = 0;
-            } else if (real_x > real_width) {
-                real_x = real_width;
-            }
+            else
+                if (real_x > real_width)
+                    real_x = real_width;
 
             switch (this.target) {
                 case "base":
@@ -11240,27 +11732,26 @@ return jQuery;
 
                     if (this.options.has_pin){
                         var r = (this.options.pin_value - this.options.min) / w,
-                                p_pin_value_real = this.checkDiapason(this.toFixed(r), this.options.from_min, this.options.from_max);
+                            p_pin_value_real = this.checkDiapason(this.toFixed(r), this.options.from_min, this.options.from_max);
                         this.coords.p_pin_value = this.toFixed(p_pin_value_real / 100 * real_width);
                     }
-
                     this.target = null;
+
                     break;
 
                 case "single":
-                    if (this.options.from_fixed) {
-                        break;
-                    }
+                    if (this.options.from_fixed) break;
 
-                    this.coords.p_single_real = this.calcWithStep(real_x / real_width * 100);
-                    this.coords.p_single_real = this.checkDiapason(this.coords.p_single_real, this.options.from_min, this.options.from_max);
+                    this.coords.p_single_real = this.calcWithStep((this.options.fixed_handle ? real_x_raw : real_x) / real_width * 100);
+                    //this.coords.p_single_real = this.checkDiapason(this.coords.p_single_real, this.options.from_min, this.options.from_max);
                     this.coords.p_single = this.toFixed(this.coords.p_single_real / 100 * real_width);
+
                     break;
 
                 case "from":
-                    if (this.options.from_fixed) {
+                    if (this.options.from_fixed)
                         break;
-                    }
+
                     this.coords.p_from_real = this.calcWithStep(real_x / real_width * 100);
                     if (this.coords.p_from_real > this.coords.p_to_real) {
                         this.coords.p_from_real = this.coords.p_to_real;
@@ -11273,9 +11764,8 @@ return jQuery;
                     break;
 
                 case "to":
-                    if (this.options.to_fixed) {
+                    if (this.options.to_fixed)
                         break;
-                    }
 
                     this.coords.p_to_real = this.calcWithStep(real_x / real_width * 100);
                     if (this.coords.p_to_real < this.coords.p_from_real) {
@@ -11307,7 +11797,7 @@ return jQuery;
                     break;
             }
 
-            if (this.options.type === "single") {
+            if (this.options.isSingle) {
                 this.coords.p_bar_x = 0;
                 this.coords.p_bar_w = this.coords.p_single + (this.coords.p_handle / 2);
 
@@ -11334,19 +11824,21 @@ return jQuery;
                 this.coords.p_pointer = 0;
                 return;
             }
+            var x_pointer_raw = isNaN(this.coords.x_pointer) ? 0 : this.coords.x_pointer;
 
-            if (this.coords.x_pointer < 0 || isNaN(this.coords.x_pointer)  ) {
+            if (this.coords.x_pointer < 0 || isNaN(this.coords.x_pointer)  )
                 this.coords.x_pointer = 0;
-            } else if (this.coords.x_pointer > this.coords.w_rs) {
-                this.coords.x_pointer = this.coords.w_rs;
-            }
+            else
+                if (this.coords.x_pointer > this.coords.w_rs)
+                    this.coords.x_pointer = this.coords.w_rs;
 
-            this.coords.p_pointer = this.toFixed(this.coords.x_pointer / this.coords.w_rs * 100);
+            this.coords.p_pointer     = this.toFixed(this.coords.x_pointer / this.coords.w_rs * 100);
+            this.coords.p_pointer_raw = this.toFixed(x_pointer_raw         / this.coords.w_rs * 100);
         },
 
         //chooseHandle
         chooseHandle: function (real_x) {
-            if (this.options.type === "single") {
+            if (this.options.isSingle) {
                 return "single";
             } else {
                 var m_point = this.coords.p_from_real + ((this.coords.p_to_real - this.coords.p_from_real) / 2);
@@ -11360,9 +11852,7 @@ return jQuery;
 
         //calcMinMax
         calcMinMax: function () {
-            if (!this.coords.w_rs) {
-                return;
-            }
+            if (!this.coords.w_rs) return;
 
             this.labels.p_min = this.labels.w_min / this.coords.w_rs * 100;
             this.labels.p_max = this.labels.w_max / this.coords.w_rs * 100;
@@ -11370,31 +11860,30 @@ return jQuery;
 
         //calcLabels
         calcLabels: function () {
-            if (!this.coords.w_rs || this.options.hide_from_to) {
-                return;
-            }
+            if (!this.coords.w_rs || this.options.hide_from_to) return;
 
-            if (this.options.type === "single") {
-                this.labels.w_single = this.getOuterWidth(this.$cache.single);
+            if (this.options.isSingle) {
+                this.labels.w_single = this.getOuterWidth(this.cache.$single);
                 this.labels.p_single = this.labels.w_single / this.coords.w_rs * 100;
                 this.labels.p_single_left = this.coords.p_single + (this.coords.p_handle / 2) - (this.labels.p_single / 2);
-                this.labels.p_single_left = this.checkEdges(this.labels.p_single_left, this.labels.p_single);
+                if (!this.options.fixed_handle)
+                    this.labels.p_single_left = this.checkEdges(this.labels.p_single_left, this.labels.p_single);
 
-            } else {
-
-                this.labels.w_from = this.getOuterWidth(this.$cache.from);
+            }
+            else {
+                this.labels.w_from = this.getOuterWidth(this.cache.$from);
                 this.labels.p_from = this.labels.w_from / this.coords.w_rs * 100;
                 this.labels.p_from_left = this.coords.p_from + (this.coords.p_handle / 2) - (this.labels.p_from / 2);
                 this.labels.p_from_left = this.toFixed(this.labels.p_from_left);
                 this.labels.p_from_left = this.checkEdges(this.labels.p_from_left, this.labels.p_from);
 
-                this.labels.w_to = this.getOuterWidth(this.$cache.to);
+                this.labels.w_to = this.getOuterWidth(this.cache.$to);
                 this.labels.p_to = this.labels.w_to / this.coords.w_rs * 100;
                 this.labels.p_to_left = this.coords.p_to + (this.coords.p_handle / 2) - (this.labels.p_to / 2);
                 this.labels.p_to_left = this.toFixed(this.labels.p_to_left);
                 this.labels.p_to_left = this.checkEdges(this.labels.p_to_left, this.labels.p_to);
 
-                this.labels.w_single = this.getOuterWidth(this.$cache.single);
+                this.labels.w_single = this.getOuterWidth(this.cache.$single);
                 this.labels.p_single = this.labels.w_single / this.coords.w_rs * 100;
                 this.labels.p_single_left = ((this.labels.p_from_left + this.labels.p_to_left + this.labels.p_to) / 2) - (this.labels.p_single / 2);
                 this.labels.p_single_left = this.toFixed(this.labels.p_single_left);
@@ -11406,13 +11895,24 @@ return jQuery;
         // =============================================================================================================
         // Drawings
 
+
         //drawHandles
         drawHandles: function () {
+
+            function setLeftAndWidth( $elem, left, width ){
+                if (!$elem) return;
+                var css = {};
+                if (left !== null)
+                    css.left = left + (left ? '%' : '');
+                if (width !== null)
+                    css.width = width + (width ? '%' : '');
+                $elem.css( css );
+            }
+
             this.getCoords_w_rs();
 
-            if (!this.coords.w_rs) {
-                return;
-            }
+            if (!this.coords.w_rs) return;
+
             if (this.coords.w_rs !== this.coords.w_rs_old) {
                 this.target = "base";
                 this.is_resize = true;
@@ -11422,73 +11922,57 @@ return jQuery;
                 this.setMinMax();
                 this.calc(true);
                 this.drawLabels();
-                if (this.options.grid) {
+                if (this.options.grid)
                     this.calcGridMargin();
-                }
                 this.force_redraw = true;
                 this.coords.w_rs_old = this.coords.w_rs;
             }
 
-            if (!this.coords.w_rs) {
-                return;
-            }
+            if (!this.coords.w_rs) return;
 
-            if (!this.dragging && !this.force_redraw && !this.is_key) {
-                return;
-            }
+            if (!this.dragging && !this.force_redraw && !this.is_key) return;
 
             if (this.old_from !== this.result.from || this.old_to !== this.result.to || this.force_redraw || this.is_key) {
-
                 this.drawLabels();
-                this.$cache.bar.css('left', this.coords.p_bar_x + "%");
-                this.$cache.bar.css('width', this.coords.p_bar_w + "%");
+                setLeftAndWidth( this.cache.$bar, this.coords.p_bar_x, this.coords.p_bar_w );
 
-                if (this.options.type === "single") {
-                    this.$cache.s_single.css('left', this.coords.p_single + "%");
-                    this.$cache.single.css('left', this.labels.p_single_left + "%");
+                if (this.options.has_pin)
+                    this.cache.$s_pin.css({
+                        "left" : this.coords.p_pin_value + "%",
+                        "color": this.options.pin_color
+                    });
 
-                    this.$cache.input.prop("value", this.result.from);
-                    this.$cache.input.data("from", this.result.from);
+                if (this.options.isSingle) {
+                    setLeftAndWidth( this.cache.$s_single, this.coords.p_single );
+                    setLeftAndWidth( this.cache.$single, this.labels.p_single_left );
 
-                } else {
-                    this.$cache.s_from.css('left', this.coords.p_from + "%");
-                    this.$cache.s_to.css('left', this.coords.p_to + "%");
-
-                    if (this.options.has_pin){
-                        this.$cache.s_pin.css('left', this.coords.p_pin_value + "%");
-                    }
-
-                    if (this.$cache.lineLeft){
-                        this.$cache.lineLeft.css({left: 0, width: this.coords.p_bar_x + "%"});
-                    }
-
-                    if (this.old_from !== this.result.from || this.force_redraw) {
-                        this.$cache.from.css('left', this.labels.p_from_left + "%");
-                    }
-                    if (this.old_to !== this.result.to || this.force_redraw) {
-                        this.$cache.to.css('left', this.labels.p_to_left + "%");
-                    }
-
-                    this.$cache.single.css('left', this.labels.p_single_left + "%");
-                    this.$cache.input.prop("value", this.result.from + ";" + this.result.to);
-                    this.$cache.input.data("from", this.result.from);
-                    this.$cache.input.data("to", this.result.to);
+                    if (this.options.fixed_handle)
+                        //Keep the handle centered in in container
+                        this.cache.$container.css('left', - this.coords.w_container*this.coords.p_single/100
+                                                          + 0.5*this.coords.w_outerContainer + 'rem' );
+                }
+                else {
+                    setLeftAndWidth( this.cache.$s_from, this.coords.p_from );
+                    setLeftAndWidth( this.cache.$s_to, this.coords.p_to );
+                    setLeftAndWidth( this.cache.$lineLeft, 0, this.coords.p_bar_x );
+                    if (this.old_from !== this.result.from || this.force_redraw)
+                        setLeftAndWidth( this.cache.$from, this.labels.p_from_left );
+                    if (this.old_to !== this.result.to || this.force_redraw)
+                        setLeftAndWidth( this.cache.$to, this.labels.p_to_left );
+                    setLeftAndWidth( this.cache.$single, this.labels.p_single_left );
                 }
 
-                if ((this.old_from !== this.result.from || this.old_to !== this.result.to) && !this.is_start) {
-                    this.$cache.input.trigger("change");
-                }
+                if ((this.old_from !== this.result.from || this.old_to !== this.result.to) && !this.is_start)
+                    this.cache.$input.trigger("change");
 
                 this.old_from = this.result.from;
                 this.old_to = this.result.to;
 
-                if (!this.is_resize && !this.is_update && !this.is_start) {
+                if (!this.is_resize && !this.is_update && !this.is_start)
                     this.onChange();
-                }
 
-                if (this.is_key || this.is_click) {
+                if (this.is_key || this.is_click)
                     this.onFinish();
-                }
 
                 this.is_update = false;
                 this.is_resize = false;
@@ -11502,38 +11986,24 @@ return jQuery;
 
         //drawLabels
         drawLabels: function () {
-            if (!this.options) {
-                return;
-            }
+            if (!this.options || this.options.hide_from_to) return;
 
-            var text_single,
-                    text_from,
-                    text_to;
+            var text_single, text_from, text_to;
 
-            if (this.options.hide_from_to) {
-                return;
-            }
-
-            if (this.options.type === "single") {
+            if (this.options.isSingle) {
 
                 text_single = this.decorate(this._prettify(this.result.from), this.result.from);
-                this.$cache.single.html(text_single);
+                this.cache.$single.html(text_single);
 
                 this.calcLabels();
 
-                if (this.labels.p_single_left < this.labels.p_min + 1) {
-                    this.$cache.min.css('visibility', 'hidden');
-                } else {
-                    this.$cache.min.css('visibility', 'visible');
+                if (!this.options.hide_min_max){
+                    this.cache.$min.toggle( this.labels.p_single_left >= this.labels.p_min + 1 );
+                    this.cache.$max.toggle( this.labels.p_single_left + this.labels.p_single <= 100 - this.labels.p_max - 1 );
                 }
 
-                if (this.labels.p_single_left + this.labels.p_single > 100 - this.labels.p_max - 1) {
-                    this.$cache.max.css('visibility', 'hidden');
-                } else {
-                    this.$cache.max.css('visibility', 'visible');
-                }
-
-         } else {
+            }
+            else {
 
                 if (this.options.decorate_both) {
                     text_single = this.decorate(this._prettify(this.result.from));
@@ -11545,9 +12015,9 @@ return jQuery;
                 text_from = this.decorate(this._prettify(this.result.from), this.result.from);
                 text_to = this.decorate(this._prettify(this.result.to), this.result.to);
 
-                this.$cache.single.html(text_single);
-                this.$cache.from.html(text_from);
-                this.$cache.to.html(text_to);
+                this.cache.$single.html(text_single);
+                this.cache.$from.html(text_from);
+                this.cache.$to.html(text_to);
 
                 this.calcLabels();
 
@@ -11557,37 +12027,29 @@ return jQuery;
                 max = Math.max(single_left, to_left);
 
                 if (this.labels.p_from_left + this.labels.p_from >= this.labels.p_to_left) {
-                    this.$cache.from.css('visibility', 'hidden');
-                    this.$cache.to.css('visibility', 'hidden');
-                    this.$cache.single.css('visibility', 'visible');
+                    this.cache.$from.css('visibility', 'hidden');
+                    this.cache.$to.css('visibility', 'hidden');
+                    this.cache.$single.css('visibility', 'visible');
 
                     if (this.result.from === this.result.to) {
-                        this.$cache.from.css('visibility', 'visible');
-                        this.$cache.single.css('visibility', 'hidden');
+                        this.cache.$from.css('visibility', 'visible');
+                        this.cache.$single.css('visibility', 'hidden');
                         max = to_left;
                     } else {
-                        this.$cache.from.css('visibility', 'hidden');
-                        this.$cache.single.css('visibility', 'visible');
+                        this.cache.$from.css('visibility', 'hidden');
+                        this.cache.$single.css('visibility', 'visible');
                         max = Math.max(single_left, to_left);
                     }
                 } else {
-                    this.$cache.from.css('visibility', 'visible');
-                    this.$cache.to.css('visibility', 'visible');
-                    this.$cache.single.css('visibility', 'hidden');
+                    this.cache.$from.css('visibility', 'visible');
+                    this.cache.$to.css('visibility', 'visible');
+                    this.cache.$single.css('visibility', 'hidden');
                 }
 
-                if (min < this.labels.p_min + 1) {
-                    this.$cache.min.css('visibility', 'hidden');
-                } else {
-                    this.$cache.min.css('visibility', 'visible');
+                if (!this.options.hide_min_max){
+                    this.cache.$min.toggle( min >= this.labels.p_min + 1 );
+                    this.cache.$max.toggle( max <= 100 - this.labels.p_max - 1 );
                 }
-
-                if (max > 100 - this.labels.p_max - 1) {
-                    this.$cache.max.css('visibility', 'hidden');
-                } else {
-                    this.$cache.max.css('visibility', 'visible');
-                }
-
             }
         }, //end of drawLabels
 
@@ -11597,7 +12059,7 @@ return jQuery;
 
         //toggleInput
         toggleInput: function () {
-            this.$cache.input.toggleClass("hidden-input");
+            this.cache.$input.toggleClass("hidden-input");
         },
 
         //calcPercent
@@ -11623,41 +12085,37 @@ return jQuery;
             var number = ((max - min) / 100 * percent) + min,
             string = this.options.step.toString().split(".")[1];
 
-            if (string) {
+            if (string)
                 number = +number.toFixed(string.length);
-            } else {
+            else {
                 number = number / this.options.step;
                 number = number * this.options.step;
                 number = +number.toFixed(0);
             }
 
-            if (abs) {
+            if (abs)
                 number -= abs;
-            }
 
-            if (number < this.options.min) {
+            if (number < this.options.min)
                 number = this.options.min;
-            } else if (number > this.options.max) {
-                number = this.options.max;
-            }
+            else
+                if (number > this.options.max)
+                    number = this.options.max;
 
-            if (string) {
+            if (string)
                 return +number.toFixed(string.length);
-            } else {
+            else
                 return this.toFixed(number);
-            }
         },
 
         //calcWithStep
         calcWithStep: function (percent) {
-
             var rounded = Math.round((percent - this.coords.p_step_offset) / this.coords.p_step) * this.coords.p_step + this.coords.p_step_offset;
 
-            if (rounded < this.coords.p_min)    { rounded = this.coords.p_min; }
-          if (rounded > 100)                                { rounded = 100; }
-            if (percent === 100)                            { rounded = 100; }
-            if (rounded > this.coords.p_max)    { rounded = this.coords.p_max; }
-
+            if (rounded < this.coords.p_min) rounded = this.coords.p_min;
+            if (rounded > 100)               rounded = 100;
+            if (percent === 100)             rounded = 100;
+            if (rounded > this.coords.p_max) rounded = this.coords.p_max;
             return this.toFixed(rounded);
         },
 
@@ -11667,22 +12125,20 @@ return jQuery;
             current,
             next;
 
-            if (!o.min_interval) {
+            if (!o.min_interval)
                 return p_current;
-            }
 
             current = this.calcReal(p_current);
             next = this.calcReal(p_next);
 
             if (type === "from") {
-                if (next - current < o.min_interval) {
+                if (next - current < o.min_interval)
                     current = next - o.min_interval;
-                }
-            } else {
-                if (current - next < o.min_interval) {
-                    current = next + o.min_interval;
-                }
             }
+            else
+                if (current - next < o.min_interval)
+                    current = next + o.min_interval;
+
             return this.calcPercent(current);
         },
 
@@ -11692,22 +12148,19 @@ return jQuery;
             current,
             next;
 
-            if (!o.max_interval) {
+            if (!o.max_interval)
                 return p_current;
-            }
 
             current = this.calcReal(p_current);
             next = this.calcReal(p_next);
 
             if (type === "from") {
-                if (next - current > o.max_interval) {
+                if (next - current > o.max_interval)
                     current = next - o.max_interval;
-                }
-            } else {
-                if (current - next > o.max_interval) {
-                    current = next + o.max_interval;
-                }
             }
+            else
+                if (current - next > o.max_interval)
+                    current = next + o.max_interval;
 
             return this.calcPercent(current);
         },
@@ -11743,12 +12196,11 @@ return jQuery;
 
         //checkEdges
         checkEdges: function (left, width) {
-            if (left < 0) {
+            if (left < 0)
                 left = 0;
-            } else if (left > 100 - width) {
-                left = 100 - width;
-            }
-
+            else
+                if (left > 100 - width)
+                    left = 100 - width;
             return this.toFixed(left);
         },
 
@@ -11769,53 +12221,33 @@ return jQuery;
             if (typeof o.to_max === "string") o.to_max = +o.to_max;
 
             if (o.max <= o.min) {
-                if (o.min) {
+                if (o.min)
                     o.max = o.min * 2;
-                } else {
+                else
                     o.max = o.min + 1;
-                }
                 o.step = 1;
             }
 
             if (typeof o.from !== "number" || isNaN(o.from)) { o.from = o.min; }
-
             if (typeof o.to !== "number" || isNaN(o.from)) { o.to = o.max; }
-
             if (o.from < o.min || o.from > o.max) { o.from = o.min; }
-
             if (o.to > o.max || o.to < o.min) { o.to = o.max; }
-
             if (o.type === "double" && o.from > o.to) { o.from = o.to; }
-
             if (typeof o.step !== "number" || isNaN(o.step) || !o.step || o.step < 0) { o.step = 1; }
-
             if (o.from_min && o.from < o.from_min) { o.from = o.from_min; }
-
             if (o.from_max && o.from > o.from_max) { o.from = o.from_max; }
-
             if (o.to_min && o.to < o.to_min) { o.to = o.to_min; }
-
             if (o.to_max && o.from > o.to_max) { o.to = o.to_max; }
-
             if (r) {
-                if (r.min !== o.min) {
-                    r.min = o.min;
-                }
-
-                if (r.max !== o.max) { r.max = o.max; }
-
-                if (r.from < r.min || r.from > r.max) { r.from = o.from; }
-
-                if (r.to < r.min || r.to > r.max) { r.to = o.to; }
+                if (r.min !== o.min) r.min = o.min;
+                if (r.max !== o.max) r.max = o.max;
+                if (r.from < r.min || r.from > r.max) r.from = o.from;
+                if (r.to < r.min || r.to > r.max) r.to = o.to;
             }
-
-            if (typeof o.min_interval !== "number" || isNaN(o.min_interval) || !o.min_interval || o.min_interval < 0) { o.min_interval = 0; }
-
-            if (typeof o.max_interval !== "number" || isNaN(o.max_interval) || !o.max_interval || o.max_interval < 0) { o.max_interval = 0; }
-
-            if (o.min_interval && o.min_interval > o.max - o.min) { o.min_interval = o.max - o.min; }
-
-            if (o.max_interval && o.max_interval > o.max - o.min) { o.max_interval = o.max - o.min; }
+            if (typeof o.min_interval !== "number" || isNaN(o.min_interval) || !o.min_interval || o.min_interval < 0) o.min_interval = 0;
+            if (typeof o.max_interval !== "number" || isNaN(o.max_interval) || !o.max_interval || o.max_interval < 0) o.max_interval = 0;
+            if (o.min_interval && o.min_interval > o.max - o.min) o.min_interval = o.max - o.min;
+            if (o.max_interval && o.max_interval > o.max - o.min) o.max_interval = o.max - o.min;
 
         }, //end of validate
 
@@ -11880,19 +12312,18 @@ return jQuery;
                 this.currentGridContainer.css('top', this.pxToRem( this.totalGridContainerTop, true) );
             }
             else {
-                this.currentGridContainer = this.$cache.grid;
+                this.currentGridContainer = this.cache.$grid;
                 this.totalGridContainerTop = this.currentGridContainer.position().top;
             }
-            this.$cache.grid = this.$cache.cont.find(".grid");
+            this.cache.$grid = this.cache.$container.find(".grid");
             return this.currentGridContainer;
         },
 
 
         //appendTick
         appendTick: function( left, options ){
-            if (!this.currentGridContainer){
-                return;
-            }
+            if (!this.currentGridContainer) return;
+
             options = $.extend( {minor: false, color: ''}, options );
             var result = $('<span class="grid-pol" style="left:' + left + '%"></span>');
 
@@ -11909,16 +12340,15 @@ return jQuery;
 
         //appendText
         appendText: function( left, value, options ){
-            if (!this.currentGridContainer){
-                return;
-            }
+            if (!this.currentGridContainer) return;
+
             options = $.extend( {color: ''}, options );
             var text = this._prettify_text( value );
 
             if (this.options.decorate_text)
-              text =    (this.options.prefix ? this.options.prefix : '') +
-                                text +
-                                (this.options.postfix ? this.options.postfix : '');
+              text = (this.options.prefix ? this.options.prefix : '') +
+                     text +
+                     (this.options.postfix ? this.options.postfix : '');
             var result = $('<span class="grid-text" style="background-color:transparent; left: ' + left + '%">' + text + '</span>');
             result.appendTo( this.currentGridContainer );
 
@@ -11927,8 +12357,9 @@ return jQuery;
 
             if (options.clickable){
                 //Check if the value for the label is a selectable one
-                options.clickable = (this.options.step == 1) ||
-                                                        ( ((value - this.options.step_offset) % this.options.step) === 0);
+                options.clickable =
+                    (this.options.step == 1) ||
+                    ( ((value - this.options.step_offset) % this.options.step) === 0);
             }
 
             if (options.clickable && !this.options.disable && !this.options.read_only){
@@ -11962,7 +12393,7 @@ return jQuery;
 
         //appendGrid
         appendGrid: function () {
-            if (!this.options.grid) {    return;    }
+            if (!this.options.grid) return;
             this.appendStandardGrid();
         },
 
@@ -11976,20 +12407,19 @@ return jQuery;
             this.appendGridContainer();
             this.calcGridMargin();
 
-
             var o = this.options,
-                    gridContainerWidth = this.getOuterWidth(this.$cache.grid),
-                    gridDistanceIndex = 0,
-                    value = o.min,
-                    maxTextWidth = 0,
-                    valueP = 0,
-                    valueOffset;
+                gridContainerWidth = this.getOuterWidth(this.cache.$grid),
+                gridDistanceIndex = 0,
+                value = o.min,
+                maxTextWidth = 0,
+                valueP = 0,
+                valueOffset;
             o.gridDistanceStep = o.gridDistances[gridDistanceIndex]; // = number of steps between each tick
             o.stepRem = o.step*gridContainerWidth/o.total  / o.major_ticks_factor;
 //            o.oneP = this.toFixed(100 / total);
 //            o.stepP = this.toFixed(o.step / (total / 100));
 
-            textOptions = $.extend( textOptions || {}, {clickable:true} );
+            textOptions = $.extend( textOptions || {}, {clickable: this.options.clicable} );
             tickOptions = tickOptions || {};
 
 
@@ -12002,7 +12432,7 @@ return jQuery;
                     o.gridDistanceStep = o.gridDistanceStep*2;
             }
             o.tickDistanceNum = o.gridDistanceStep*o.step;    //The numerical distance between each ticks
-            o.tickDistanceRem = o.gridDistanceStep*o.stepRem;        //The rem distance between each ticks
+            o.tickDistanceRem = o.gridDistanceStep*o.stepRem; //The rem distance between each ticks
 
 
             var _major_ticks = o.major_ticks;
@@ -12013,9 +12443,8 @@ return jQuery;
                 value = o.min;
                 while (value <= o.max){
                     //if value corrected by o.major_ticks_offset and o.major_ticks_factor is a DIV of the tick distance => calculate the width of the tick
-                    if ((value - o.major_ticks_offset)*o.major_ticks_factor % o.tickDistanceNum === 0){
+                    if ((value - o.major_ticks_offset)*o.major_ticks_factor % o.tickDistanceNum === 0)
                         maxTextWidth = Math.max( maxTextWidth, this.getTextWidth( value ) );
-                    }
                     value += 1;
                 }
                 maxTextWidth += this.pxToRem(6); //Adding min space between text/labels
@@ -12026,7 +12455,7 @@ return jQuery;
                 while (_major_ticks*o.tickDistanceRem < maxTextWidth){
                     gridDistanceIndex++;
                     if (gridDistanceIndex < o.gridDistances.length)
-                      _major_ticks = o.gridDistances[gridDistanceIndex];
+                        _major_ticks = o.gridDistances[gridDistanceIndex];
                     else
                         _major_ticks = _major_ticks*2;
                 }
@@ -12039,11 +12468,11 @@ return jQuery;
             while (value <= o.max){
                 valueOffset = (value - o.major_ticks_offset)*o.major_ticks_factor;
                 if (valueOffset % o.tickDistanceNum === 0){
-                  if (valueOffset % o.majorTickDistanceNum === 0){
+                    if (valueOffset % o.majorTickDistanceNum === 0){
                     //add major tick and text/label
                         this.appendTick( valueP, tickOptions );
                         this.appendText( valueP, value, textOptions );
-                  }
+                    }
                     else
                         if (!o.hide_minor_ticks)
                             //Add minor tick
@@ -12052,29 +12481,74 @@ return jQuery;
                 value += 1;
                 valueP += o.oneP;
             }
+
+            if (this.options.grid_colors)
+                this.appendGridColors( this.options.grid_colors );
+
+
+
         },
 
+        //addGridColor
+        appendGridColors: function( gridColors ){
+            var fromValue,
+                toValue  = this.options.min,
+                i,
+                gridColor,
+                percentFactor = 100 / (this.options.max - this.options.min);
+
+
+
+
+            for (i=0; i<gridColors.length; i++ ){
+                gridColor = gridColors[i];
+                if ( (gridColor.value === null) || (gridColor.value < this.options.min) || (gridColor.value > this.options.max) )
+                  //add triangle to the left or right
+                    $('<span/>')
+                        .addClass( gridColor.value > this.options.max ? 'grid-color gt_max' : 'grid-color lt_min')
+                        .css('color', gridColor.color)
+                        .appendTo( this.currentGridContainer );
+                else {
+                    fromValue = gridColor.fromValue !== undefined ? gridColor.fromValue : toValue;
+                    toValue = gridColor.value;
+
+                    $('<span/>')
+                        .addClass('grid-color' + (i%2?' to':' from'))
+                        .css({
+                            'left'            : percentFactor*(fromValue - this.options.min) + '%',
+                            'width'           : percentFactor*(toValue-fromValue) + '%',
+                            'background-color': gridColor.color
+                           })
+                        .appendTo( this.currentGridContainer );
+                }
+            }
+        },
+
+        //calcHandleWidth - Get the width of the drawing handle but round down to even number to ensure correct placement of the handle
+        calcHandleWidth: function(){
+            var $handle  = this.options.isSingle ? this.cache.$s_single : this.cache.$s_from,
+                widthPx  = $handle.outerWidth(false),
+                widthRem = this.pxToRem( 2*Math.floor(widthPx/2) ); //Round down the width to even number to assure that width/2 is a hole number
+
+            if (this.options.isSingle)
+                this.coords.w_handle = widthRem;
+            else
+                this.coords.w_handle = widthRem;
+        },
 
         //calcGridMargin
         calcGridMargin: function () {
             this.getCoords_w_rs();
-            if (!this.coords.w_rs) {
-                return;
-            }
+            if (!this.coords.w_rs) return;
 
-            if (this.options.type === "single") {
-                this.coords.w_handle = this.getOuterWidth(this.$cache.s_single);
-            } else {
-                this.coords.w_handle = this.getOuterWidth(this.$cache.s_from);
-            }
+            this.calcHandleWidth();
+
             this.coords.p_handle = this.toFixed(this.coords.w_handle  / this.coords.w_rs * 100);
-            this.coords.grid_gap = this.toFixed((this.coords.p_handle / 2) - 0.1);
 
-            this.$cache.grid.css({
-                'width'    : this.toFixed(100 - this.coords.p_handle) + "%",
-                'left'    : this.coords.grid_gap + "%"
+            this.cache.$grid.css({
+                'width': this.toFixed(100 - this.coords.p_handle) + "%",
+                'left' : this.toFixed(this.coords.w_handle / 2 ) + "rem"
             });
-
         },
 
 
@@ -12083,9 +12557,7 @@ return jQuery;
 
         //update
         update: function (options) {
-            if (!this.input) {
-                return;
-            }
+            if (!this.input) return;
 
             this.is_update = true;
 
@@ -12103,9 +12575,7 @@ return jQuery;
 
         //reset
         reset: function () {
-            if (!this.input) {
-                return;
-            }
+            if (!this.input) return;
 
             this.updateResult();
             this.update();
@@ -12113,12 +12583,10 @@ return jQuery;
 
         //destroy
         destroy: function () {
-            if (!this.input) {
-                return;
-            }
+            if (!this.input) return;
 
             this.toggleInput();
-            this.$cache.input.prop("readonly", false);
+            this.cache.$input.prop("readonly", false);
             $.data(this.input, "baseSlider", null);
 
             this.remove();
@@ -12141,7 +12609,7 @@ return jQuery;
 
 ;
 //! moment.js
-//! version : 2.18.1
+//! version : 2.19.2
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -12175,12 +12643,17 @@ function isObject(input) {
 }
 
 function isObjectEmpty(obj) {
-    var k;
-    for (k in obj) {
-        // even if its not own property I'd still call it non-empty
-        return false;
+    if (Object.getOwnPropertyNames) {
+        return (Object.getOwnPropertyNames(obj).length === 0);
+    } else {
+        var k;
+        for (k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                return false;
+            }
+        }
+        return true;
     }
-    return true;
 }
 
 function isUndefined(input) {
@@ -12274,12 +12747,10 @@ if (Array.prototype.some) {
     };
 }
 
-var some$1 = some;
-
 function isValid(m) {
     if (m._isValid == null) {
         var flags = getParsingFlags(m);
-        var parsedParts = some$1.call(flags.parsedDateParts, function (i) {
+        var parsedParts = some.call(flags.parsedDateParts, function (i) {
             return i != null;
         });
         var isNowValid = !isNaN(m._d.getTime()) &&
@@ -12287,6 +12758,7 @@ function isValid(m) {
             !flags.empty &&
             !flags.invalidMonth &&
             !flags.invalidWeekday &&
+            !flags.weekdayMismatch &&
             !flags.nullInput &&
             !flags.invalidFormat &&
             !flags.userInvalidated &&
@@ -12552,8 +13024,6 @@ if (Object.keys) {
     };
 }
 
-var keys$1 = keys;
-
 var defaultCalendar = {
     sameDay : '[Today at] LT',
     nextDay : '[Tomorrow at] LT',
@@ -12677,56 +13147,6 @@ function getPrioritizedUnits(unitsObj) {
         return a.priority - b.priority;
     });
     return units;
-}
-
-function makeGetSet (unit, keepTime) {
-    return function (value) {
-        if (value != null) {
-            set$1(this, unit, value);
-            hooks.updateOffset(this, keepTime);
-            return this;
-        } else {
-            return get(this, unit);
-        }
-    };
-}
-
-function get (mom, unit) {
-    return mom.isValid() ?
-        mom._d['get' + (mom._isUTC ? 'UTC' : '') + unit]() : NaN;
-}
-
-function set$1 (mom, unit, value) {
-    if (mom.isValid()) {
-        mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value);
-    }
-}
-
-// MOMENTS
-
-function stringGet (units) {
-    units = normalizeUnits(units);
-    if (isFunction(this[units])) {
-        return this[units]();
-    }
-    return this;
-}
-
-
-function stringSet (units, value) {
-    if (typeof units === 'object') {
-        units = normalizeObjectUnits(units);
-        var prioritized = getPrioritizedUnits(units);
-        for (var i = 0; i < prioritized.length; i++) {
-            this[prioritized[i].unit](units[prioritized[i].unit]);
-        }
-    } else {
-        units = normalizeUnits(units);
-        if (isFunction(this[units])) {
-            return this[units](value);
-        }
-    }
-    return this;
 }
 
 function zeroFill(number, targetLength, forceSign) {
@@ -12919,6 +13339,131 @@ var MILLISECOND = 6;
 var WEEK = 7;
 var WEEKDAY = 8;
 
+// FORMATTING
+
+addFormatToken('Y', 0, 0, function () {
+    var y = this.year();
+    return y <= 9999 ? '' + y : '+' + y;
+});
+
+addFormatToken(0, ['YY', 2], 0, function () {
+    return this.year() % 100;
+});
+
+addFormatToken(0, ['YYYY',   4],       0, 'year');
+addFormatToken(0, ['YYYYY',  5],       0, 'year');
+addFormatToken(0, ['YYYYYY', 6, true], 0, 'year');
+
+// ALIASES
+
+addUnitAlias('year', 'y');
+
+// PRIORITIES
+
+addUnitPriority('year', 1);
+
+// PARSING
+
+addRegexToken('Y',      matchSigned);
+addRegexToken('YY',     match1to2, match2);
+addRegexToken('YYYY',   match1to4, match4);
+addRegexToken('YYYYY',  match1to6, match6);
+addRegexToken('YYYYYY', match1to6, match6);
+
+addParseToken(['YYYYY', 'YYYYYY'], YEAR);
+addParseToken('YYYY', function (input, array) {
+    array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
+});
+addParseToken('YY', function (input, array) {
+    array[YEAR] = hooks.parseTwoDigitYear(input);
+});
+addParseToken('Y', function (input, array) {
+    array[YEAR] = parseInt(input, 10);
+});
+
+// HELPERS
+
+function daysInYear(year) {
+    return isLeapYear(year) ? 366 : 365;
+}
+
+function isLeapYear(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+// HOOKS
+
+hooks.parseTwoDigitYear = function (input) {
+    return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
+};
+
+// MOMENTS
+
+var getSetYear = makeGetSet('FullYear', true);
+
+function getIsLeapYear () {
+    return isLeapYear(this.year());
+}
+
+function makeGetSet (unit, keepTime) {
+    return function (value) {
+        if (value != null) {
+            set$1(this, unit, value);
+            hooks.updateOffset(this, keepTime);
+            return this;
+        } else {
+            return get(this, unit);
+        }
+    };
+}
+
+function get (mom, unit) {
+    return mom.isValid() ?
+        mom._d['get' + (mom._isUTC ? 'UTC' : '') + unit]() : NaN;
+}
+
+function set$1 (mom, unit, value) {
+    if (mom.isValid() && !isNaN(value)) {
+        if (unit === 'FullYear' && isLeapYear(mom.year()) && mom.month() === 1 && mom.date() === 29) {
+            mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value, mom.month(), daysInMonth(value, mom.month()));
+        }
+        else {
+            mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value);
+        }
+    }
+}
+
+// MOMENTS
+
+function stringGet (units) {
+    units = normalizeUnits(units);
+    if (isFunction(this[units])) {
+        return this[units]();
+    }
+    return this;
+}
+
+
+function stringSet (units, value) {
+    if (typeof units === 'object') {
+        units = normalizeObjectUnits(units);
+        var prioritized = getPrioritizedUnits(units);
+        for (var i = 0; i < prioritized.length; i++) {
+            this[prioritized[i].unit](units[prioritized[i].unit]);
+        }
+    } else {
+        units = normalizeUnits(units);
+        if (isFunction(this[units])) {
+            return this[units](value);
+        }
+    }
+    return this;
+}
+
+function mod(n, x) {
+    return ((n % x) + x) % x;
+}
+
 var indexOf;
 
 if (Array.prototype.indexOf) {
@@ -12936,10 +13481,13 @@ if (Array.prototype.indexOf) {
     };
 }
 
-var indexOf$1 = indexOf;
-
 function daysInMonth(year, month) {
-    return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    if (isNaN(year) || isNaN(month)) {
+        return NaN;
+    }
+    var modMonth = mod(month, 12);
+    year += (month - modMonth) / 12;
+    return modMonth === 1 ? (isLeapYear(year) ? 29 : 28) : (31 - modMonth % 7 % 2);
 }
 
 // FORMATTING
@@ -13028,26 +13576,26 @@ function handleStrictParse(monthName, format, strict) {
 
     if (strict) {
         if (format === 'MMM') {
-            ii = indexOf$1.call(this._shortMonthsParse, llc);
+            ii = indexOf.call(this._shortMonthsParse, llc);
             return ii !== -1 ? ii : null;
         } else {
-            ii = indexOf$1.call(this._longMonthsParse, llc);
+            ii = indexOf.call(this._longMonthsParse, llc);
             return ii !== -1 ? ii : null;
         }
     } else {
         if (format === 'MMM') {
-            ii = indexOf$1.call(this._shortMonthsParse, llc);
+            ii = indexOf.call(this._shortMonthsParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._longMonthsParse, llc);
+            ii = indexOf.call(this._longMonthsParse, llc);
             return ii !== -1 ? ii : null;
         } else {
-            ii = indexOf$1.call(this._longMonthsParse, llc);
+            ii = indexOf.call(this._longMonthsParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._shortMonthsParse, llc);
+            ii = indexOf.call(this._shortMonthsParse, llc);
             return ii !== -1 ? ii : null;
         }
     }
@@ -13204,72 +13752,6 @@ function computeMonthsParse () {
     this._monthsShortRegex = this._monthsRegex;
     this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
     this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
-}
-
-// FORMATTING
-
-addFormatToken('Y', 0, 0, function () {
-    var y = this.year();
-    return y <= 9999 ? '' + y : '+' + y;
-});
-
-addFormatToken(0, ['YY', 2], 0, function () {
-    return this.year() % 100;
-});
-
-addFormatToken(0, ['YYYY',   4],       0, 'year');
-addFormatToken(0, ['YYYYY',  5],       0, 'year');
-addFormatToken(0, ['YYYYYY', 6, true], 0, 'year');
-
-// ALIASES
-
-addUnitAlias('year', 'y');
-
-// PRIORITIES
-
-addUnitPriority('year', 1);
-
-// PARSING
-
-addRegexToken('Y',      matchSigned);
-addRegexToken('YY',     match1to2, match2);
-addRegexToken('YYYY',   match1to4, match4);
-addRegexToken('YYYYY',  match1to6, match6);
-addRegexToken('YYYYYY', match1to6, match6);
-
-addParseToken(['YYYYY', 'YYYYYY'], YEAR);
-addParseToken('YYYY', function (input, array) {
-    array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
-});
-addParseToken('YY', function (input, array) {
-    array[YEAR] = hooks.parseTwoDigitYear(input);
-});
-addParseToken('Y', function (input, array) {
-    array[YEAR] = parseInt(input, 10);
-});
-
-// HELPERS
-
-function daysInYear(year) {
-    return isLeapYear(year) ? 366 : 365;
-}
-
-function isLeapYear(year) {
-    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-}
-
-// HOOKS
-
-hooks.parseTwoDigitYear = function (input) {
-    return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
-};
-
-// MOMENTS
-
-var getSetYear = makeGetSet('FullYear', true);
-
-function getIsLeapYear () {
-    return isLeapYear(this.year());
 }
 
 function createDate (y, m, d, h, M, s, ms) {
@@ -13539,48 +14021,48 @@ function handleStrictParse$1(weekdayName, format, strict) {
 
     if (strict) {
         if (format === 'dddd') {
-            ii = indexOf$1.call(this._weekdaysParse, llc);
+            ii = indexOf.call(this._weekdaysParse, llc);
             return ii !== -1 ? ii : null;
         } else if (format === 'ddd') {
-            ii = indexOf$1.call(this._shortWeekdaysParse, llc);
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
             return ii !== -1 ? ii : null;
         } else {
-            ii = indexOf$1.call(this._minWeekdaysParse, llc);
+            ii = indexOf.call(this._minWeekdaysParse, llc);
             return ii !== -1 ? ii : null;
         }
     } else {
         if (format === 'dddd') {
-            ii = indexOf$1.call(this._weekdaysParse, llc);
+            ii = indexOf.call(this._weekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._shortWeekdaysParse, llc);
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._minWeekdaysParse, llc);
+            ii = indexOf.call(this._minWeekdaysParse, llc);
             return ii !== -1 ? ii : null;
         } else if (format === 'ddd') {
-            ii = indexOf$1.call(this._shortWeekdaysParse, llc);
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._weekdaysParse, llc);
+            ii = indexOf.call(this._weekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._minWeekdaysParse, llc);
+            ii = indexOf.call(this._minWeekdaysParse, llc);
             return ii !== -1 ? ii : null;
         } else {
-            ii = indexOf$1.call(this._minWeekdaysParse, llc);
+            ii = indexOf.call(this._minWeekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._weekdaysParse, llc);
+            ii = indexOf.call(this._weekdaysParse, llc);
             if (ii !== -1) {
                 return ii;
             }
-            ii = indexOf$1.call(this._shortWeekdaysParse, llc);
+            ii = indexOf.call(this._shortWeekdaysParse, llc);
             return ii !== -1 ? ii : null;
         }
     }
@@ -13969,11 +14451,10 @@ function loadLocale(name) {
             module && module.exports) {
         try {
             oldLocale = globalLocale._abbr;
-            require('./locale/' + name);
-            // because defineLocale currently also sets the global locale, we
-            // want to undo that for lazy loaded locales
+            var aliasedRequire = require;
+            aliasedRequire('./locale/' + name);
             getSetGlobalLocale(oldLocale);
-        } catch (e) { }
+        } catch (e) {}
     }
     return locales[name];
 }
@@ -14049,10 +14530,11 @@ function defineLocale (name, config) {
 
 function updateLocale(name, config) {
     if (config != null) {
-        var locale, parentConfig = baseConfig;
+        var locale, tmpLocale, parentConfig = baseConfig;
         // MERGE
-        if (locales[name] != null) {
-            parentConfig = locales[name]._config;
+        tmpLocale = loadLocale(name);
+        if (tmpLocale != null) {
+            parentConfig = tmpLocale._config;
         }
         config = mergeConfigs(parentConfig, config);
         locale = new Locale(config);
@@ -14099,7 +14581,7 @@ function getLocale (key) {
 }
 
 function listLocales() {
-    return keys$1(locales);
+    return keys(locales);
 }
 
 function checkOverflow (m) {
@@ -14130,6 +14612,154 @@ function checkOverflow (m) {
     }
 
     return m;
+}
+
+// Pick the first defined of two or three arguments.
+function defaults(a, b, c) {
+    if (a != null) {
+        return a;
+    }
+    if (b != null) {
+        return b;
+    }
+    return c;
+}
+
+function currentDateArray(config) {
+    // hooks is actually the exported moment object
+    var nowValue = new Date(hooks.now());
+    if (config._useUTC) {
+        return [nowValue.getUTCFullYear(), nowValue.getUTCMonth(), nowValue.getUTCDate()];
+    }
+    return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
+}
+
+// convert an array to a date.
+// the array should mirror the parameters below
+// note: all values past the year are optional and will default to the lowest possible value.
+// [year, month, day , hour, minute, second, millisecond]
+function configFromArray (config) {
+    var i, date, input = [], currentDate, yearToUse;
+
+    if (config._d) {
+        return;
+    }
+
+    currentDate = currentDateArray(config);
+
+    //compute day of the year from weeks and weekdays
+    if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
+        dayOfYearFromWeekInfo(config);
+    }
+
+    //if the day of the year is set, figure out what it is
+    if (config._dayOfYear != null) {
+        yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
+
+        if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
+            getParsingFlags(config)._overflowDayOfYear = true;
+        }
+
+        date = createUTCDate(yearToUse, 0, config._dayOfYear);
+        config._a[MONTH] = date.getUTCMonth();
+        config._a[DATE] = date.getUTCDate();
+    }
+
+    // Default to current date.
+    // * if no year, month, day of month are given, default to today
+    // * if day of month is given, default month and year
+    // * if month is given, default only year
+    // * if year is given, don't default anything
+    for (i = 0; i < 3 && config._a[i] == null; ++i) {
+        config._a[i] = input[i] = currentDate[i];
+    }
+
+    // Zero out whatever was not defaulted, including time
+    for (; i < 7; i++) {
+        config._a[i] = input[i] = (config._a[i] == null) ? (i === 2 ? 1 : 0) : config._a[i];
+    }
+
+    // Check for 24:00:00.000
+    if (config._a[HOUR] === 24 &&
+            config._a[MINUTE] === 0 &&
+            config._a[SECOND] === 0 &&
+            config._a[MILLISECOND] === 0) {
+        config._nextDay = true;
+        config._a[HOUR] = 0;
+    }
+
+    config._d = (config._useUTC ? createUTCDate : createDate).apply(null, input);
+    // Apply timezone offset from input. The actual utcOffset can be changed
+    // with parseZone.
+    if (config._tzm != null) {
+        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+    }
+
+    if (config._nextDay) {
+        config._a[HOUR] = 24;
+    }
+
+    // check for mismatching day of week
+    if (config._w && typeof config._w.d !== 'undefined' && config._w.d !== config._d.getDay()) {
+        getParsingFlags(config).weekdayMismatch = true;
+    }
+}
+
+function dayOfYearFromWeekInfo(config) {
+    var w, weekYear, week, weekday, dow, doy, temp, weekdayOverflow;
+
+    w = config._w;
+    if (w.GG != null || w.W != null || w.E != null) {
+        dow = 1;
+        doy = 4;
+
+        // TODO: We need to take the current isoWeekYear, but that depends on
+        // how we interpret now (local, utc, fixed offset). So create
+        // a now version of current config (take local/utc/offset flags, and
+        // create now).
+        weekYear = defaults(w.GG, config._a[YEAR], weekOfYear(createLocal(), 1, 4).year);
+        week = defaults(w.W, 1);
+        weekday = defaults(w.E, 1);
+        if (weekday < 1 || weekday > 7) {
+            weekdayOverflow = true;
+        }
+    } else {
+        dow = config._locale._week.dow;
+        doy = config._locale._week.doy;
+
+        var curWeek = weekOfYear(createLocal(), dow, doy);
+
+        weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
+
+        // Default to current week.
+        week = defaults(w.w, curWeek.week);
+
+        if (w.d != null) {
+            // weekday -- low day numbers are considered next week
+            weekday = w.d;
+            if (weekday < 0 || weekday > 6) {
+                weekdayOverflow = true;
+            }
+        } else if (w.e != null) {
+            // local weekday -- counting starts from begining of week
+            weekday = w.e + dow;
+            if (w.e < 0 || w.e > 6) {
+                weekdayOverflow = true;
+            }
+        } else {
+            // default to begining of week
+            weekday = dow;
+        }
+    }
+    if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
+        getParsingFlags(config)._overflowWeeks = true;
+    } else if (weekdayOverflow != null) {
+        getParsingFlags(config)._overflowWeekday = true;
+    } else {
+        temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
+        config._a[YEAR] = temp.year;
+        config._dayOfYear = temp.dayOfYear;
+    }
 }
 
 // iso 8601 regex
@@ -14223,70 +14853,94 @@ function configFromISO(config) {
 }
 
 // RFC 2822 regex: For details see https://tools.ietf.org/html/rfc2822#section-3.3
-var basicRfcRegex = /^((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d?\d\s(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(?:\d\d)?\d\d\s)(\d\d:\d\d)(\:\d\d)?(\s(?:UT|GMT|[ECMP][SD]T|[A-IK-Za-ik-z]|[+-]\d{4}))$/;
+var rfc2822 = /^(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{2,4})\s(\d\d):(\d\d)(?::(\d\d))?\s(?:(UT|GMT|[ECMP][SD]T)|([Zz])|([+-]\d{4}))$/;
+
+function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
+    var result = [
+        untruncateYear(yearStr),
+        defaultLocaleMonthsShort.indexOf(monthStr),
+        parseInt(dayStr, 10),
+        parseInt(hourStr, 10),
+        parseInt(minuteStr, 10)
+    ];
+
+    if (secondStr) {
+        result.push(parseInt(secondStr, 10));
+    }
+
+    return result;
+}
+
+function untruncateYear(yearStr) {
+    var year = parseInt(yearStr, 10);
+    if (year <= 49) {
+        return 2000 + year;
+    } else if (year <= 999) {
+        return 1900 + year;
+    }
+    return year;
+}
+
+function preprocessRFC2822(s) {
+    // Remove comments and folding whitespace and replace multiple-spaces with a single space
+    return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').trim();
+}
+
+function checkWeekday(weekdayStr, parsedInput, config) {
+    if (weekdayStr) {
+        // TODO: Replace the vanilla JS Date object with an indepentent day-of-week check.
+        var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr),
+            weekdayActual = new Date(parsedInput[0], parsedInput[1], parsedInput[2]).getDay();
+        if (weekdayProvided !== weekdayActual) {
+            getParsingFlags(config).weekdayMismatch = true;
+            config._isValid = false;
+            return false;
+        }
+    }
+    return true;
+}
+
+var obsOffsets = {
+    UT: 0,
+    GMT: 0,
+    EDT: -4 * 60,
+    EST: -5 * 60,
+    CDT: -5 * 60,
+    CST: -6 * 60,
+    MDT: -6 * 60,
+    MST: -7 * 60,
+    PDT: -7 * 60,
+    PST: -8 * 60
+};
+
+function calculateOffset(obsOffset, militaryOffset, numOffset) {
+    if (obsOffset) {
+        return obsOffsets[obsOffset];
+    } else if (militaryOffset) {
+        // the only allowed military tz is Z
+        return 0;
+    } else {
+        var hm = parseInt(numOffset, 10);
+        var m = hm % 100, h = (hm - m) / 100;
+        return h * 60 + m;
+    }
+}
 
 // date and time from ref 2822 format
 function configFromRFC2822(config) {
-    var string, match, dayFormat,
-        dateFormat, timeFormat, tzFormat;
-    var timezones = {
-        ' GMT': ' +0000',
-        ' EDT': ' -0400',
-        ' EST': ' -0500',
-        ' CDT': ' -0500',
-        ' CST': ' -0600',
-        ' MDT': ' -0600',
-        ' MST': ' -0700',
-        ' PDT': ' -0700',
-        ' PST': ' -0800'
-    };
-    var military = 'YXWVUTSRQPONZABCDEFGHIKLM';
-    var timezone, timezoneIndex;
-
-    string = config._i
-        .replace(/\([^\)]*\)|[\n\t]/g, ' ') // Remove comments and folding whitespace
-        .replace(/(\s\s+)/g, ' ') // Replace multiple-spaces with a single space
-        .replace(/^\s|\s$/g, ''); // Remove leading and trailing spaces
-    match = basicRfcRegex.exec(string);
-
+    var match = rfc2822.exec(preprocessRFC2822(config._i));
     if (match) {
-        dayFormat = match[1] ? 'ddd' + ((match[1].length === 5) ? ', ' : ' ') : '';
-        dateFormat = 'D MMM ' + ((match[2].length > 10) ? 'YYYY ' : 'YY ');
-        timeFormat = 'HH:mm' + (match[4] ? ':ss' : '');
-
-        // TODO: Replace the vanilla JS Date object with an indepentent day-of-week check.
-        if (match[1]) { // day of week given
-            var momentDate = new Date(match[2]);
-            var momentDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][momentDate.getDay()];
-
-            if (match[1].substr(0,3) !== momentDay) {
-                getParsingFlags(config).weekdayMismatch = true;
-                config._isValid = false;
-                return;
-            }
+        var parsedArray = extractFromRFC2822Strings(match[4], match[3], match[2], match[5], match[6], match[7]);
+        if (!checkWeekday(match[1], parsedArray, config)) {
+            return;
         }
 
-        switch (match[5].length) {
-            case 2: // military
-                if (timezoneIndex === 0) {
-                    timezone = ' +0000';
-                } else {
-                    timezoneIndex = military.indexOf(match[5][1].toUpperCase()) - 12;
-                    timezone = ((timezoneIndex < 0) ? ' -' : ' +') +
-                        (('' + timezoneIndex).replace(/^-?/, '0')).match(/..$/)[0] + '00';
-                }
-                break;
-            case 4: // Zone
-                timezone = timezones[match[5]];
-                break;
-            default: // UT or +/-9999
-                timezone = timezones[' GMT'];
-        }
-        match[5] = timezone;
-        config._i = match.splice(1).join('');
-        tzFormat = ' ZZ';
-        config._f = dayFormat + dateFormat + timeFormat + tzFormat;
-        configFromStringAndFormat(config);
+        config._a = parsedArray;
+        config._tzm = calculateOffset(match[8], match[9], match[10]);
+
+        config._d = createUTCDate.apply(null, config._a);
+        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+
         getParsingFlags(config).rfc2822 = true;
     } else {
         config._isValid = false;
@@ -14329,149 +14983,6 @@ hooks.createFromInputFallback = deprecate(
         config._d = new Date(config._i + (config._useUTC ? ' UTC' : ''));
     }
 );
-
-// Pick the first defined of two or three arguments.
-function defaults(a, b, c) {
-    if (a != null) {
-        return a;
-    }
-    if (b != null) {
-        return b;
-    }
-    return c;
-}
-
-function currentDateArray(config) {
-    // hooks is actually the exported moment object
-    var nowValue = new Date(hooks.now());
-    if (config._useUTC) {
-        return [nowValue.getUTCFullYear(), nowValue.getUTCMonth(), nowValue.getUTCDate()];
-    }
-    return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
-}
-
-// convert an array to a date.
-// the array should mirror the parameters below
-// note: all values past the year are optional and will default to the lowest possible value.
-// [year, month, day , hour, minute, second, millisecond]
-function configFromArray (config) {
-    var i, date, input = [], currentDate, yearToUse;
-
-    if (config._d) {
-        return;
-    }
-
-    currentDate = currentDateArray(config);
-
-    //compute day of the year from weeks and weekdays
-    if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
-        dayOfYearFromWeekInfo(config);
-    }
-
-    //if the day of the year is set, figure out what it is
-    if (config._dayOfYear != null) {
-        yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
-
-        if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
-            getParsingFlags(config)._overflowDayOfYear = true;
-        }
-
-        date = createUTCDate(yearToUse, 0, config._dayOfYear);
-        config._a[MONTH] = date.getUTCMonth();
-        config._a[DATE] = date.getUTCDate();
-    }
-
-    // Default to current date.
-    // * if no year, month, day of month are given, default to today
-    // * if day of month is given, default month and year
-    // * if month is given, default only year
-    // * if year is given, don't default anything
-    for (i = 0; i < 3 && config._a[i] == null; ++i) {
-        config._a[i] = input[i] = currentDate[i];
-    }
-
-    // Zero out whatever was not defaulted, including time
-    for (; i < 7; i++) {
-        config._a[i] = input[i] = (config._a[i] == null) ? (i === 2 ? 1 : 0) : config._a[i];
-    }
-
-    // Check for 24:00:00.000
-    if (config._a[HOUR] === 24 &&
-            config._a[MINUTE] === 0 &&
-            config._a[SECOND] === 0 &&
-            config._a[MILLISECOND] === 0) {
-        config._nextDay = true;
-        config._a[HOUR] = 0;
-    }
-
-    config._d = (config._useUTC ? createUTCDate : createDate).apply(null, input);
-    // Apply timezone offset from input. The actual utcOffset can be changed
-    // with parseZone.
-    if (config._tzm != null) {
-        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
-    }
-
-    if (config._nextDay) {
-        config._a[HOUR] = 24;
-    }
-}
-
-function dayOfYearFromWeekInfo(config) {
-    var w, weekYear, week, weekday, dow, doy, temp, weekdayOverflow;
-
-    w = config._w;
-    if (w.GG != null || w.W != null || w.E != null) {
-        dow = 1;
-        doy = 4;
-
-        // TODO: We need to take the current isoWeekYear, but that depends on
-        // how we interpret now (local, utc, fixed offset). So create
-        // a now version of current config (take local/utc/offset flags, and
-        // create now).
-        weekYear = defaults(w.GG, config._a[YEAR], weekOfYear(createLocal(), 1, 4).year);
-        week = defaults(w.W, 1);
-        weekday = defaults(w.E, 1);
-        if (weekday < 1 || weekday > 7) {
-            weekdayOverflow = true;
-        }
-    } else {
-        dow = config._locale._week.dow;
-        doy = config._locale._week.doy;
-
-        var curWeek = weekOfYear(createLocal(), dow, doy);
-
-        weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
-
-        // Default to current week.
-        week = defaults(w.w, curWeek.week);
-
-        if (w.d != null) {
-            // weekday -- low day numbers are considered next week
-            weekday = w.d;
-            if (weekday < 0 || weekday > 6) {
-                weekdayOverflow = true;
-            }
-        } else if (w.e != null) {
-            // local weekday -- counting starts from begining of week
-            weekday = w.e + dow;
-            if (w.e < 0 || w.e > 6) {
-                weekdayOverflow = true;
-            }
-        } else {
-            // default to begining of week
-            weekday = dow;
-        }
-    }
-    if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
-        getParsingFlags(config)._overflowWeeks = true;
-    } else if (weekdayOverflow != null) {
-        getParsingFlags(config)._overflowWeekday = true;
-    } else {
-        temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
-        config._a[YEAR] = temp.year;
-        config._dayOfYear = temp.dayOfYear;
-    }
-}
 
 // constant that refers to the ISO standard
 hooks.ISO_8601 = function () {};
@@ -14797,7 +15308,7 @@ var ordering = ['year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'se
 
 function isDurationValid(m) {
     for (var key in m) {
-        if (!(ordering.indexOf(key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
+        if (!(indexOf.call(ordering, key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
             return false;
         }
     }
@@ -14848,7 +15359,7 @@ function Duration (duration) {
     // day when working around DST, we need to store them separately
     this._days = +days +
         weeks * 7;
-    // It is impossible translate months into days without knowing
+    // It is impossible to translate months into days without knowing
     // which months you are are talking about, so we have to store
     // it separately.
     this._months = +months +
@@ -15095,12 +15606,12 @@ function isUtc () {
 }
 
 // ASP.NET json date format regex
-var aspNetRegex = /^(\-)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)(\.\d*)?)?$/;
+var aspNetRegex = /^(\-|\+)?(?:(\d*)[. ])?(\d+)\:(\d+)(?:\:(\d+)(\.\d*)?)?$/;
 
 // from http://docs.closure-library.googlecode.com/git/closure_goog_date_date.js.source.html
 // somewhat more in line with 4.4.3.2 2004 spec, but allows decimal anywhere
 // and further modified to allow for strings containing both week and day
-var isoRegex = /^(-)?P(?:(-?[0-9,.]*)Y)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)W)?(?:(-?[0-9,.]*)D)?(?:T(?:(-?[0-9,.]*)H)?(?:(-?[0-9,.]*)M)?(?:(-?[0-9,.]*)S)?)?$/;
+var isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
 
 function createDuration (input, key) {
     var duration = input,
@@ -15134,7 +15645,7 @@ function createDuration (input, key) {
             ms : toInt(absRound(match[MILLISECOND] * 1000)) * sign // the millisecond decimal point is included in the match
         };
     } else if (!!(match = isoRegex.exec(input))) {
-        sign = (match[1] === '-') ? -1 : 1;
+        sign = (match[1] === '-') ? -1 : (match[1] === '+') ? 1 : 1;
         duration = {
             y : parseIso(match[2], sign),
             M : parseIso(match[3], sign),
@@ -15237,14 +15748,14 @@ function addSubtract (mom, duration, isAdding, updateOffset) {
 
     updateOffset = updateOffset == null ? true : updateOffset;
 
-    if (milliseconds) {
-        mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding);
+    if (months) {
+        setMonth(mom, get(mom, 'Month') + months * isAdding);
     }
     if (days) {
         set$1(mom, 'Date', get(mom, 'Date') + days * isAdding);
     }
-    if (months) {
-        setMonth(mom, get(mom, 'Month') + months * isAdding);
+    if (milliseconds) {
+        mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding);
     }
     if (updateOffset) {
         hooks.updateOffset(mom, days || months);
@@ -15354,22 +15865,18 @@ function diff (input, units, asFloat) {
 
     units = normalizeUnits(units);
 
-    if (units === 'year' || units === 'month' || units === 'quarter') {
-        output = monthDiff(this, that);
-        if (units === 'quarter') {
-            output = output / 3;
-        } else if (units === 'year') {
-            output = output / 12;
-        }
-    } else {
-        delta = this - that;
-        output = units === 'second' ? delta / 1e3 : // 1000
-            units === 'minute' ? delta / 6e4 : // 1000 * 60
-            units === 'hour' ? delta / 36e5 : // 1000 * 60 * 60
-            units === 'day' ? (delta - zoneDelta) / 864e5 : // 1000 * 60 * 60 * 24, negate dst
-            units === 'week' ? (delta - zoneDelta) / 6048e5 : // 1000 * 60 * 60 * 24 * 7, negate dst
-            delta;
+    switch (units) {
+        case 'year': output = monthDiff(this, that) / 12; break;
+        case 'month': output = monthDiff(this, that); break;
+        case 'quarter': output = monthDiff(this, that) / 3; break;
+        case 'second': output = (this - that) / 1e3; break; // 1000
+        case 'minute': output = (this - that) / 6e4; break; // 1000 * 60
+        case 'hour': output = (this - that) / 36e5; break; // 1000 * 60 * 60
+        case 'day': output = (this - that - zoneDelta) / 864e5; break; // 1000 * 60 * 60 * 24, negate dst
+        case 'week': output = (this - that - zoneDelta) / 6048e5; break; // 1000 * 60 * 60 * 24 * 7, negate dst
+        default: output = this - that;
     }
+
     return asFloat ? output : absFloor(output);
 }
 
@@ -16347,6 +16854,10 @@ var asWeeks        = makeAs('w');
 var asMonths       = makeAs('M');
 var asYears        = makeAs('y');
 
+function clone$1 () {
+    return createDuration(this);
+}
+
 function get$2 (units) {
     units = normalizeUnits(units);
     return this.isValid() ? this[units + 's']() : NaN;
@@ -16456,6 +16967,10 @@ function humanize (withSuffix) {
 
 var abs$1 = Math.abs;
 
+function sign(x) {
+    return ((x > 0) - (x < 0)) || +x;
+}
+
 function toISOString$1() {
     // for ISO strings we do not use the normal bubbling rules:
     //  * milliseconds bubble up until they become hours
@@ -16490,7 +17005,7 @@ function toISOString$1() {
     var D = days;
     var h = hours;
     var m = minutes;
-    var s = seconds;
+    var s = seconds ? seconds.toFixed(3).replace(/\.?0+$/, '') : '';
     var total = this.asSeconds();
 
     if (!total) {
@@ -16499,15 +17014,19 @@ function toISOString$1() {
         return 'P0D';
     }
 
-    return (total < 0 ? '-' : '') +
-        'P' +
-        (Y ? Y + 'Y' : '') +
-        (M ? M + 'M' : '') +
-        (D ? D + 'D' : '') +
+    var totalSign = total < 0 ? '-' : '';
+    var ymSign = sign(this._months) !== sign(total) ? '-' : '';
+    var daysSign = sign(this._days) !== sign(total) ? '-' : '';
+    var hmsSign = sign(this._milliseconds) !== sign(total) ? '-' : '';
+
+    return totalSign + 'P' +
+        (Y ? ymSign + Y + 'Y' : '') +
+        (M ? ymSign + M + 'M' : '') +
+        (D ? daysSign + D + 'D' : '') +
         ((h || m || s) ? 'T' : '') +
-        (h ? h + 'H' : '') +
-        (m ? m + 'M' : '') +
-        (s ? s + 'S' : '');
+        (h ? hmsSign + h + 'H' : '') +
+        (m ? hmsSign + m + 'M' : '') +
+        (s ? hmsSign + s + 'S' : '');
 }
 
 var proto$2 = Duration.prototype;
@@ -16527,6 +17046,7 @@ proto$2.asMonths       = asMonths;
 proto$2.asYears        = asYears;
 proto$2.valueOf        = valueOf$1;
 proto$2._bubble        = bubble;
+proto$2.clone          = clone$1;
 proto$2.get            = get$2;
 proto$2.milliseconds   = milliseconds;
 proto$2.seconds        = seconds;
@@ -16568,7 +17088,7 @@ addParseToken('x', function (input, array, config) {
 // Side effect imports
 
 
-hooks.version = '2.18.1';
+hooks.version = '2.19.2';
 
 setHookCallback(createLocal);
 
@@ -16595,7 +17115,7 @@ hooks.updateLocale          = updateLocale;
 hooks.locales               = listLocales;
 hooks.weekdaysShort         = listWeekdaysShort;
 hooks.normalizeUnits        = normalizeUnits;
-hooks.relativeTimeRounding = getSetRelativeTimeRounding;
+hooks.relativeTimeRounding  = getSetRelativeTimeRounding;
 hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
 hooks.calendarFormat        = getCalendarFormat;
 hooks.prototype             = proto;
@@ -17146,7 +17666,7 @@ return hooks;
 }).call(this);
 ;
 //! moment-timezone.js
-//! version : 0.5.13
+//! version : 0.5.14
 //! Copyright (c) JS Foundation and other contributors
 //! license : MIT
 //! github.com/moment/moment-timezone
@@ -17171,7 +17691,7 @@ return hooks;
 	// 	return moment;
 	// }
 
-	var VERSION = "0.5.13",
+	var VERSION = "0.5.14",
 		zones = {},
 		links = {},
 		names = {},
@@ -17339,6 +17859,11 @@ return hooks;
 		},
 
 		offset : function (mom) {
+			logError("zone.offset has been deprecated in favor of zone.utcOffset");
+			return this.offsets[this._index(mom)];
+		},
+
+		utcOffset : function (mom) {
 			return this.offsets[this._index(mom)];
 		}
 	};
@@ -17378,7 +17903,7 @@ return hooks;
 	}
 
 	ZoneScore.prototype.scoreOffsetAt = function (offsetAt) {
-		this.offsetScore += Math.abs(this.zone.offset(offsetAt.at) - offsetAt.offset);
+		this.offsetScore += Math.abs(this.zone.utcOffset(offsetAt.at) - offsetAt.offset);
 		if (this.zone.abbr(offsetAt.at).replace(/[^A-Z]/g, '') !== offsetAt.abbr) {
 			this.abbrScore++;
 		}
@@ -17472,7 +17997,7 @@ return hooks;
 		// use Intl API when available and returning valid time zone
 		try {
 			var intlName = Intl.DateTimeFormat().resolvedOptions().timeZone;
-			if (intlName){
+			if (intlName && intlName.length > 3) {
 				var name = names[normalizeName(intlName)];
 				if (name) {
 					return name;
@@ -17530,9 +18055,7 @@ return hooks;
 			normalized = normalizeName(name);
 			zones[normalized] = packed[i];
 			names[normalized] = name;
-			if (split[5]) {
-				addToGuesses(normalized, split[2].split(' '));
-			}
+			addToGuesses(normalized, split[2].split(' '));
 		}
 	}
 
@@ -17611,7 +18134,8 @@ return hooks;
 	}
 
 	function needsOffset (m) {
-		return !!(m._a && (m._tzm === undefined));
+		var isUnixTimestamp = (m._f === 'X' || m._f === 'x');
+		return !!(m._a && (m._tzm === undefined) && !isUnixTimestamp);
 	}
 
 	function logError (message) {
@@ -17680,7 +18204,7 @@ return hooks;
 			mom._z = zone;
 		}
 		if (mom._z) {
-			offset = mom._z.offset(mom);
+			offset = mom._z.utcOffset(mom);
 			if (Math.abs(offset) < 16) {
 				offset = offset / 60;
 			}
@@ -17692,11 +18216,11 @@ return hooks;
 		}
 	};
 
-	fn.tz = function (name) {
+	fn.tz = function (name, keepTime) {
 		if (name) {
 			this._z = getZone(name);
 			if (this._z) {
-				moment.updateOffset(this);
+				moment.updateOffset(this, keepTime);
 			} else {
 				logError("Moment Timezone has no data for " + name + ". See http://momentjs.com/timezone/docs/#/data-loading/.");
 			}
@@ -17743,10 +18267,10 @@ return hooks;
 	}
 
 	loadData({
-		"version": "2017b",
+		"version": "2017c",
 		"zones": [
 			"Africa/Abidjan|GMT|0|0||48e5",
-			"Africa/Khartoum|EAT|-30|0||51e5",
+			"Africa/Nairobi|EAT|-30|0||47e5",
 			"Africa/Algiers|CET|-10|0||26e5",
 			"Africa/Lagos|WAT|-10|0||17e6",
 			"Africa/Maputo|CAT|-20|0||26e5",
@@ -17754,8 +18278,9 @@ return hooks;
 			"Africa/Casablanca|WET WEST|0 -10|0101010101010101010101010101010101010101010|1H3C0 wM0 co0 go0 1o00 s00 dA0 vc0 11A0 A00 e00 y00 11A0 uM0 e00 Dc0 11A0 s00 e00 IM0 WM0 mo0 gM0 LA0 WM0 jA0 e00 Rc0 11A0 e00 e00 U00 11A0 8o0 e00 11A0 11A0 5A0 e00 17c0 1fA0 1a00|32e5",
 			"Europe/Paris|CET CEST|-10 -20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|11e6",
 			"Africa/Johannesburg|SAST|-20|0||84e5",
+			"Africa/Khartoum|EAT CAT|-30 -20|01|1Usl0|51e5",
 			"Africa/Tripoli|EET CET CEST|-20 -10 -20|0120|1IlA0 TA0 1o00|11e5",
-			"Africa/Windhoek|WAST WAT|-20 -10|01010101010101010101010|1GQo0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0|32e4",
+			"Africa/Windhoek|WAST WAT CAT|-20 -10 -20|0101010101012|1GQo0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0|32e4",
 			"America/Adak|HST HDT|a0 90|01010101010101010101010|1GIc0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|326",
 			"America/Anchorage|AKST AKDT|90 80|01010101010101010101010|1GIb0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|30e4",
 			"America/Santo_Domingo|AST|40|0||29e5",
@@ -17781,7 +18306,7 @@ return hooks;
 			"America/Fort_Nelson|PST PDT MST|80 70 70|01010102|1GIa0 1zb0 Op0 1zb0 Op0 1zb0 Op0|39e2",
 			"America/Halifax|AST ADT|40 30|01010101010101010101010|1GI60 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|39e4",
 			"America/Godthab|-03 -02|30 20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|17e3",
-			"America/Grand_Turk|EST EDT AST|50 40 40|010101012|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|37e2",
+			"America/Grand_Turk|EST EDT AST|50 40 40|0101010121010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 5Ip0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|37e2",
 			"America/Havana|CST CDT|50 40|01010101010101010101010|1GQt0 1qM0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0|21e5",
 			"America/Metlakatla|PST AKST AKDT|80 90 80|0121212121212121|1PAa0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|14e2",
 			"America/Miquelon|-03 -02|30 20|01010101010101010101010|1GI50 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|61e2",
@@ -17817,7 +18342,7 @@ return hooks;
 			"Asia/Damascus|EET EEST|-20 -30|01010101010101010101010|1GPy0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0|26e5",
 			"Asia/Dili|+09|-90|0||19e4",
 			"Asia/Dubai|+04|-40|0||39e5",
-			"Asia/Famagusta|EET EEST +03|-20 -30 -30|01010101012|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 15U0",
+			"Asia/Famagusta|EET EEST +03|-20 -30 -30|0101010101201010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0",
 			"Asia/Gaza|EET EEST|-20 -30|01010101010101010101010|1GPy0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0|18e5",
 			"Asia/Hong_Kong|HKT|-80|0||73e5",
 			"Asia/Hovd|+07 +08|-70 -80|01010|1O8H0 1cJ0 1cP0 1cJ0|81e3",
@@ -17883,12 +18408,12 @@ return hooks;
 			"Pacific/Chatham|+1345 +1245|-dJ -cJ|01010101010101010101010|1GQe0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00|600",
 			"Pacific/Apia|+14 +13|-e0 -d0|01010101010101010101010|1GQe0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00|37e3",
 			"Pacific/Bougainville|+10 +11|-a0 -b0|01|1NwE0|18e4",
-			"Pacific/Fiji|+13 +12|-d0 -c0|01010101010101010101010|1Goe0 1Nc0 Ao0 1Q00 xz0 1SN0 uM0 1SM0 uM0 1VA0 s00 1VA0 uM0 1SM0 uM0 1SM0 uM0 1SM0 uM0 1VA0 s00 1VA0|88e4",
+			"Pacific/Fiji|+13 +12|-d0 -c0|01010101010101010101010|1Goe0 1Nc0 Ao0 1Q00 xz0 1SN0 uM0 1SM0 uM0 1VA0 s00 1VA0 s00 1VA0 uM0 1SM0 uM0 1SM0 uM0 1VA0 s00 1VA0|88e4",
 			"Pacific/Guam|ChST|-a0|0||17e4",
 			"Pacific/Marquesas|-0930|9u|0||86e2",
 			"Pacific/Pago_Pago|SST|b0|0||37e2",
 			"Pacific/Norfolk|+1130 +11|-bu -b0|01|1PoCu|25e4",
-			"Pacific/Tongatapu|+13 +14|-d0 -e0|01010101010101|1S4d0 s00 1VA0 uM0 1SM0 uM0 1SM0 uM0 1SM0 uM0 1VA0 s00 1VA0|75e3"
+			"Pacific/Tongatapu|+13 +14|-d0 -e0|010|1S4d0 s00|75e3"
 		],
 		"links": [
 			"Africa/Abidjan|Africa/Accra",
@@ -17923,18 +18448,6 @@ return hooks;
 			"Africa/Casablanca|Africa/El_Aaiun",
 			"Africa/Johannesburg|Africa/Maseru",
 			"Africa/Johannesburg|Africa/Mbabane",
-			"Africa/Khartoum|Africa/Addis_Ababa",
-			"Africa/Khartoum|Africa/Asmara",
-			"Africa/Khartoum|Africa/Asmera",
-			"Africa/Khartoum|Africa/Dar_es_Salaam",
-			"Africa/Khartoum|Africa/Djibouti",
-			"Africa/Khartoum|Africa/Juba",
-			"Africa/Khartoum|Africa/Kampala",
-			"Africa/Khartoum|Africa/Mogadishu",
-			"Africa/Khartoum|Africa/Nairobi",
-			"Africa/Khartoum|Indian/Antananarivo",
-			"Africa/Khartoum|Indian/Comoro",
-			"Africa/Khartoum|Indian/Mayotte",
 			"Africa/Lagos|Africa/Bangui",
 			"Africa/Lagos|Africa/Brazzaville",
 			"Africa/Lagos|Africa/Douala",
@@ -17952,6 +18465,17 @@ return hooks;
 			"Africa/Maputo|Africa/Kigali",
 			"Africa/Maputo|Africa/Lubumbashi",
 			"Africa/Maputo|Africa/Lusaka",
+			"Africa/Nairobi|Africa/Addis_Ababa",
+			"Africa/Nairobi|Africa/Asmara",
+			"Africa/Nairobi|Africa/Asmera",
+			"Africa/Nairobi|Africa/Dar_es_Salaam",
+			"Africa/Nairobi|Africa/Djibouti",
+			"Africa/Nairobi|Africa/Juba",
+			"Africa/Nairobi|Africa/Kampala",
+			"Africa/Nairobi|Africa/Mogadishu",
+			"Africa/Nairobi|Indian/Antananarivo",
+			"Africa/Nairobi|Indian/Comoro",
+			"Africa/Nairobi|Indian/Mayotte",
 			"Africa/Tripoli|Libya",
 			"America/Adak|America/Atka",
 			"America/Adak|US/Aleutian",
@@ -18053,7 +18577,6 @@ return hooks;
 			"America/Managua|America/Regina",
 			"America/Managua|America/Swift_Current",
 			"America/Managua|America/Tegucigalpa",
-			"America/Managua|Canada/East-Saskatchewan",
 			"America/Managua|Canada/Saskatchewan",
 			"America/Mexico_City|America/Bahia_Banderas",
 			"America/Mexico_City|America/Merida",
@@ -18349,7 +18872,7 @@ return hooks;
 
 ;
 /****************************************************************************
-    moment-simple-format.js, 
+    moment-simple-format.js,
 
     (c) 2016, FCOO
 
@@ -18360,13 +18883,13 @@ return hooks;
 
 (function (moment, $ /*, window, document, undefined*/) {
     "use strict";
- 
+
     /***********************************************************
     dateFormatList = array[0..dateFormats-1] of {DMY: [String], MDY: [String], YMD: [String]}
     List of different format-strings in tree different sequence
     ***********************************************************/
     var dateFormatList = [],
-        w, m, y, 
+        w, m, y,
         wFormat, mFormat, backslash, yFormat, dateFormat;
     for (w in {F:'', S:'', N:''})
         for (m in {F:'', S:'', D:''})
@@ -18375,8 +18898,8 @@ return hooks;
                 wFormat = w == 'F' ? 'dddd, ' : w == 'S' ? 'ddd, ' : '';
                 mFormat = m == 'F' ? 'MMMM'   : m == 'S' ? 'MMM'   : 'MM';
                 yFormat = y == 'F' ? 'YYYY'   : y == 'S' ? 'YY'    : '';
-                backslash = mFormat == 'MM'; 
-                
+                backslash = mFormat == 'MM';
+
                 dateFormat.DMY = wFormat + 'DD' + (backslash ? '/' : '. ') + mFormat + (yFormat ? (backslash ? '/' : ' ') + yFormat : '');
                 dateFormat.MDY = wFormat + mFormat + (backslash ? '/' : ' ') + 'DD' + (yFormat ? (backslash ? '/' : ', ') + yFormat : '');
                 dateFormat.YMD = wFormat + (yFormat ? yFormat + (backslash ? '/' : ' ') : '') + mFormat + (backslash ? '/' : ' ') + 'DD';
@@ -18385,8 +18908,8 @@ return hooks;
             }
     //Special case: NNN
     dateFormatList.push( { code:'NNN', DMY: 'DD', MDY: 'DD', YMD: 'DD'} );
-    
-    /* 'Handmade' version to see the principle 
+
+    /* 'Handmade' version to see the principle
         { code:'FFF', DMY: 'dddd, DD. MMMM YYYY', MDY: 'dddd, MMMM DD, YYYY', YMD: 'dddd, YYYY MMMM DD' },    //Monday, 24. December 2015 | Monday, December 24, 2015 | Monday, 2015 December 24
         { code:'SFF', DMY: 'ddd, DD. MMMM YYYY' , MDY: 'ddd, MMMM DD, YYYY' , YMD: 'ddd, YYYY MMMM DD'  },    //Mon, 24. December 2015    | Monday, December 24, 2015 | Mon, 2015 December 24
         { code:'SSF', DMY: 'ddd, DD. MMM YYYY'  , MDY: 'ddd, MMM DD, YYYY'  , YMD: 'ddd, YYYY MMM DD'   },    //Mon, 24. Dec 2015         | Mon Dec 24, 2015          | Mon 2015 Dec 24
@@ -18405,13 +18928,13 @@ return hooks;
             timezone      : 'local',
             date          : 'DMY',
             dateFormat    : {
-                weekday: 'None', 
-                month  : 'Short', 
+                weekday: 'None',
+                month  : 'Short',
                 year   : 'Full'
             },
             relativeFormat: {
-                now    : true, 
-                days   : false, 
+                now    : true,
+                days   : false,
                 hours  : true,
                 minutes: true
             },
@@ -18436,20 +18959,20 @@ return hooks;
             relativeFormat: ''
         };
 
-    
+
 
     function options2code( options ){
         //Convert the format of dastes in options to a tree-char code
         function convert( singleOption ){
             singleOption = singleOption.toUpperCase();
             return singleOption == 'FULL'    ? 'F' :
-                   singleOption == 'SHORT'   ? 'S' : 
-                   singleOption == 'DIGITAL' ? 'D' : 
-                   singleOption == 'NONE'    ? 'N' : 
+                   singleOption == 'SHORT'   ? 'S' :
+                   singleOption == 'DIGITAL' ? 'D' :
+                   singleOption == 'NONE'    ? 'N' :
                                    singleOption;
-        } 
+        }
         return convert( options.dateFormat.weekday ) + convert( options.dateFormat.month ) + convert( options.dateFormat.year );
-    }            
+    }
 
     //Global const, var, and methods
 
@@ -18457,7 +18980,7 @@ return hooks;
     moment.sfGetOptions
     Return the current options optional merged with `options`
     ********************************************************************/
-    moment.sfGetOptions = function( options ){ 
+    moment.sfGetOptions = function( options ){
         return $.extend( true, {}, namespace.options, options );
     };
 
@@ -18465,12 +18988,12 @@ return hooks;
     moment.sfGetDateFormat
     Return the current moment date format based on current options optional merged with `options`
     ********************************************************************/
-    moment.sfGetDateFormat = function( options ){ 
+    moment.sfGetDateFormat = function( options ){
         options = $.extend( true, {}, namespace.options, options );
         var i, code = options2code( options );
         for (i=0; i<dateFormatList.length; i++ )
             if (dateFormatList[i].code == code)
-              return dateFormatList[i][ options.date ]; 
+              return dateFormatList[i][ options.date ];
         return '';
     };
 
@@ -18478,7 +19001,7 @@ return hooks;
     moment.sfGetTimeFormat
     Return the current moment time format based on current options optional merged with `options`
     ********************************************************************/
-    moment.sfGetTimeFormat = function( options ){ 
+    moment.sfGetTimeFormat = function( options ){
         options = $.extend( true, {}, namespace.options, options );
         return parseInt(options.time) == 24 ? 'HH:mm' : 'hh:mma';
     };
@@ -18487,7 +19010,7 @@ return hooks;
     moment.sfGetHourFormat
     Return the current moment hour format based on current options optional merged with `options`
     ********************************************************************/
-    moment.sfGetHourFormat = function( options ){ 
+    moment.sfGetHourFormat = function( options ){
         options = $.extend( true, {}, namespace.options, options );
         return parseInt(options.time) == 24 ? 'HH' : 'hha';
     };
@@ -18496,7 +19019,7 @@ return hooks;
     moment.sfGetTimezone
     Return the current timezone record moment or the timezone record withid = `id`
     ********************************************************************/
-    moment.sfGetTimezone = function( id ){     
+    moment.sfGetTimezone = function( id ){
         id = id || namespace.options.timezone;
         for (var i=0; i<namespace.timezoneList.length; i++ )
             if (namespace.timezoneList[i].id == id)
@@ -18507,21 +19030,21 @@ return hooks;
     /*******************************************************************
     moment.sfGetRelativeFormat
     ********************************************************************/
-    moment.sfGetRelativeFormat = function( options ){ 
+    moment.sfGetRelativeFormat = function( options ){
         options = $.extend( true, {}, namespace.options, options );
         var opt_relativeFormat = options.relativeFormat,
             opt_text           = options.text;
 
-        return (opt_relativeFormat.days    ? 'd['  + opt_text.dayAbbr  + ']' : '') + 
+        return (opt_relativeFormat.days    ? 'd['  + opt_text.dayAbbr  + ']' : '') +
                (opt_relativeFormat.hours   ? 'h['  + opt_text.hourAbbr + ']' : '') +
                (opt_relativeFormat.minutes ? 'mm[' + opt_text.minAbbr  + ']' : '');
     };
-    
+
     /*******************************************************************
     moment.sfSetFormat
-    Set the `options`   
+    Set the `options`
     ********************************************************************/
-    moment.sfSetFormat = function( options ){ 
+    moment.sfSetFormat = function( options ){
         $.extend( true, namespace.options, options );
         namespace.code = options2code( namespace.options );
 
@@ -18534,9 +19057,9 @@ return hooks;
         if (namespace.onSetFormatList)
           for (var i=0; i<namespace.onSetFormatList.length; i++ )
             namespace.onSetFormatList[i]( namespace.options );
-          
+
     };
-    
+
     /*******************************************************************
     moment.sfOnSetFormat
     Add `func = function( options )` to be called after `moment.sfSetFormat( options )` is called
@@ -18556,36 +19079,36 @@ return hooks;
     All the timezones are in `moment.simpleFormat.timezoneList //[]`
     ********************************************************************/
         /*******************************************************************
-        timezoneUpdate( name, offsetMoment )
-        Update fullname with optional new value of name and/or offsetMoment
+        timezoneUpdate( name, utcOffsetMoment )
+        Update fullname with optional new value of name and/or utcOffsetMoment
         ********************************************************************/
-        function timezoneUpdate( name, offsetMoment ){
+        function timezoneUpdate( name, utcOffsetMoment ){
             this.name = name || this.name || this.id;
-            this.offsetMoment = offsetMoment || this.offsetMoment || moment();
-            var offset = 0; 
+            this.utcOffsetMoment = utcOffsetMoment || this.utcOffsetMoment || moment();
+            var utcOffset = 0;
             switch (this.id){
-                case 'local': offset = (new Date()).getTimezoneOffset();    break;
-                case 'utc'  : offset = null; break;
-                default     : offset = window.moment.tz.zone(this.id).offset( this.offsetMoment ); break;
+                case 'local': utcOffset = (new Date()).getTimezoneOffset();    break;
+                case 'utc'  : utcOffset = null; break;
+                default     : utcOffset = window.moment.tz.zone(this.id).utcOffset( this.utcOffsetMoment ); break;
             }
-            this.offset = offset;                      
+            this.utcOffset = utcOffset;
             this.fullName = this.name;
-            if (offset !== null){
-                this.fullName += ' (UTC' + (offset<=0?'+':'-');
-                offset = Math.abs(offset);        
-                var h = Math.floor(offset / 60),
-                    m = offset % 60;
+            if (utcOffset !== null){
+                this.fullName += ' (UTC' + (utcOffset<=0?'+':'-');
+                utcOffset = Math.abs(utcOffset);
+                var h = Math.floor(utcOffset / 60),
+                    m = utcOffset % 60;
                 this.fullName += (h<10?'0':'') + h + ':' + (m<10?'0':'') + m + ')';
             }
         }
-    
-    moment.sfAddTimezone = function( options, offsetMoment ){ 
+
+    moment.sfAddTimezone = function( options, utcOffsetMoment ){
         var THIS = this;
         if ($.isArray( options ))
-            $.each( options, function( index, opt ){ THIS.sfAddTimezone( opt, offsetMoment ); } );
-        else { 
+            $.each( options, function( index, opt ){ THIS.sfAddTimezone( opt, utcOffsetMoment ); } );
+        else {
             options.update = timezoneUpdate;
-            options.update( null, offsetMoment );
+            options.update( null, utcOffsetMoment );
             namespace.timezoneList.push(options);
         }
     };
@@ -18594,7 +19117,7 @@ return hooks;
 
     /*******************************************************************
     moment.sfDateFormatList
-    Return a array of available formats. 
+    Return a array of available formats.
     includeCodeFunc = function( code ): optional - return true or false to include or exclude a format with code from the list
     ********************************************************************/
     moment.sfDateFormatList = function( includeCodeFunc ){
@@ -18603,7 +19126,7 @@ return hooks;
         for (i=0; i<dateFormatList.length; i++ ){
             dateFormat = dateFormatList[i];
             if (includeCodeFunc( dateFormat.code ) ){
-                result.push( dateFormat[ namespace.options.date ] );              
+                result.push( dateFormat[ namespace.options.date ] );
             }
         }
         return result;
@@ -18614,7 +19137,7 @@ return hooks;
     Initialize the options and the list of time-zones
     Only need to be call if `options.text` is changed
     ********************************************************************/
-    moment.sfInit = function( options ){ 
+    moment.sfInit = function( options ){
         this.sfSetFormat( options );
 
         if (namespace.timezoneList.length){
@@ -18631,7 +19154,7 @@ return hooks;
     };
 
     moment.sfInit();
-    
+
 
     //Moment.prototype.method == moment.fn.method
 
@@ -18639,7 +19162,7 @@ return hooks;
     moment.fn.tzMoment
     Return the moment adjusted to `timezone` or the time-zone set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.tzMoment = function( timezone ) { 
+    moment.fn.tzMoment = function( timezone ) {
         timezone = timezone || namespace.options.timezone;
         if (timezone == 'local') return this.local();
         if (timezone == 'utc') return this.utc();
@@ -18668,7 +19191,7 @@ return hooks;
     moment.fn.dateFormat
     Return a formatted date string. The format is given by `options` or the options set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.dateFormat = function( options ) { 
+    moment.fn.dateFormat = function( options ) {
         return this._sfAnyFormat( options, function(){
             return this.format( namespace.dateFormat );
         });
@@ -18678,7 +19201,7 @@ return hooks;
     moment.fn.timeFormat
     Return a formatted time string. The format is given by `options` or the options set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.timeFormat = function( options ) { 
+    moment.fn.timeFormat = function( options ) {
         return this._sfAnyFormat( options, function(){
             return this.format( namespace.timeFormat );
         });
@@ -18688,7 +19211,7 @@ return hooks;
     moment.fn.hourFormat
     Return a formatted hour string. The format is given by `options` or the options set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.hourFormat = function( options ) { 
+    moment.fn.hourFormat = function( options ) {
         return this._sfAnyFormat( options, function(){
             return this.format( namespace.hourFormat );
         });
@@ -18699,7 +19222,7 @@ return hooks;
     moment.fn.dateTimeFormat
     Return a formatted date and time string. The format is given by `options` or the options set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.dateTimeFormat = function( options ) { 
+    moment.fn.dateTimeFormat = function( options ) {
         return this.dateFormat( options ) + ' ' + this.timeFormat( options );
     };
 
@@ -18707,7 +19230,7 @@ return hooks;
     moment.fn.relativeFormat
     Return a relative time string. The format is given by `options` or the options set with `moment.sfSetFormat`
     ********************************************************************/
-    moment.fn.relativeFormat = function( options ) { 
+    moment.fn.relativeFormat = function( options ) {
         return this._sfAnyFormat( options, function(){
             var mom = moment( this ).round(1, 'minutes'),
                 now = moment().round(1, 'minutes'),
