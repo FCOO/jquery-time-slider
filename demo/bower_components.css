@@ -1,10 +1,10 @@
 /***********************************************
 jquery-base-slider.scss, Description from README.md
 
-    (c) 2015, Niels Holt
+    (c) 2015, FCOO
 
-    https://github.com/NielsHolt/jquery-base-slider
-    https://github.com/NielsHolt
+    https://github.com/fcoo/jquery-base-slider
+    https://github.com/fcoo
 
 There are four different types of sliders:
 default, small, round and range
@@ -14,10 +14,6 @@ The type is set by adding the same class-name to the outer <span> eq. <span clas
 The scss is divided in two parts: First the common part equal for all types and then a specified part for the different types
 
 ************************************************/
-@font-face {
-  font-family: "range-slider";
-  src: url("fonts/range-slider.woff?15990756") format("woff"); }
-
 .base-slider-container-outer {
   left: 0;
   width: 100%;
@@ -42,7 +38,7 @@ COMMON STYLE
     outline: none !important;
     box-sizing: border-box;
     height: 0.375rem;
-    border: solid 0.0625rem #afb3bb;
+    border: 0.0625rem solid #afb3bb;
     border-bottom-right-radius: 0.125rem;
     border-top-right-radius: 0.125rem;
     border-bottom-left-radius: 0.125rem;
@@ -76,7 +72,7 @@ COMMON STYLE
     left: 0;
     width: 0;
     height: 0.375rem;
-    border: solid 0.0625rem #afb3bb;
+    border: 0.0625rem solid #afb3bb;
     border-bottom-left-radius: 0.125rem;
     border-top-left-radius: 0.125rem;
     border-right: none;
@@ -86,8 +82,8 @@ COMMON STYLE
       background-color: inherit; }
   .base-slider-container.impact-line .bar, .base-slider-container.impact-line-reverse .bar {
     background-color: yellow; }
-  .base-slider-container.not-clicable .line,
-  .base-slider-container.not-clicable .bar,
+  .base-slider-container.not-clickable .line,
+  .base-slider-container.not-clickable .bar,
   .base-slider-container.disabled .line,
   .base-slider-container.disabled .bar,
   .base-slider-container.read-only .line,
@@ -105,44 +101,14 @@ COMMON STYLE
       z-index: 12; }
   .base-slider-container.active .slider {
     cursor: pointer; }
-  .base-slider-container.range .slider,
   .base-slider-container .pin {
     position: absolute;
     cursor: default !important;
     z-index: 100;
-    font-family: "range-slider";
-    font-size: 0.375rem;
-    font-style: normal;
-    font-weight: normal;
-    font-variant: normal;
-    text-transform: none;
-    speak: none;
-    text-decoration: inherit;
-    display: inline-block;
-    text-align: center;
-    line-height: 1em; }
-    .base-slider-container.range .slider.from,
-    .base-slider-container .pin.from {
-      text-align: right; }
-      .base-slider-container.range .slider.from:before,
-      .base-slider-container .pin.from:before {
-        content: '\e801'; }
-    .base-slider-container.range .slider.to,
-    .base-slider-container .pin.to {
-      text-align: left; }
-      .base-slider-container.range .slider.to:before,
-      .base-slider-container .pin.to:before {
-        content: '\e800'; }
-    .base-slider-container.range .slider.pin,
-    .base-slider-container .pin.pin {
-      height: 0.6428571429rem !important;
-      margin-top: -0.5142857143rem;
-      font-size: 0.6428571429rem;
-      text-align: center;
-      background-image: none !important; }
-      .base-slider-container.range .slider.pin:before,
-      .base-slider-container .pin.pin:before {
-        content: '\e802'; }
+    height: 0.6428571429rem !important;
+    margin-top: -0.5142857143rem;
+    font-size: 0.6428571429rem;
+    text-align: center; }
   .base-slider-container .marker-min, .base-slider-container .marker-max {
     position: absolute;
     display: block;
@@ -153,8 +119,8 @@ COMMON STYLE
     line-height: 1.333;
     text-shadow: none;
     top: 0rem;
-    padding: 0.0625rem 0.1875rem;
-    border: solid 0.0625rem #afb3bb;
+    padding: 0.0625rem 0.3125rem;
+    border: 0.0625rem solid #afb3bb;
     background-color: #d1d6e0;
     border-radius: 0.125rem; }
     .base-slider-container .marker-min.marker-min, .base-slider-container .marker-max.marker-min {
@@ -180,7 +146,8 @@ COMMON STYLE
     top: 0rem;
     background: white;
     border: 0.0625rem solid black;
-    border-radius: 0.25rem; }
+    border-radius: 0.25rem;
+    box-shadow: 1px 1px 1px 0px rgba(255, 255, 255, 0.75), -1px 1px 1px 0px rgba(255, 255, 255, 0.75); }
     .base-slider-container.marker-frame .marker-from:after,
     .base-slider-container.marker-frame .marker-to:after,
     .base-slider-container.marker-frame .marker-single:after {
@@ -225,6 +192,7 @@ COMMON STYLE
     position: absolute;
     z-index: 2;
     top: 0.6875rem;
+    background-color: transparent;
     left: 0;
     white-space: nowrap;
     text-align: center;
@@ -244,35 +212,38 @@ COMMON STYLE
       font-style: italic; }
     .grid .grid-text.clickable {
       cursor: pointer; }
+    .grid .grid-text.frame {
+      border: 0.0625rem solid #afb3bb;
+      border-radius: 0.25rem;
+      padding: 0.0625rem 0.3125rem;
+      margin-left: -0.375rem;
+      margin-top: -0.125rem;
+      line-height: 1; }
   .grid .grid-color {
     position: absolute;
     z-index: 1;
     top: 0;
     height: 0.5625rem;
-    font-family: "range-slider";
-    font-size: 0.675rem;
-    font-style: normal;
-    font-weight: normal;
-    font-variant: normal;
-    text-transform: none;
-    speak: none;
-    text-decoration: inherit;
+    font-size: 1.125rem;
     text-align: center;
     line-height: 0.5625rem;
     overflow: hidden; }
     .grid .grid-color.gt_max {
-      width: 0.5625rem;
       left: 100%;
-      text-align: right; }
-      .grid .grid-color.gt_max:before {
-        content: '\e803'; }
+      width: 0;
+      height: 0;
+      border: 0 solid transparent;
+      border-bottom-width: 0.28125rem;
+      border-top-width: 0.28125rem;
+      border-left: 0.5625rem solid black; }
     .grid .grid-color.lt_min {
-      width: 0.5625rem;
       left: -0.5625rem;
-      transform: scaleX(-1);
-      text-align: left; }
-      .grid .grid-color.lt_min:before {
-        content: '\e803'; }
+      width: 0;
+      height: 0;
+      border: 0 solid transparent;
+      border-top-width: 0.28125rem;
+      border-bottom-width: 0.28125rem;
+      border-right: 0.5625rem solid black; }
 
 .disabled {
   opacity: 0.4; }
@@ -297,71 +268,209 @@ COMMON STYLE
 /***************************************************************
 STYLE FOR SPECIFIC TYPE
 ***************************************************************/
-.base-slider-container.default {
+.base-slider-container.horizontal {
   /****************************************************
         Special case for no marker and pin: 
         Adjust all top-position by adding top-margin if the pin is heigher than the slider
         ****************************************************/ }
-  .base-slider-container.default .line, .base-slider-container.default .bar {
-    top: 1.645625rem; }
-  .base-slider-container.default .slider {
+  .base-slider-container.horizontal .line, .base-slider-container.horizontal .bar {
+    top: 1.770625rem; }
+  .base-slider-container.horizontal .slider {
     box-sizing: border-box;
-    width: 0.6875rem;
-    height: 1.125rem;
-    background-image: url("images/slider.default.png"); }
-  .base-slider-container.default .pin {
-    top: 1.645625rem; }
-  .base-slider-container.default.active .slider.state_hover, .base-slider-container.default.active .slider:hover {
-    background-image: url("images/slider.default.hover.png"); }
-  .base-slider-container.default .grid {
-    top: 2.395625rem; }
-  .base-slider-container.default.ticks-on-line .grid {
-    top: 1.645625rem; }
-  .base-slider-container.default.ticks-on-line.no-marker .grid {
-    top: 0.375rem; }
-  .base-slider-container.default.no-marker .line,
-  .base-slider-container.default.no-marker .bar,
-  .base-slider-container.default.no-marker .pin {
-    top: 0.375rem !important; }
-  .base-slider-container.default.no-marker .slider {
+    width: 0.8461538462rem;
+    height: 1.375rem;
+    background-image: url("images/slider.horizontal.svg"); }
+  .base-slider-container.horizontal .pin {
+    top: 1.770625rem;
+    width: 0.8461538462rem; }
+  .base-slider-container.horizontal.active .slider.state_hover, .base-slider-container.horizontal.active .slider:hover {
+    background-image: url("images/slider.horizontal.hover.svg"); }
+  .base-slider-container.horizontal .grid {
+    top: 2.645625rem; }
+  .base-slider-container.horizontal.ticks-on-line .grid {
+    top: 1.770625rem; }
+  .base-slider-container.horizontal.ticks-on-line.no-marker .grid {
+    top: 0.5rem; }
+  .base-slider-container.horizontal.no-marker .line,
+  .base-slider-container.horizontal.no-marker .bar,
+  .base-slider-container.horizontal.no-marker .pin {
+    top: 0.5rem !important; }
+  .base-slider-container.horizontal.no-marker .slider {
     top: 0rem; }
-  .base-slider-container.default.no-marker .grid {
-    top: 1.125rem; }
-  .base-slider-container.default.no-marker.has-pin {
-    margin-top: 0.1392857143rem; }
+  .base-slider-container.horizontal.no-marker .grid {
+    top: 1.375rem; }
+  .base-slider-container.horizontal.no-marker.has-pin {
+    margin-top: 0.0142857143rem; }
 
-.base-slider-container.small {
+.base-slider-container.vertical {
   /****************************************************
         Special case for no marker and pin: 
         Adjust all top-position by adding top-margin if the pin is heigher than the slider
         ****************************************************/ }
-  .base-slider-container.small .line, .base-slider-container.small .bar {
-    top: 1.395625rem; }
-  .base-slider-container.small .slider {
+  .base-slider-container.vertical .line, .base-slider-container.vertical .bar {
+    top: 1.5062019231rem; }
+  .base-slider-container.vertical .slider {
     box-sizing: border-box;
-    width: 0.8125rem;
-    height: 0.9375rem;
-    background-image: url("images/slider.small.png"); }
-  .base-slider-container.small .pin {
-    top: 1.395625rem; }
-  .base-slider-container.small.active .slider.state_hover, .base-slider-container.small.active .slider:hover {
-    background-image: url("images/slider.small.hover.png"); }
-  .base-slider-container.small .grid {
-    top: 2.208125rem; }
-  .base-slider-container.small.ticks-on-line .grid {
-    top: 1.395625rem; }
-  .base-slider-container.small.ticks-on-line.no-marker .grid {
-    top: 0.125rem; }
-  .base-slider-container.small.no-marker .line,
-  .base-slider-container.small.no-marker .bar,
-  .base-slider-container.small.no-marker .pin {
-    top: 0.125rem !important; }
-  .base-slider-container.small.no-marker .slider {
+    width: 1.375rem;
+    height: 0.8461538462rem;
+    background-image: url("images/slider.vertical.svg"); }
+  .base-slider-container.vertical .pin {
+    top: 1.5062019231rem;
+    width: 1.375rem; }
+  .base-slider-container.vertical.active .slider.state_hover, .base-slider-container.vertical.active .slider:hover {
+    background-image: url("images/slider.vertical.hover.svg"); }
+  .base-slider-container.vertical .grid {
+    top: 2.1167788462rem; }
+  .base-slider-container.vertical.ticks-on-line .grid {
+    top: 1.5062019231rem; }
+  .base-slider-container.vertical.ticks-on-line.no-marker .grid {
+    top: 0.2355769231rem; }
+  .base-slider-container.vertical.no-marker .line,
+  .base-slider-container.vertical.no-marker .bar,
+  .base-slider-container.vertical.no-marker .pin {
+    top: 0.2355769231rem !important; }
+  .base-slider-container.vertical.no-marker .slider {
     top: 0rem; }
-  .base-slider-container.small.no-marker .grid {
-    top: 0.9375rem; }
-  .base-slider-container.small.no-marker.has-pin {
-    margin-top: 0.3892857143rem; }
+  .base-slider-container.vertical.no-marker .grid {
+    top: 0.8461538462rem; }
+  .base-slider-container.vertical.no-marker.has-pin {
+    margin-top: 0.2787087912rem; }
+
+.base-slider-container.down {
+  /****************************************************
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
+  .base-slider-container.down .line, .base-slider-container.down .bar {
+    top: 1.770625rem; }
+  .base-slider-container.down .slider {
+    box-sizing: border-box;
+    width: 0.8551236749rem;
+    height: 1.375rem;
+    background-image: url("images/slider.down.svg"); }
+  .base-slider-container.down .pin {
+    top: 1.770625rem;
+    width: 0.8551236749rem; }
+  .base-slider-container.down.active .slider.state_hover, .base-slider-container.down.active .slider:hover {
+    background-image: url("images/slider.down.hover.svg"); }
+  .base-slider-container.down .grid {
+    top: 2.645625rem; }
+  .base-slider-container.down.ticks-on-line .grid {
+    top: 1.770625rem; }
+  .base-slider-container.down.ticks-on-line.no-marker .grid {
+    top: 0.5rem; }
+  .base-slider-container.down.no-marker .line,
+  .base-slider-container.down.no-marker .bar,
+  .base-slider-container.down.no-marker .pin {
+    top: 0.5rem !important; }
+  .base-slider-container.down.no-marker .slider {
+    top: 0rem; }
+  .base-slider-container.down.no-marker .grid {
+    top: 1.375rem; }
+  .base-slider-container.down.no-marker.has-pin {
+    margin-top: 0.0142857143rem; }
+
+.base-slider-container.up {
+  /****************************************************
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
+  .base-slider-container.up .line, .base-slider-container.up .bar {
+    top: 1.770625rem; }
+  .base-slider-container.up .slider {
+    box-sizing: border-box;
+    width: 0.8551236749rem;
+    height: 1.375rem;
+    background-image: url("images/slider.up.svg"); }
+  .base-slider-container.up .pin {
+    top: 1.770625rem;
+    width: 0.8551236749rem; }
+  .base-slider-container.up.active .slider.state_hover, .base-slider-container.up.active .slider:hover {
+    background-image: url("images/slider.up.hover.svg"); }
+  .base-slider-container.up .grid {
+    top: 2.645625rem; }
+  .base-slider-container.up.ticks-on-line .grid {
+    top: 1.770625rem; }
+  .base-slider-container.up.ticks-on-line.no-marker .grid {
+    top: 0.5rem; }
+  .base-slider-container.up.no-marker .line,
+  .base-slider-container.up.no-marker .bar,
+  .base-slider-container.up.no-marker .pin {
+    top: 0.5rem !important; }
+  .base-slider-container.up.no-marker .slider {
+    top: 0rem; }
+  .base-slider-container.up.no-marker .grid {
+    top: 1.375rem; }
+  .base-slider-container.up.no-marker.has-pin {
+    margin-top: 0.0142857143rem; }
+
+.base-slider-container.right {
+  /****************************************************
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
+  .base-slider-container.right .line, .base-slider-container.right .bar {
+    top: 1.5106868375rem; }
+  .base-slider-container.right .slider {
+    box-sizing: border-box;
+    width: 1.375rem;
+    height: 0.8551236749rem;
+    background-image: url("images/slider.right.svg"); }
+  .base-slider-container.right .pin {
+    top: 1.5106868375rem;
+    width: 1.375rem; }
+  .base-slider-container.right.active .slider.state_hover, .base-slider-container.right.active .slider:hover {
+    background-image: url("images/slider.right.hover.svg"); }
+  .base-slider-container.right .grid {
+    top: 2.1257486749rem; }
+  .base-slider-container.right.ticks-on-line .grid {
+    top: 1.5106868375rem; }
+  .base-slider-container.right.ticks-on-line.no-marker .grid {
+    top: 0.2400618375rem; }
+  .base-slider-container.right.no-marker .line,
+  .base-slider-container.right.no-marker .bar,
+  .base-slider-container.right.no-marker .pin {
+    top: 0.2400618375rem !important; }
+  .base-slider-container.right.no-marker .slider {
+    top: 0rem; }
+  .base-slider-container.right.no-marker .grid {
+    top: 0.8551236749rem; }
+  .base-slider-container.right.no-marker.has-pin {
+    margin-top: 0.2742238768rem; }
+
+.base-slider-container.left {
+  /****************************************************
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
+  .base-slider-container.left .line, .base-slider-container.left .bar {
+    top: 1.5106868375rem; }
+  .base-slider-container.left .slider {
+    box-sizing: border-box;
+    width: 1.375rem;
+    height: 0.8551236749rem;
+    background-image: url("images/slider.left.svg"); }
+  .base-slider-container.left .pin {
+    top: 1.5106868375rem;
+    width: 1.375rem; }
+  .base-slider-container.left.active .slider.state_hover, .base-slider-container.left.active .slider:hover {
+    background-image: url("images/slider.left.hover.svg"); }
+  .base-slider-container.left .grid {
+    top: 2.1257486749rem; }
+  .base-slider-container.left.ticks-on-line .grid {
+    top: 1.5106868375rem; }
+  .base-slider-container.left.ticks-on-line.no-marker .grid {
+    top: 0.2400618375rem; }
+  .base-slider-container.left.no-marker .line,
+  .base-slider-container.left.no-marker .bar,
+  .base-slider-container.left.no-marker .pin {
+    top: 0.2400618375rem !important; }
+  .base-slider-container.left.no-marker .slider {
+    top: 0rem; }
+  .base-slider-container.left.no-marker .grid {
+    top: 0.8551236749rem; }
+  .base-slider-container.left.no-marker.has-pin {
+    margin-top: 0.2742238768rem; }
 
 .base-slider-container.round {
   /****************************************************
@@ -369,32 +478,65 @@ STYLE FOR SPECIFIC TYPE
         Adjust all top-position by adding top-margin if the pin is heigher than the slider
         ****************************************************/ }
   .base-slider-container.round .line, .base-slider-container.round .bar {
-    top: 1.458125rem; }
+    top: 1.645625rem; }
   .base-slider-container.round .slider {
     box-sizing: border-box;
-    width: 0.75rem;
-    height: 0.75rem;
-    background-image: url("images/slider.round.png"); }
+    width: 1.125rem;
+    height: 1.125rem;
+    background-image: url("images/slider.round.svg"); }
   .base-slider-container.round .pin {
-    top: 1.458125rem; }
+    top: 1.645625rem;
+    width: 1.125rem; }
   .base-slider-container.round.active .slider.state_hover, .base-slider-container.round.active .slider:hover {
-    background-image: url("images/slider.round.hover.png"); }
+    background-image: url("images/slider.round.hover.svg"); }
   .base-slider-container.round .grid {
-    top: 2.020625rem; }
+    top: 2.395625rem; }
   .base-slider-container.round.ticks-on-line .grid {
-    top: 1.458125rem; }
+    top: 1.645625rem; }
   .base-slider-container.round.ticks-on-line.no-marker .grid {
-    top: 0.1875rem; }
+    top: 0.375rem; }
   .base-slider-container.round.no-marker .line,
   .base-slider-container.round.no-marker .bar,
   .base-slider-container.round.no-marker .pin {
-    top: 0.1875rem !important; }
+    top: 0.375rem !important; }
   .base-slider-container.round.no-marker .slider {
     top: 0rem; }
   .base-slider-container.round.no-marker .grid {
-    top: 0.75rem; }
+    top: 1.125rem; }
   .base-slider-container.round.no-marker.has-pin {
-    margin-top: 0.3267857143rem; }
+    margin-top: 0.1392857143rem; }
+
+.base-slider-container.fixed {
+  /****************************************************
+        Special case for no marker and pin: 
+        Adjust all top-position by adding top-margin if the pin is heigher than the slider
+        ****************************************************/ }
+  .base-slider-container.fixed .line, .base-slider-container.fixed .bar {
+    top: 1.395625rem; }
+  .base-slider-container.fixed .slider {
+    box-sizing: border-box;
+    width: 0.6996466431rem;
+    height: 1.125rem;
+    background-image: url("images/slider.fixed.svg"); }
+  .base-slider-container.fixed .pin {
+    top: 1.395625rem;
+    width: 0.6996466431rem; }
+  .base-slider-container.fixed .grid {
+    top: 1.770625rem; }
+  .base-slider-container.fixed.ticks-on-line .grid {
+    top: 1.395625rem; }
+  .base-slider-container.fixed.ticks-on-line.no-marker .grid {
+    top: 0.125rem; }
+  .base-slider-container.fixed.no-marker .line,
+  .base-slider-container.fixed.no-marker .bar,
+  .base-slider-container.fixed.no-marker .pin {
+    top: 0.125rem !important; }
+  .base-slider-container.fixed.no-marker .slider {
+    top: 0rem; }
+  .base-slider-container.fixed.no-marker .grid {
+    top: 1.125rem; }
+  .base-slider-container.fixed.no-marker.has-pin {
+    margin-top: 0.3892857143rem; }
 
 .base-slider-container.range {
   /****************************************************
@@ -407,8 +549,13 @@ STYLE FOR SPECIFIC TYPE
     box-sizing: border-box;
     width: 0.375rem;
     height: 0.375rem; }
+    .base-slider-container.range .slider.from {
+      background-image: url("images/slider.range.from.svg"); }
+    .base-slider-container.range .slider.to {
+      background-image: url("images/slider.range.to.svg"); }
   .base-slider-container.range .pin {
-    top: 1.270625rem; }
+    top: 1.270625rem;
+    width: 0.375rem; }
   .base-slider-container.range .grid {
     top: 1.645625rem; }
   .base-slider-container.range.ticks-on-line .grid {
@@ -425,34 +572,3 @@ STYLE FOR SPECIFIC TYPE
     top: 0.375rem; }
   .base-slider-container.range.no-marker.has-pin {
     margin-top: 0.5142857143rem; }
-
-.base-slider-container.fixed {
-  /****************************************************
-        Special case for no marker and pin: 
-        Adjust all top-position by adding top-margin if the pin is heigher than the slider
-        ****************************************************/ }
-  .base-slider-container.fixed .line, .base-slider-container.fixed .bar {
-    top: 1.395625rem; }
-  .base-slider-container.fixed .slider {
-    box-sizing: border-box;
-    width: 0.6875rem;
-    height: 1.125rem;
-    background-image: url("images/slider.fixed.png"); }
-  .base-slider-container.fixed .pin {
-    top: 1.395625rem; }
-  .base-slider-container.fixed .grid {
-    top: 1.833125rem; }
-  .base-slider-container.fixed.ticks-on-line .grid {
-    top: 1.395625rem; }
-  .base-slider-container.fixed.ticks-on-line.no-marker .grid {
-    top: 0.125rem; }
-  .base-slider-container.fixed.no-marker .line,
-  .base-slider-container.fixed.no-marker .bar,
-  .base-slider-container.fixed.no-marker .pin {
-    top: 0.125rem !important; }
-  .base-slider-container.fixed.no-marker .slider {
-    top: 0rem; }
-  .base-slider-container.fixed.no-marker .grid {
-    top: 1.125rem; }
-  .base-slider-container.fixed.no-marker.has-pin {
-    margin-top: 0.3892857143rem; }

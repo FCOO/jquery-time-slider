@@ -31,7 +31,6 @@ options:
 (function ($, window, document, undefined) {
     "use strict";
 
-
     //roundMoment( m )
     function roundMoment( m ){ return m.startOf('hour');}
 
@@ -62,6 +61,11 @@ options:
         defaultOptions = {
             grid              : true,
             gridDistances     : [1, 2, 3, 6, 12, 24, 48],
+
+            step : 1, // 1 hour
+            keyboard_shift_step_factor: 6,  //Step 6 hour with shift or ctrl
+            keyboard_page_step_factor : 24, //Step 24 h with PgUp og PgDn
+
             step_offset_moment: null,
             format: {
                 showRelative: false,
@@ -108,7 +112,9 @@ options:
             this.options.step_offset = (value - this.options.min) % this.options.step;
         }
 
-        //Create BaseSlider
+        //Create BaseSlider - dont create grid here
+        var optionsGrid = this.options.grid;
+        this.options.grid = false;
         window.BaseSlider.call(this, input, this.options, plugin_count );
 
         //Set from/fromMoment and to/toMoment
@@ -118,6 +124,7 @@ options:
             this.setToValue( setValueAndMoment( this.options.to, this.options.toMoment ).value );
 
         //Sets the format and create the grids
+        this.options.grid = optionsGrid;
         this.setFormat();
     };
 
@@ -183,10 +190,9 @@ options:
                     dateFormatOk,
                     textWidth;
 
-            this.appendGridContainer();
-            this.calcGridMargin();
+            this.preAppendGrid();
 
-            this.currentGridContainer.addClass("text-between-ticks");
+            this.$currentGridContainer.addClass("text-between-ticks");
             this._prettify_text = this._prettify_text_absolute_date;
 
             //Setting tick at midnight
@@ -277,6 +283,8 @@ options:
                     }
                 }
             }
+
+            this.postAppendGrid();
         },
 
         //appendStandardGrid
@@ -285,7 +293,7 @@ options:
             this.cache.$grid = this.cache.$container.find(".grid").first();
             this.cache.$grid.siblings('.grid').remove();
             this.cache.$grid.empty();
-            this.currentGridContainer = null;
+            this.$currentGridContainer = null;
 
             //Create all grid
             if (this.options.format.showRelative){
@@ -310,7 +318,8 @@ options:
                     this.options.major_ticks_offset = -1*now.tzMoment( 'utc' ).hours();
                     var saveTimezone = this.options.format.timezone;
                     this.options.format.timezone = 'utc';
-                    var textOptions = {italic:true, minor:true}, tickOptions = {color:'#555555'};
+                    var textOptions = {italic:true, minor:true},
+                        tickOptions = {color:'#555555'};
                     this._prettify = this._prettify_absolute;
                     this._prettify_text = this._prettify_text_absolute;
                     this._appendStandardGrid( textOptions, tickOptions );
@@ -322,7 +331,6 @@ options:
 
         //_updateOptionsFormat
         _updateOptionsFormat: function( format ){
-//            this.options.format = $.extend( defaultOptionsFormat, this.options.format, format || {}  );
             $.extend( true, this.options.format, format || {}  );
 
             //Merge current moment.simpleFormat.options into this.options.format

@@ -10470,6 +10470,55 @@ return jQuery;
 	}
 }( jQuery ));
 ;
+/****************************************************************************
+	jquery-font-size-event.js,
+
+	(c) 2017, FCOO
+
+	https://github.com/FCOO/jquery-font-size-event
+	https://github.com/FCOO
+
+****************************************************************************/
+
+(function ($, window/*, document, undefined*/) {
+	"use strict";
+
+
+    $.DEFAULT_BROWSER_FONT_SIZE = '16px';
+
+    var eventId = 'fontSizeChanged',
+        refHeightFactor = 2,
+        $fontSizeDetectElement =
+            $('<span/>')
+                .html('S&nbsp;<br>&nbsp;')
+                .css({
+                    'position' : 'absolute',
+                    'top'      : '-1000px',
+                    'font-size': '1rem',
+                    'width'    : refHeightFactor+'rem',
+                    'height'   : refHeightFactor+'rem'
+                })
+                .appendTo( $('body') );
+
+
+    window.addResizeListener( $fontSizeDetectElement.get(0), function(){
+        var refHeightPx = parseFloat( $fontSizeDetectElement.height() ),
+            fontSize = {
+                fontSizeRem    : 1,
+                fontSizePx     : refHeightPx/refHeightFactor,
+                fontSizePercent: Math.round(100*refHeightPx/refHeightFactor/parseFloat( $.DEFAULT_BROWSER_FONT_SIZE ))
+            };
+
+        $fontSizeDetectElement.trigger( eventId, fontSize );
+    });
+
+
+    $.onFontSizeChanged = function( handler, context ){
+        $fontSizeDetectElement.on( eventId, $.proxy( handler, context ) );
+    };
+
+}(jQuery, this, document));
+;
 /*!
  * jQuery Mousewheel 3.1.13
  *
@@ -10696,10 +10745,10 @@ return jQuery;
 /****************************************************************************
     jquery-base-slider, Description from README.md
 
-    (c) 2015, Niels Holt
+    (c) 2015, FCOO
 
-    https://github.com/NielsHolt/jquery-base-slider
-    https://github.com/NielsHolt
+    https://github.com/fcoo/jquery-base-slider
+    https://github.com/fcoo
 
 ****************************************************************************/
 (function ($, window, document, undefined) {
@@ -10711,13 +10760,13 @@ return jQuery;
     var defaultOptions = {
         //Type and slider
         type        : "single",  // Choose single or double, could be "single" - for one handle, or "double" for two handles
-        slider      : "default", // Choose slider type, could be "default","small","round", "range", or '"fixed"
+        slider      : "down",    // Choose slider type, could be "horizontal", "vertical", "down", "up", "left", "right", "round", "range", or "fixed"
         read_only   : false,     // Locks slider and makes it inactive.
         disable     : false,     // Locks slider and makes it disable ("dissy")
         fixed_handle: false,     // Special version where the slider is fixed and the grid are moved left or right to select value. slider is set to "single"
                                  // A value for options.width OR options.value_distances must be provided
-        clicable    : true,      // Allows click on lables and line. Default = true except for fixed_handle:true where default = false
-        mousewheel  : false,     // Only for type:'single': Adds mousewheel-event to the parent-element of the slider. Works best if the parent-element only contains the slider and has a fixed height and width
+        clickable   : true,      // Allows click on lables and line. Default = true except for fixed_handle:true where default = false
+        mousewheel  : false,     // Adds mousewheel-event to the parent-element of the slider. Works best if the parent-element only contains the slider and has a fixed height and width
 
         //Dimensions (only for options.fixed_handle: true)
         width          : 0, // The total width of the slider (in px for rem = 16px)
@@ -10737,8 +10786,9 @@ return jQuery;
         to_min  : null,     // Set the minimum limit for right handle
         to_max  : null,     // Set the maximum limit for right handle
 
-        pin_value: null,    // The value for the pin. Use  setPin( value [, color] )  to change the value dynamical
-        pin_color: 'black', // The color of the pin. Use  setPin( value , color )  to change the color dynamical
+        pin_value: null,            // The value for the pin. Use  setPin( value [, color] )  to change the value dynamical
+        pin_color: 'black',         // The color of the pin. Use  setPin( value , color )  to change the color dynamical
+        pin_icon : 'fa-map-marker', // The class-name from Fontawasome setting the icon used as pin
 
         //Steps
         step        : 1,    // Set sliders step. Always > 0. Could be fractional.
@@ -10753,13 +10803,13 @@ return jQuery;
         impact_line        : false, // The line on a double slider is coloured as<br>green-[slider]-yellow-[slider]-red
         impact_line_reverse: false, // The line on a double slider is colored as<br>red-[slider]-yellow-[slider]-green
         bar_color          : null,  // The color of the bar
-        hide_bar_color     : false, // The bar gets same color as the line
+        show_bar_color     : true, // The bar gets same color as the line
 
         //Grid (ticks and text)
         grid              : false,                      // Enables grid of values.
         major_ticks       : null,                       // Nummber of  step  between major ticks. Default=null=> Calculated automatic
         major_ticks_offset: 0,                          // Offset for the values where a major ticks is placed. Eq. Min=0, max=100 => major ticks on values=0,10,20,..,90,100. With  major_ticks_offset:4  the major ticks would be placed on values=4,14,24,...,84,94
-        hide_minor_ticks  : false,                      // Hide minor ticks.
+        show_minor_ticks  : true,                      // Show minor ticks.
         gridDistances     : [1, 2, 5, 10, 20, 50, 100], // Distance between major ticks. E.g. Slider with hours could use [1, 2, 4, 12, 24]
         ticks_on_line     : false,                      // Place the ticks in the (first) grid on the line with the sliders.
         major_ticks_factor: 1,                          // Not documented
@@ -10767,11 +10817,11 @@ return jQuery;
         grid_colors       : null, //Array of { [fromValue, ]value, color } to set colors on the bar. If no fromValue is given the the previous value is used.
                                   //If value == null or < min => A triangle is added to the left indicating 'below min'.
                                   //If value > max            =>  A triangle is added to the right indicating 'above max'.
-
+        textColors        : null, //Array of {value, className, color, backgroundColor} to set frame around and className, color, backgroundColor for the label and with value
 
         //Labels above slider
-        hide_min_max: true,     // Hides min and max labels
-        hide_from_to: false,    // Hide from and to labels
+        show_min_max: false,    // Show min and max labels
+        show_from_to: true,     // Show from and to labels
         marker_frame: false,    // Frame the from- and to-marker
 
         //Adjust text and labels
@@ -10809,6 +10859,10 @@ return jQuery;
         onUpdate: null  // Callback. Is called than slider is modified by external methods  update  or  reset
     };
 
+    //'Global' text-element to be used by getTextWidth
+    var $outerTextElement = null,
+        textElement       = null;
+
 
     /************************************
     BaseSlider
@@ -10841,11 +10895,14 @@ return jQuery;
         // get config from options
         this.options = $.extend( {}, defaultOptions, options );
 
-        if (this.options.fixed_handle){
+        //Backward compatibility
+        if (options.slider == 'default')
+            options.slider = 'down';
+        if (options.slider == 'small')
+            options.slider = 'down';
+
+        if (this.options.fixed_handle)
             this.options.type = 'single';
-            if (options.clicable === undefined)
-                this.options.clicable = false;
-        }
 
         this.options.isSingle = (this.options.type == 'single');
         this.options.isInterval = (this.options.type == 'double');
@@ -10853,6 +10910,35 @@ return jQuery;
         if (this.options.isInterval){
             this.options.mousewheel = false;
         }
+
+        //Convert textColors = [] of {value, color, backgroundColor, className} to textColorRec = { value1: { color, backgroundColor, className }, value2: color, backgroundColor, className },...}
+        this.options.textColorRec = {};
+        var _this = this;
+        if (this.options.textColors)
+            $.each( this.options.textColors, function( index, rec ){
+                _this.options.textColorRec[ rec.value ] = rec;
+            });
+
+
+        //Create element outside DOM used to calc width of text-elements
+        this.$outerTextElement =
+            $outerTextElement ||
+            $('<div/>')
+                .addClass('grid')
+                .css({
+                    position: 'absolute',
+                    top     : -1000
+                })
+                .appendTo( $('body') );
+        $outerTextElement = this.$outerTextElement;
+
+        this.textElement =
+            textElement ||
+            $('<div/>')
+                .addClass('grid-text')
+                .appendTo( this.$outerTextElement )
+                .get(0);
+        textElement = this.textElement;
 
         this.validate();
 
@@ -10938,11 +11024,23 @@ return jQuery;
             p_single_left: 0
         };
 
-      this.init();
+        //Get font-size for the html
+        this.options.fontSize = parseFloat( $('html').css('font-size') || $('body').css('font-size') || $.DEFAULT_BROWSER_FONT_SIZE || '16px' );
 
+        this.init();
+
+        //Update slider when browser font-size is changed
+        $.onFontSizeChanged( this.onFontSizeChange, this );
     };
 
     window.BaseSlider.prototype = {
+        //onFontSizeChange - called when the font-size of the browser is chnaged
+        onFontSizeChange: function( event, fontSize ){
+            this.options.fontSize = parseFloat( fontSize.fontSizePx ) || this.options.fontSize;
+            this.update();
+        },
+
+        //init
         init: function (is_update) {
             this.options.total = this.options.max - this.options.min;
             this.options.oneP  = this.toFixed(100 / this.options.total);
@@ -11051,7 +11149,7 @@ return jQuery;
             if (this.options.isInterval)
                 this.cache.$lineLeft = $span('line-left', this.cache.$line);
 
-            if (!this.options.hide_from_to) {
+            if (this.options.show_from_to) {
                 this.cache.$single = $span('marker-single', this.cache.$bs);
                 if (this.options.isInterval){
                     this.cache.$from   = $span('marker-from',   this.cache.$bs);
@@ -11085,10 +11183,10 @@ return jQuery;
 
 
             if (this.options.has_pin)
-                this.cache.$s_pin = $span('slider pin', this.cache.$container);
+                this.cache.$s_pin = $span('pin fa', this.cache.$container);
 
             //Add class to set bar color same as line
-            if (this.options.hide_bar_color)
+            if (!this.options.show_bar_color)
                 this.cache.$bar.addClass('hide-bar-color');
 
             //Set alternative bar color
@@ -11100,7 +11198,7 @@ return jQuery;
                 this.cache.$container.addClass('marker-frame');
 
             //Adjust top-position if no marker is displayed
-            if (this.options.hide_min_max && this.options.hide_from_to)
+            if (!this.options.show_min_max && !this.options.show_from_to)
                 this.cache.$container.addClass("no-marker");
 
             //Adjust top-position of first grid if tick must be on the slider
@@ -11123,7 +11221,7 @@ return jQuery;
             }
 
             //Append grid(s)
-            this.currentGridContainer = null;
+            this.$currentGridContainer = null;
             if (this.options.grid)
                 this.appendGrid();
 
@@ -11143,8 +11241,8 @@ return jQuery;
                     this.cache.$input.prop('disabled', false);
                     this.bindEvents();
                 }
-            if (!this.options.clicable)
-                this.cache.$container.addClass("not-clicable");
+            if (!this.options.clickable || this.options.fixed_handle)
+                this.cache.$container.addClass("not-clickable");
         },
 
         //_offEvents
@@ -11158,8 +11256,14 @@ return jQuery;
 
         //remove
         remove: function () {
-            this.cache.$container.remove();
-            this.cache.$container = null;
+            if (this.cache.$outerContainer){
+              this.cache.$outerContainer.remove();
+              this.cache.$outerContainer = null;
+            }
+            else {
+                this.cache.$container.remove();
+                this.cache.$container = null;
+            }
 
             this._offEvents( this.cache.$line, "keydown" );
             this._offEvents( this.cache.$body, "touchmove mousemove" );
@@ -11193,7 +11297,7 @@ return jQuery;
 
             this._onEvents( this.cache.$win,  "touchend mouseup",     this.pointerUp );
 
-            if (this.options.clicable){
+            if (this.options.clickable && !this.options.fixed_handle){
                 this._onEvents( this.cache.$line, "touchstart mousedown", this.pointerClick, "click" );
                 this._onEvents( this.cache.$bar,  "touchstart mousedown", this.pointerClick, "click" );
             }
@@ -11332,7 +11436,7 @@ return jQuery;
 
         //textClick - click on label
         textClick: function( e ){
-            var value = $(e.target).data('base-slider-value');
+            var value = parseFloat( e.target.getAttribute('data-base-slider-value') );
             if (!this.options.isInterval){
                 this.setValue( value );
                 return;
@@ -11569,7 +11673,7 @@ return jQuery;
         setMinMax: function () {
             if (!this.options) return;
 
-            if (this.options.hide_min_max) {
+            if (!this.options.show_min_max) {
                 this.cache.$min.hide();
                 this.cache.$max.hide();
                 return;
@@ -11639,28 +11743,36 @@ return jQuery;
             this.onCallback();
         },
 
-        setPin: function( value, color ) {
+        setPin: function( value, color, icon ) {
             if (!this.options.has_pin) return;
 
-            value = Math.min( this.options.max, value );
-            value = Math.max( this.options.min, value );
-            this.options.pin_value = value;
+            if (value !== null){
+                value = Math.min( this.options.max, value );
+                value = Math.max( this.options.min, value );
+                this.options.pin_value = value;
+            }
+
+            this.options.pin_color = color || this.options.pin_color || 'black';
+
+            var oldIcon = this.options.pin_icon || '';
+            this.options.pin_icon = icon || this.options.pin_icon || 'fa-map-marker';
 
             this.target = "base";
             this.calc(true);
 
-            this.cache.$s_pin.css({
-                left : this.coords.p_pin_value + "%",
-                color: color || 'black'
-            });
+            this.cache.$s_pin
+                .css({
+                    left : this.coords.p_pin_value + "%",
+                    color: this.options.pin_color
+                })
+                .removeClass( oldIcon )
+                .addClass( this.options.pin_icon );
         },
 
 
         //pxToRem
         pxToRem: function( valuePx, inclUnit ){
-            var fontSize = $('html').css('font-size') || $('body').css('font-size') || '16',
-                result = valuePx / parseFloat( fontSize );
-            return inclUnit ? result + 'rem' : result;
+            return valuePx / this.options.fontSize + (inclUnit ? 'rem' : 0);
         },
 
         //getInnerWidth
@@ -11781,7 +11893,6 @@ return jQuery;
                     if (this.options.from_fixed || this.options.to_fixed) {
                         break;
                     }
-
                     real_x = this.toFixed(real_x + (this.coords.p_handle * 0.1));
 
                     this.coords.p_from_real = this.calcWithStep((real_x - this.coords.p_gap_left) / real_width * 100);
@@ -11860,7 +11971,7 @@ return jQuery;
 
         //calcLabels
         calcLabels: function () {
-            if (!this.coords.w_rs || this.options.hide_from_to) return;
+            if (!this.coords.w_rs || !this.options.show_from_to) return;
 
             if (this.options.isSingle) {
                 this.labels.w_single = this.getOuterWidth(this.cache.$single);
@@ -11937,10 +12048,12 @@ return jQuery;
                 setLeftAndWidth( this.cache.$bar, this.coords.p_bar_x, this.coords.p_bar_w );
 
                 if (this.options.has_pin)
-                    this.cache.$s_pin.css({
-                        "left" : this.coords.p_pin_value + "%",
-                        "color": this.options.pin_color
-                    });
+                    this.cache.$s_pin
+                        .css({
+                            "left" : this.coords.p_pin_value + "%",
+                            "color": this.options.pin_color
+                        })
+                        .addClass( this.options.pin_icon );
 
                 if (this.options.isSingle) {
                     setLeftAndWidth( this.cache.$s_single, this.coords.p_single );
@@ -11986,7 +12099,7 @@ return jQuery;
 
         //drawLabels
         drawLabels: function () {
-            if (!this.options || this.options.hide_from_to) return;
+            if (!this.options || this.options.s_from_to) return;
 
             var text_single, text_from, text_to;
 
@@ -11997,7 +12110,7 @@ return jQuery;
 
                 this.calcLabels();
 
-                if (!this.options.hide_min_max){
+                if (this.options.show_min_max){
                     this.cache.$min.toggle( this.labels.p_single_left >= this.labels.p_min + 1 );
                     this.cache.$max.toggle( this.labels.p_single_left + this.labels.p_single <= 100 - this.labels.p_max - 1 );
                 }
@@ -12046,7 +12159,7 @@ return jQuery;
                     this.cache.$single.css('visibility', 'hidden');
                 }
 
-                if (!this.options.hide_min_max){
+                if (this.options.show_min_max){
                     this.cache.$min.toggle( min >= this.labels.p_min + 1 );
                     this.cache.$max.toggle( max <= 100 - this.labels.p_max - 1 );
                 }
@@ -12305,55 +12418,80 @@ return jQuery;
 
         appendGridContainer: function(){
             this.getCoords_w_rs();
-            if (this.currentGridContainer){
-                this.totalGridContainerTop += this.currentGridContainer.height();
-                this.currentGridContainer =
-                    $('<span class="grid"></span>').insertAfter( this.currentGridContainer );
-                this.currentGridContainer.css('top', this.pxToRem( this.totalGridContainerTop, true) );
+            if (this.$currentGridContainer){
+                this.totalGridContainerTop += this.$currentGridContainer.height();
+                this.$currentGridContainer =
+                    $('<span class="grid"></span>').insertAfter( this.$currentGridContainer );
+                this.$currentGridContainer.css('top', this.pxToRem( this.totalGridContainerTop, true) );
             }
             else {
-                this.currentGridContainer = this.cache.$grid;
-                this.totalGridContainerTop = this.currentGridContainer.position().top;
+                this.$currentGridContainer = this.cache.$grid;
+                this.totalGridContainerTop = this.$currentGridContainer.position().top;
             }
             this.cache.$grid = this.cache.$container.find(".grid");
-            return this.currentGridContainer;
+            return this.$currentGridContainer;
         },
 
 
         //appendTick
         appendTick: function( left, options ){
-            if (!this.currentGridContainer) return;
+            if (!this.$currentGridContainer) return;
 
             options = $.extend( {minor: false, color: ''}, options );
-            var result = $('<span class="grid-pol" style="left:' + left + '%"></span>');
 
-            if (options.minor)
-                result.addClass('minor');
+            var result = document.createElement("span");
+            result.className = "grid-pol" + (options.minor ? ' minor' : '');
+            result.style.left = left + '%';
+
             if (options.color)
-                result.css('background-color', options.color);
+                result.style.backgroundColor = options.color;
 
-
-            result.appendTo( this.currentGridContainer );
+            this.currentGridContainer.appendChild( result );
             return result;
 
         },
 
+        //_valueToText
+        _valueToText: function( value ){
+            var result = this._prettify_text( value );
+            if (this.options.decorate_text)
+              result = (this.options.prefix ? this.options.prefix : '') +
+                       result +
+                       (this.options.postfix ? this.options.postfix : '');
+            return result;
+        },
+
         //appendText
         appendText: function( left, value, options ){
-            if (!this.currentGridContainer) return;
+            if (!this.$currentGridContainer) return;
 
             options = $.extend( {color: ''}, options );
-            var text = this._prettify_text( value );
 
-            if (this.options.decorate_text)
-              text = (this.options.prefix ? this.options.prefix : '') +
-                     text +
-                     (this.options.postfix ? this.options.postfix : '');
-            var result = $('<span class="grid-text" style="background-color:transparent; left: ' + left + '%">' + text + '</span>');
-            result.appendTo( this.currentGridContainer );
+            var text = this._valueToText( value ),
+                result = document.createElement("span"),
+                className = 'grid-text';
 
-            //Center the label
-            result.css( 'margin-left', this.getOuterWidth(result, true, -0.5) );
+            result.textContent = text;
+            result.style.left  = 'calc('+left+'% - ' + this.getDecorateTextWidth( text, options, .5, true ) + 'rem)'; //Center the label
+
+            if (options.minor)
+                className += ' minor';
+            if (options.italic)
+                className += ' italic';
+            if (options.color)
+                result.style.color = options.color;
+
+            if (this.options.textColorRec[value]){
+                var textOptions = this.options.textColorRec[value];
+                className += ' frame';
+                if (textOptions.className)
+                    className += ' '+textOptions.className;
+                if (textOptions.color)
+                    result.style.color = textOptions.color;
+                if (textOptions.backgroundColor)
+                    result.style.backgroundColor = textOptions.backgroundColor;
+            }
+
 
             if (options.clickable){
                 //Check if the value for the label is a selectable one
@@ -12363,33 +12501,54 @@ return jQuery;
             }
 
             if (options.clickable && !this.options.disable && !this.options.read_only){
-                //value = options.click_value !== undefined ? options.click_value : parseFloat( text );
                 value = options.click_value !== undefined ? options.click_value : value;
-                result
-                    .data('base-slider-value', value)
-                    .on("click.irs_" + this.plugin_count, $.proxy( this.textClick, this ) ) /* this.textClick.bind(this) */
-                    .addClass('clickable');
+
+                result.setAttribute('data-base-slider-value', value);
+                result.addEventListener('click', $.proxy( this.textClick, this ));
+                className += ' clickable';
             }
-            if (options.minor)
-                result.addClass('minor');
-            if (options.italic)
-                result.addClass('italic');
-            if (options.color)
-                result.css('color', options.color);
 
-
+            result.className = className;
+            this.currentGridContainer.appendChild( result );
             return result;
-
         },
 
-        //getTextWidth
+
+        //getTextWidth - get width of value as text OR max width of all values in array of value
         getTextWidth: function( value, options ){
-            var
-                elem = this.appendText( 0, value, options ),
-                result = parseFloat( elem.outerWidth(false) );
-            elem.remove();
-            return this.pxToRem(result);
+            var _this = this;
+            if ($.isArray( value )){
+                var html = '';
+                $.each( value, function(index, one_value ){
+                    html += _this._valueToText( one_value ) + '<br>';
+                });
+                return this.getDecorateTextWidth( html, options );
+            }
+            else
+                return this.getDecorateTextWidth( this._valueToText( value ) , options );
         },
+
+        getDecorateTextWidth: function( html, options, factor, floor ){
+            var newClassName = 'grid-text';
+            if (options){
+                if (options.minor)
+                    newClassName += ' minor';
+                if (options.italic)
+                    newClassName += ' italic';
+            }
+            if (this.textElement.className != newClassName )
+                this.textElement.className = newClassName;
+            this.textElement.innerHTML = html;
+
+            var result = parseFloat( this.textElement.offsetWidth );
+            if (factor)
+                result = factor*result;
+            if (floor)
+                result = Math.floor(result);
+
+            return this.pxToRem( result );
+        },
+
 
         //appendGrid
         appendGrid: function () {
@@ -12402,10 +12561,35 @@ return jQuery;
             this._appendStandardGrid( textOptions );
         },
 
+
+        //preAppendGrid and postAppendGrid - must be called as first and last when creating a grid - used if a new appendStandardGrid is used
+
+        preAppendGrid: function(){
+            this.appendGridContainer();
+
+            this.calcGridMargin();
+
+            //The DOM-version of this.$currentGridContainer
+            this.currentGridContainer = this.$currentGridContainer.get(0);
+
+            //Create the grid outside the DOM
+            //Save width in % and set in in px instead of %
+            this.currentGridContainerWidth = this.currentGridContainer.style.width;
+            this.$currentGridContainer.css('width', this.$currentGridContainer.width());
+            this.$currentGridContainer.width( this.$currentGridContainer.width() );
+            this.$currentGridContainerMarker = $('<div/>').insertAfter( this.$currentGridContainer );
+            this.$currentGridContainer.detach();
+        },
+        postAppendGrid: function(){
+            //Insert the created grid into the DOM
+            this.$currentGridContainer.insertBefore( this.$currentGridContainerMarker );
+            this.$currentGridContainer.css('width', this.currentGridContainerWidth );
+            this.$currentGridContainerMarker.remove();
+        },
+
         //_appendStandardGrid
         _appendStandardGrid: function ( textOptions, tickOptions ) {
-            this.appendGridContainer();
-            this.calcGridMargin();
+            this.preAppendGrid();
 
             var o = this.options,
                 gridContainerWidth = this.getOuterWidth(this.cache.$grid),
@@ -12416,10 +12600,8 @@ return jQuery;
                 valueOffset;
             o.gridDistanceStep = o.gridDistances[gridDistanceIndex]; // = number of steps between each tick
             o.stepRem = o.step*gridContainerWidth/o.total  / o.major_ticks_factor;
-//            o.oneP = this.toFixed(100 / total);
-//            o.stepP = this.toFixed(o.step / (total / 100));
 
-            textOptions = $.extend( textOptions || {}, {clickable: this.options.clicable} );
+            textOptions = $.extend( textOptions || {}, {clickable: this.options.clickable} );
             tickOptions = tickOptions || {};
 
 
@@ -12441,13 +12623,14 @@ return jQuery;
 
                 //Find widest text/label
                 value = o.min;
+                var valueList = [];
                 while (value <= o.max){
                     //if value corrected by o.major_ticks_offset and o.major_ticks_factor is a DIV of the tick distance => calculate the width of the tick
                     if ((value - o.major_ticks_offset)*o.major_ticks_factor % o.tickDistanceNum === 0)
-                        maxTextWidth = Math.max( maxTextWidth, this.getTextWidth( value ) );
+                        valueList.push( value );
                     value += 1;
                 }
-                maxTextWidth += this.pxToRem(6); //Adding min space between text/labels
+                maxTextWidth = this.getTextWidth( valueList ) + this.pxToRem(6); //Adding min space between text/labels
 
                 //Find ticks between each major tick
                 gridDistanceIndex = 0;
@@ -12474,7 +12657,7 @@ return jQuery;
                         this.appendText( valueP, value, textOptions );
                     }
                     else
-                        if (!o.hide_minor_ticks)
+                        if (o.show_minor_ticks)
                             //Add minor tick
                             this.appendTick( valueP, { minor:true } );
                 }
@@ -12485,8 +12668,7 @@ return jQuery;
             if (this.options.grid_colors)
                 this.appendGridColors( this.options.grid_colors );
 
-
-
+            this.postAppendGrid();
         },
 
         //addGridColor
@@ -12502,12 +12684,22 @@ return jQuery;
 
             for (i=0; i<gridColors.length; i++ ){
                 gridColor = gridColors[i];
-                if ( (gridColor.value === null) || (gridColor.value < this.options.min) || (gridColor.value > this.options.max) )
-                  //add triangle to the left or right
-                    $('<span/>')
-                        .addClass( gridColor.value > this.options.max ? 'grid-color gt_max' : 'grid-color lt_min')
-                        .css('color', gridColor.color)
-                        .appendTo( this.currentGridContainer );
+                if ( (gridColor.value === null) || (gridColor.value < this.options.min) || (gridColor.value > this.options.max) ){
+                    //add triangle to the left or right
+                    var $span = $('<span/>')
+                                    .addClass( 'grid-color _fa')
+                                    //.addClass( gridColor.value > this.options.max ? 'fa-caret-right gt_max' : '_fa-caret-left lt_min')
+//                                    .css('color', gridColor.color)
+                                    .appendTo( this.$currentGridContainer );
+                    if (gridColor.value > this.options.max)
+                        $span
+                            .addClass('gt_max')
+                            .css('border-left-color', gridColor.color);
+                    else
+                        $span
+                            .addClass('lt_min')
+                            .css('border-right-color', gridColor.color);
+                }
                 else {
                     fromValue = gridColor.fromValue !== undefined ? gridColor.fromValue : toValue;
                     toValue = gridColor.value;
@@ -12519,7 +12711,7 @@ return jQuery;
                             'width'           : percentFactor*(toValue-fromValue) + '%',
                             'background-color': gridColor.color
                            })
-                        .appendTo( this.currentGridContainer );
+                        .appendTo( this.$currentGridContainer );
                 }
             }
         },
@@ -12609,7 +12801,7 @@ return jQuery;
 
 ;
 //! moment.js
-//! version : 2.19.2
+//! version : 2.19.3
 //! authors : Tim Wood, Iskren Chernev, Moment.js contributors
 //! license : MIT
 //! momentjs.com
@@ -13269,7 +13461,7 @@ var matchTimestamp = /[+-]?\d+(\.\d{1,3})?/; // 123456789 123456789.123
 
 // any word (or two) characters or numbers including two/three word month in arabic.
 // includes scottish gaelic two word and hyphenated months
-var matchWord = /[0-9]*['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]+|[\u0600-\u06FF\/]+(\s*?[\u0600-\u06FF]+){1,2}/i;
+var matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i;
 
 
 var regexes = {};
@@ -17088,7 +17280,7 @@ addParseToken('x', function (input, array, config) {
 // Side effect imports
 
 
-hooks.version = '2.19.2';
+hooks.version = '2.19.3';
 
 setHookCallback(createLocal);
 

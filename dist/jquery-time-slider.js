@@ -31,13 +31,12 @@ options:
 (function ($, window, document, undefined) {
     "use strict";
 
-
-    //roundMoment( m ) 
+    //roundMoment( m )
     function roundMoment( m ){ return m.startOf('hour');}
 
 
     //valueToMoment
-    function valueToMoment ( value ){ 
+    function valueToMoment ( value ){
         var result = roundMoment(moment());
         result.add( value, 'hours' );
         return result;
@@ -47,8 +46,8 @@ options:
     function setValueAndMoment( value, m ){
         var nowMoment = roundMoment(moment());
         if (value === undefined){
-            roundMoment( m ); 
-            value = m.diff(nowMoment, 'hours'); 
+            roundMoment( m );
+            value = m.diff(nowMoment, 'hours');
         }
         else {
             m = nowMoment;
@@ -57,20 +56,25 @@ options:
         return { m: m, value: value };
     }
 
-    
+
     var plugin_count = 1000,
         defaultOptions = {
             grid              : true,
             gridDistances     : [1, 2, 3, 6, 12, 24, 48],
+
+            step : 1, // 1 hour
+            keyboard_shift_step_factor: 6,  //Step 6 hour with shift or ctrl
+            keyboard_page_step_factor : 24, //Step 24 h with PgUp og PgDn
+
             step_offset_moment: null,
             format: {
-                showRelative: false, 
+                showRelative: false,
                 showUTC     : false
             }
         };
 
     window.TimeSlider = function (input, options, plugin_count) {
-        this.VERSION = "4.0.3";
+        this.VERSION = "4.1.0";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -78,7 +82,7 @@ options:
 
         //Setting display- and text-options
         function setAndGet( obj, attrName, attrList ){
-            obj[attrName] = obj[attrName] || {}; 
+            obj[attrName] = obj[attrName] || {};
             for (var i=0; i<attrList.length; i++ ){
                 var nextAttrName = attrList[i];
                 if ( $.type( obj[attrName][nextAttrName] ) === 'string' )
@@ -106,9 +110,11 @@ options:
           //Use options.step_offset_moment to calculate step_offset
             var value = setValueAndMoment( undefined, moment( this.options.step_offset_moment ) ).value;
             this.options.step_offset = (value - this.options.min) % this.options.step;
-        }  
+        }
 
-        //Create BaseSlider
+        //Create BaseSlider - dont create grid here
+        var optionsGrid = this.options.grid;
+        this.options.grid = false;
         window.BaseSlider.call(this, input, this.options, plugin_count );
 
         //Set from/fromMoment and to/toMoment
@@ -118,6 +124,7 @@ options:
             this.setToValue( setValueAndMoment( this.options.to, this.options.toMoment ).value );
 
         //Sets the format and create the grids
+        this.options.grid = optionsGrid;
         this.setFormat();
     };
 
@@ -137,11 +144,11 @@ options:
         _valueToTzMoment: function( value, timezone ){
             return valueToMoment(value).tzMoment( timezone );
         },
-        
+
         //_valueToFormat - converts value to a moment.format-string or a relative text. If no timezome is given => return relative format
-        _valueToFormat: function( value, timezone ){ 
+        _valueToFormat: function( value, timezone ){
             if (timezone)
-                return this._valueToTzMoment( value, timezone ).format( this.options.format.dateHourFormat );              
+                return this._valueToTzMoment( value, timezone ).format( this.options.format.dateHourFormat );
             else
                 return this.options.format.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.format.text.hourAbbr;
         },
@@ -153,13 +160,13 @@ options:
         _prettify_text_absolute: function( value ){
             return this._valueToTzMoment( value, this.options.format.timezone ).hourFormat();
         },
-        
-        _prettify_text_absolute_date: function( value ){ 
+
+        _prettify_text_absolute_date: function( value ){
                 return this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
             },
-    
+
         //adjustResult
-        adjustResult: function(){ 
+        adjustResult: function(){
             this.result.minMoment  = valueToMoment ( this.result.min );
             this.result.maxMoment  = valueToMoment ( this.result.max );
             this.result.fromMoment = valueToMoment ( this.result.from );
@@ -177,20 +184,19 @@ options:
                     isFirstMidnight = true,
                     firstMidnightValue = 0,
                     lastMidnightValue = 0,
-                    dayRem, 
+                    dayRem,
                     values = [],
                     dateFormats,
                     dateFormatOk,
                     textWidth;
 
-            this.appendGridContainer();
-            this.calcGridMargin();
+            this.preAppendGrid();
 
-            this.currentGridContainer.addClass("text-between-ticks");
+            this.$currentGridContainer.addClass("text-between-ticks");
             this._prettify_text = this._prettify_text_absolute_date;
 
             //Setting tick at midnight
-            value = o.min;            
+            value = o.min;
             while (value <= o.max){
                 if ( ((value - this.options.major_ticks_offset) % o.tickDistanceNum === 0) && (this._valueToTzMoment( value, this.options.format.timezone ).hour() === 0) ){
                     midnights++;
@@ -202,8 +208,8 @@ options:
                     }
                     lastMidnightValue = value;
                 }
-                value += 1; 
-                valueP += o.oneP; 
+                value += 1;
+                valueP += o.oneP;
             }
 
             //Find the max width (in rem) of a date-label = dayRem
@@ -215,7 +221,7 @@ options:
 
             if (!o.format.dateFormat){
                 //Find the format for the date, where all dates is smaller than dayRem
-                dateFormats = moment.sfDateFormatList( function( code ){ 
+                dateFormats = moment.sfDateFormatList( function( code ){
                                 //Include all formats except full weekday or full month
                                 return (code.charAt(0) != 'F') && (code.charAt(1) != 'F');
                               });
@@ -239,11 +245,11 @@ options:
                     }
                     if (dateFormatOk)
                       break;
-                }    
+                }
                 if (!dateFormatOk)
-                    o.format.dateFormat = '';  
+                    o.format.dateFormat = '';
             }
-            
+
             if (o.format.dateFormat){
                 //Append the label/text
                 if (midnights === 0){
@@ -258,7 +264,7 @@ options:
                         var minTextValue = o.min + textWidth/2/valueRem;
                         this.appendText( o.oneP * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
                     }
-                
+
                     //last day - check if there are space to put a date-label
                     textWidth = this.getTextWidth( o.max, textOptions );
                     if ( valueRem*(o.max - lastMidnightValue) >= textWidth ){
@@ -267,7 +273,7 @@ options:
                         this.appendText( o.oneP * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
                     }
 
-                    //Days between first and last day                
+                    //Days between first and last day
                     if (midnights > 1){
                         value = firstMidnightValue + 12;
                         while (value <= lastMidnightValue){
@@ -277,15 +283,17 @@ options:
                     }
                 }
             }
+
+            this.postAppendGrid();
         },
 
         //appendStandardGrid
         appendStandardGrid: function(){
             //First remove all grid-container except the first one
-            this.$cache.grid = this.$cache.cont.find(".grid").first(); 
-            this.$cache.grid.siblings('.grid').remove();
-            this.$cache.grid.empty();
-            this.currentGridContainer = null;
+            this.cache.$grid = this.cache.$container.find(".grid").first();
+            this.cache.$grid.siblings('.grid').remove();
+            this.cache.$grid.empty();
+            this.$currentGridContainer = null;
 
             //Create all grid
             if (this.options.format.showRelative){
@@ -301,16 +309,17 @@ options:
                 //Create the hour-grid and the date-grid for selected timezone
                 this._prettify = this._prettify_absolute;
                 this._prettify_text = this._prettify_text_absolute;
-                this.options.major_ticks_offset = -1*now.tzMoment( this.options.format.timezone ).hours(); 
+                this.options.major_ticks_offset = -1*now.tzMoment( this.options.format.timezone ).hours();
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
                 if ((this.options.format.timezone != 'utc') && this.options.format.showUTC){
                     //Create the hour-grid and the date-grid for utc
-                    this.options.major_ticks_offset = -1*now.tzMoment( 'utc' ).hours(); 
+                    this.options.major_ticks_offset = -1*now.tzMoment( 'utc' ).hours();
                     var saveTimezone = this.options.format.timezone;
                     this.options.format.timezone = 'utc';
-                    var textOptions = {italic:true, minor:true}, tickOptions = {color:'#555555'};
+                    var textOptions = {italic:true, minor:true},
+                        tickOptions = {color:'#555555'};
                     this._prettify = this._prettify_absolute;
                     this._prettify_text = this._prettify_text_absolute;
                     this._appendStandardGrid( textOptions, tickOptions );
@@ -322,14 +331,13 @@ options:
 
         //_updateOptionsFormat
         _updateOptionsFormat: function( format ){
-//            this.options.format = $.extend( defaultOptionsFormat, this.options.format, format || {}  );
             $.extend( true, this.options.format, format || {}  );
 
             //Merge current moment.simpleFormat.options into this.options.format
             $.extend( true, this.options.format, moment.sfGetOptions() );
 
             //Create the format for the label over the 'dragger'
-            this.options.format.dateHourFormat = 
+            this.options.format.dateHourFormat =
                 (this.options.format.date == 'DMY' ? 'DD-MMM' : 'MMM-DD') + //Dec-24 / 24-Dec
                 ' ' + moment.sfGetTimeFormat();
 
@@ -343,21 +351,21 @@ options:
             //Set jquery-base-slider options values_separator to use moment.simpleFormat.text.to
             this.options.values_separator = ' ' + this.options.format.text.to + ' ';
         },
-            
-            
-            
+
+
+
         //setFormat
         setFormat: function( format ){
-            this._updateOptionsFormat( format );        
+            this._updateOptionsFormat( format );
             this.update();
             this.updateDisplay();
         },
-        
+
         //updateDisplay - updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
         updateDisplay: function(){
             var i, attr, value;
-            function setText( $elem, text ){ 
-                if ($elem) 
+            function setText( $elem, text ){
+                if ($elem)
                     $elem.each( function(){ $(this).text( text ); } );
             }
             for (i=0; i<2; i++){
