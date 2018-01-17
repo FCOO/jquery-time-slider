@@ -9,42 +9,42 @@
 	<meta name='owner' content='FCOO'>
     <title>jquery-time-slider - Example</title>
 
-    <link  href="bower_components.css" rel="stylesheet">	
-    <link  href="font-awesome.css" rel="stylesheet">	
+    <link  href="bower_components.css" rel="stylesheet">
+    <link  href="font-awesome.css" rel="stylesheet">
 	<style>
 		.slider-container {
 			width: 25rem;
 			height: 8rem;
-			border:0.12rem solid red; 
+			border:0.12rem solid red;
 			padding:0.25rem;
 		}
 		.date-box {
 			display: inline-block;
-			border:0.12rem solid green; 
+			border:0.12rem solid green;
 			padding: 0.25rem;
 			width: 6.5rem;
 		}
-		h4 { 
+		h4 {
 			margin		: 0;
-			font-size	: 120%; 
+			font-size	: 120%;
 		}
 		button {
-			font-size: 0.8rem; 
-		}		
+			font-size: 0.8rem;
+		}
 	</style>
-		
+
 
 </head>
 <body style="">
-		<h4>Scale</h4>
-		<div>
-			<input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</label>
-			<input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</label>
+    <h4>Scale</h4>
+	<div>
+	    <input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</label>
+		<input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</label>
 	    <input type="radio" class="scaleRadio" name="options" id="option3" value="100" autocomplete="off" checked>100%</label>
-		  <input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</label>
-			<input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</label>
+		<input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</label>
+		<input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</label>
 	    <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</label>
-		</div>
+    </div>
         <div>
             <select id="timezone">
                 <optgroup label="Standard">
@@ -88,28 +88,28 @@
 			<div class="slider-container">
 				<input type="text" id="example_04" value="" name="range" />
 			</div>
-			<button id="btnPrevFrom">Previous</button>	
-			<button id="btnNowFrom">Now</button>	
-			<button id="btnNextFrom">Next</button>	
+			<button id="btnPrevFrom">Previous</button>
+			<button id="btnNowFrom">Now</button>
+			<button id="btnNextFrom">Next</button>
 			<br>
-			<button id="btnPrevTo">Previous</button>	
-			<button id="btnNowTo">Now</button>	
-			<button id="btnNextTo">Next</button>	
+			<button id="btnPrevTo">Previous</button>
+			<button id="btnNowTo">Now</button>
+			<button id="btnNextTo">Next</button>
 			<br>
-			<button id="btnSlider1Format">Toggle format</button>	
+			<button id="btnSlider1Format">Toggle format</button>
 			<br>
-			<div class="divUtc date-box"></div>	
-			<div class="divTz date-box"></div>	
-			<div class="divRel date-box"></div>	
+			<div class="divUtc date-box"></div>
+			<div class="divTz date-box"></div>
+			<div class="divRel date-box"></div>
 			<br>
-			<div class="divToUtc date-box"></div>	
-			<div class="divToTz date-box"></div>	
-			<div class="divToRel date-box"></div>		
+			<div class="divToUtc date-box"></div>
+			<div class="divToTz date-box"></div>
+			<div class="divToRel date-box"></div>
 
 		</div>
 
-	
-	
+
+
 	<script>
         var start = (new Date()).getTime(),
             last = start;
@@ -119,6 +119,7 @@
             last = now;
         }
     </script>
+	<script src="modernizr-custom.js"></script>
 	<script src="bower_components.js"></script>
 
     <script src="da.js"></script>
@@ -141,7 +142,7 @@
         $('#timezone option').each( function( index, elem ){
             var timezone = moment.sfGetTimezone( elem.value );
             if (timezone)
-                $(elem).text( timezone.fullName );  
+                $(elem).text( timezone.fullName );
         });
 
         $('#timezone').on('change', function(event){
@@ -157,71 +158,75 @@
 		});
 
 
-//DEBUG: test('START');
-		var timeSlider0 = 
+DEBUG: test('START');
+		var timeSlider0 =
             $("#example_00").timeSlider({
 	        //type: "double",
-			    format: { 
+			    format: {
                     showRelative:false,
                     showUTC: true,
                 },
 		    	min: -24*7,
 			    max: +24*7,
                 step: 1,
-	    		from: 0, 
+	    		from: 0,
 		    	to:24,
 			    grid: true,
-                fixed_handle: true, 
-                slider:"fixed", 
-                mousewheel: true, 
-                hide_bar_color: true,
-                width: 14*400, 
-                show_bar_color: false,
-//                grid_colors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
-                textColors: [{value: 0, color:'white', backgroundColor: 'green' }]
+                handleFixed: true,
+                slider:"fixed",
+                mousewheel: true,
+                width: 14*400,
+                showLineColor: false,
+
+//                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
+                textColors: [
+                    {value: 0, color:'white', backgroundColor: 'green' },
+                    {value: 2, color:'white', backgroundColor: 'red' }
+                ],
+
 		    })
-            .data('timeSlider');	
-//Debug: test('END');
-		var timeSlider1 = 
+            .data('timeSlider');
+Debug: test('END');
+		var timeSlider1 =
 		    $("#example_01").timeSlider({
 			    format: { showUTC: true},
     			min: -4,
 	    		max: +24,
-			    from: 0, 
+			    from: 0,
     			to:24,
 	    		grid: true,
                 mousewheel: true
-			}).data('timeSlider');		
+			}).data('timeSlider');
 
 		$("#example_02").timeSlider({
 	    //type: "double",
 			format: { showRelative:true },
 			min: -24,
 			max: +48,
-			from: 0, 
+			from: 0,
 			to:24,
 			grid: true,
             mousewheel: true,
-                pin_value: 10,
+                pinValue: 10,
 		});
-	
-		var timeSlider3 = 
+
+		var timeSlider3 =
             $("#example_03").timeSlider({
         	    type: "double",
 		        	format: { showRelative:true },
         			min: -24,
 		        	max: +48,
-        			from: 0, 
+        			from: 0,
 		        	to:24,
         			grid: true,
-		        	impact_line: true
-			}).data('timeSlider');		
-		
-		
-		var timeSlider4 = 
+		        	showImpactLineColor: true
+			}).data('timeSlider');
+
+
+		var timeSlider4 =
 			$("#example_04").timeSlider({
-				callback: function(result){ console.log('callback',result);},
-				callback_on_dragging: false,
+				onChange: function(result){ console.log('onChange',result);},
+				onChangeOnDragging: false,
 				slider: 'round',
 				type: "double",
 				format: { showUTC: true},
@@ -235,21 +240,21 @@
 				},
 				min: -7,
 				max: +15 + 2*24,
-				from: 0, 
+				from: 0,
 				to:24,
 				grid: true,
-			}).data('timeSlider');		
-	
+			}).data('timeSlider');
+
 
         var lang = 'en_gb';
-		$('#btnSlider1Format').click( function() { 
+		$('#btnSlider1Format').click( function() {
             lang = (lang == 'en_gb' ? 'da' : 'en_gb');
             var isEn = lang == 'en_gb',
                 date = moment.sfGetOptions().date,
                 time = parseInt(moment.sfGetOptions().time);
             moment.locale(lang);
-            moment.sfSetFormat( { 
-                date: date=='DMY'?'YMD':'DMY', 
+            moment.sfSetFormat( {
+                date: date=='DMY'?'YMD':'DMY',
                 time: time==24?12:24,
                 text: {
                     now: isEn ? 'now' : 'nu',
@@ -262,7 +267,7 @@
 		});
 
 	</script>
-	
-	
+
+
 	</body>
 </html>

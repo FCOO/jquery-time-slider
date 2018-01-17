@@ -57,23 +57,23 @@ options:
     }
 
 
-    var plugin_count = 1000,
+    var pluginCount = 1000,
         defaultOptions = {
             grid              : true,
             gridDistances     : [1, 2, 3, 6, 12, 24, 48],
 
             step : 1, // 1 hour
-            keyboard_shift_step_factor: 6,  //Step 6 hour with shift or ctrl
-            keyboard_page_step_factor : 24, //Step 24 h with PgUp og PgDn
+            keyboardShiftStepFactor: 6,  //Step 6 hour with shift or ctrl
+            keyboardPageStepFactor : 24, //Step 24 h with PgUp og PgDn
 
-            step_offset_moment: null,
+            stepOffsetMoment: null,
             format: {
                 showRelative: false,
                 showUTC     : false
             }
         };
 
-    window.TimeSlider = function (input, options, plugin_count) {
+    window.TimeSlider = function (input, options, pluginCount) {
         this.VERSION = "{VERSION}";
 
         //Setting default options
@@ -106,16 +106,16 @@ options:
         valMom = setValueAndMoment( this.options.to, this.options.toMoment || this.options.maxMoment );
         this.options.to = valMom.value; options.toMoment = valMom.m;
 
-        if ((this.options.step > 1) && this.options.step_offset_moment){
-          //Use options.step_offset_moment to calculate step_offset
-            var value = setValueAndMoment( undefined, moment( this.options.step_offset_moment ) ).value;
-            this.options.step_offset = (value - this.options.min) % this.options.step;
+        if ((this.options.step > 1) && this.options.stepOffsetMoment){
+          //Use options.stepOffsetMoment to calculate stepOffset
+            var value = setValueAndMoment( undefined, moment( this.options.stepOffsetMoment ) ).value;
+            this.options.stepOffset = (value - this.options.min) % this.options.step;
         }
 
         //Create BaseSlider - dont create grid here
         var optionsGrid = this.options.grid;
         this.options.grid = false;
-        window.BaseSlider.call(this, input, this.options, plugin_count );
+        window.BaseSlider.call(this, input, this.options, pluginCount );
 
         //Set from/fromMoment and to/toMoment
         this.setFromValue( setValueAndMoment( this.options.from, this.options.fromMoment ).value );
@@ -132,7 +132,7 @@ options:
     $.fn.timeSlider = function (options) {
         return this.each(function() {
             if (!$.data(this, "timeSlider")) {
-                $.data(this, "timeSlider", new window.TimeSlider(this, options, plugin_count++));
+                $.data(this, "timeSlider", new window.TimeSlider(this, options, pluginCount++));
             }
         });
     };
@@ -153,15 +153,15 @@ options:
                 return this.options.format.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.format.text.hourAbbr;
         },
 
-        _prettify_relative     : function( value ){ return this._valueToFormat( value ); },
-        _prettify_text_relative: function( value ){ return value;                        },
+        _prettifyRelative      : function( value ){ return this._valueToFormat( value ); },
+        _prettifyLabelRelative: function( value ){ return value;                        },
 
-        _prettify_absolute: function( value ){ return this._valueToFormat( value, this.options.format.timezone ); },
-        _prettify_text_absolute: function( value ){
+        _prettifyAbsolute: function( value ){ return this._valueToFormat( value, this.options.format.timezone ); },
+        _prettifyLabelAbsolute: function( value ){
             return this._valueToTzMoment( value, this.options.format.timezone ).hourFormat();
         },
 
-        _prettify_text_absolute_date: function( value ){
+        _prettifyLabelAbsoluteDate: function( value ){
                 return this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
             },
 
@@ -177,28 +177,28 @@ options:
         //appendDateGrid
         appendDateGrid: function( textOptions, tickOptions ){
             var o = this.options,
-                    value,
-                    valueP = 0,
-                    valueRem = o.stepRem/o.step,
-                    midnights = 0,
-                    isFirstMidnight = true,
-                    firstMidnightValue = 0,
-                    lastMidnightValue = 0,
-                    dayRem,
-                    values = [],
-                    dateFormats,
-                    dateFormatOk,
-                    textWidth;
+                value,
+                valueP = 0,
+                valueRem = o.stepRem/o.step,
+                midnights = 0,
+                isFirstMidnight = true,
+                firstMidnightValue = 0,
+                lastMidnightValue = 0,
+                dayRem,
+                values = [],
+                dateFormats,
+                dateFormatOk,
+                textWidth;
 
             this.preAppendGrid();
 
-            this.$currentGridContainer.addClass("text-between-ticks");
-            this._prettify_text = this._prettify_text_absolute_date;
+            this.$currentGridContainer.addClass("label-between-ticks");
+            this._prettifyLabel = this._prettifyLabelAbsoluteDate;
 
             //Setting tick at midnight
             value = o.min;
             while (value <= o.max){
-                if ( ((value - this.options.major_ticks_offset) % o.tickDistanceNum === 0) && (this._valueToTzMoment( value, this.options.format.timezone ).hour() === 0) ){
+                if ( ((value - this.options.majorTicksOffset) % o.tickDistanceNum === 0) && (this._valueToTzMoment( value, this.options.format.timezone ).hour() === 0) ){
                     midnights++;
                     this.appendTick( valueP, tickOptions );
 
@@ -209,15 +209,15 @@ options:
                     lastMidnightValue = value;
                 }
                 value += 1;
-                valueP += o.oneP;
+                valueP += o.percentProValue;
             }
 
             //Find the max width (in rem) of a date-label = dayRem
             dayRem = valueRem * (
-                                  midnights === 0 ? o.max - o.min :
+                                  midnights === 0 ? o.range :
                                   midnights == 1  ? Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
                                                     24
-                                ) - this.pxToRem(6); //6 = margin
+                                ) - this.options.minDistanceRem; // = margin
 
             if (!o.format.dateFormat){
                 //Find the format for the date, where all dates is smaller than dayRem
@@ -233,16 +233,11 @@ options:
                     value += 24;
                 }
 
-                //Checking if all dates dispalyed in dayFormat are samller thae the max width for a day = dayRem. Setting this._prettify_text will force getTextWidth to use the text directly
+                //Checking if all dates dispalyed in dayFormat are samller than the max width for a day = dayRem. Setting this._prettifyLabel will force getTextWidth to use the text directly
                 for (var i=0; i<dateFormats.length; i++ ){
                     o.format.dateFormat = dateFormats[i];
-                    dateFormatOk = true;
-                    for (var j=0; j<values.length; j++ ){
-                        if (this.getTextWidth( values[j], textOptions ) > dayRem){
-                            dateFormatOk = false;
-                            break;
-                        }
-                    }
+                    dateFormatOk = (this.getTextWidth( values, textOptions ) <= dayRem);
+
                     if (dateFormatOk)
                       break;
                 }
@@ -251,10 +246,17 @@ options:
             }
 
             if (o.format.dateFormat){
+                //No text-colors on day-text
+                var textColorRec = o.textColorRec,
+                    clickable    = o.clickable;
+
+                o.textColorRec = {};
+                o.clickable = false;
+
                 //Append the label/text
                 if (midnights === 0){
                     //Special case: No midnights => the date are placed centered
-                    this.appendText( o.oneP * ((o.max-o.min)/2) , o.min, textOptions );
+                    this.appendLabel( o.percentProValue * o.range / 2 , o.min, textOptions );
                 }
                 else {
                     //first day - check if there are space to put a date-label
@@ -262,7 +264,7 @@ options:
                     if ( valueRem*(firstMidnightValue - o.min) >= textWidth ){
                         //Try to place the date-text under 12 o'clock (noon) but always keep inside the left edge
                         var minTextValue = o.min + textWidth/2/valueRem;
-                        this.appendText( o.oneP * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
+                        this.appendLabel( o.percentProValue * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
                     }
 
                     //last day - check if there are space to put a date-label
@@ -270,18 +272,20 @@ options:
                     if ( valueRem*(o.max - lastMidnightValue) >= textWidth ){
                         //Try to place the date-text under 12 o'clock (noon) but always keep inside the right edge
                         var maxTextValue = o.max - textWidth/2/valueRem;
-                        this.appendText( o.oneP * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
+                        this.appendLabel( o.percentProValue * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
                     }
 
                     //Days between first and last day
                     if (midnights > 1){
                         value = firstMidnightValue + 12;
                         while (value <= lastMidnightValue){
-                            this.appendText( o.oneP*(value-o.min) , value, textOptions );
+                            this.appendLabel( o.percentProValue*(value-o.min) , value, textOptions );
                             value += 24;
                         }
                     }
                 }
+                o.textColorRec = textColorRec;
+                o.clickable = clickable;
             }
 
             this.postAppendGrid();
@@ -298,32 +302,35 @@ options:
             //Create all grid
             if (this.options.format.showRelative){
                 //Relative time: Set the prettify-functions and create the grid needed
-                this._prettify = this._prettify_relative;
-                this._prettify_text = this._prettify_text_relative;
-                this.options.major_ticks_offset = 0;
+                this._prettify = this._prettifyRelative;
+                this._prettifyLabel = this._prettifyLabelRelative;
+                this.options.majorTicksOffset = 0;
                 this._appendStandardGrid();
             }
             else {
                 //Absolute time: Set the prettify-functions
                 var now = moment();
                 //Create the hour-grid and the date-grid for selected timezone
-                this._prettify = this._prettify_absolute;
-                this._prettify_text = this._prettify_text_absolute;
-                this.options.major_ticks_offset = -1*now.tzMoment( this.options.format.timezone ).hours();
+                this._prettify = this._prettifyAbsolute;
+                this._prettifyLabel = this._prettifyLabelAbsolute;
+                this.options.majorTicksOffset = -1*now.tzMoment( this.options.format.timezone ).hours();
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
                 if ((this.options.format.timezone != 'utc') && this.options.format.showUTC){
                     //Create the hour-grid and the date-grid for utc
-                    this.options.major_ticks_offset = -1*now.tzMoment( 'utc' ).hours();
+                    this.options.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
                     var saveTimezone = this.options.format.timezone;
                     this.options.format.timezone = 'utc';
                     var textOptions = {italic:true, minor:true},
                         tickOptions = {color:'#555555'};
-                    this._prettify = this._prettify_absolute;
-                    this._prettify_text = this._prettify_text_absolute;
+                    this._prettify = this._prettifyAbsolute;
+//HERconsole.log('HER1', textOptions);
+                    this._prettifyLabel = this._prettifyLabelAbsolute;
                     this._appendStandardGrid( textOptions, tickOptions );
+//HERconsole.log('HER2', textOptions);
                     this.appendDateGrid( textOptions, tickOptions );
+//HERconsole.log('HER3', textOptions);
                     this.options.format.timezone = saveTimezone;
                 }
             }
@@ -348,8 +355,8 @@ options:
             var now =  this.options.format.text.now;
             this.options.format.text.nowUC =  now.charAt(0).toUpperCase() + now.slice(1);
 
-            //Set jquery-base-slider options values_separator to use moment.simpleFormat.text.to
-            this.options.values_separator = ' ' + this.options.format.text.to + ' ';
+            //Set jquery-base-slider options valuesSeparator to use moment.simpleFormat.text.to
+            this.options.valuesSeparator = ' ' + this.options.format.text.to + ' ';
         },
 
 
@@ -377,7 +384,7 @@ options:
             }
         },
 
-        preCallback: function(){ this.updateDisplay(); }
+        preOnChange: function(){ this.updateDisplay(); }
     };
     window.TimeSlider.prototype = $.extend( {}, window.BaseSlider.prototype, window.TimeSlider.prototype );
 
