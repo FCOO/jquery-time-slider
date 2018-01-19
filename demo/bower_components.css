@@ -133,11 +133,7 @@ COMMON STYLE
   left: 0;
   z-index: 2;
   width: 100%;
-  height: 1.75rem; }
-  .grid.label-between-ticks {
-    height: 1.3125rem; }
-    .grid.label-between-ticks .grid-label-outer {
-      top: 0; }
+  height: 1.5625rem; }
   .grid .grid-pol {
     position: absolute;
     z-index: 2;
@@ -154,30 +150,39 @@ COMMON STYLE
     position: absolute;
     z-index: 2;
     top: 0.5625rem;
-    height: 1.1875rem; }
+    height: 1rem; }
     .grid .grid-label-outer .grid-label {
       box-sizing: border-box;
       width: 100%;
       height: 100%;
       margin-left: -50%;
-      padding: 0;
-      padding-top: 0.125rem; }
+      padding: 0; }
       .grid .grid-label-outer .grid-label .grid-label-text {
         display: inline-block;
         box-sizing: border-box;
         line-height: 1;
+        height: 100%;
         padding: 0.125rem;
         border: 0.0625rem solid transparent;
         border-radius: 0.25rem; }
         .grid .grid-label-outer .grid-label .grid-label-text.frame {
           border-color: #afb3bb; }
+  .grid.label-between-ticks {
+    height: 0.625rem; }
+    .grid.label-between-ticks .grid-label-outer {
+      top: 0;
+      height: 0.625rem; }
+      .grid.label-between-ticks .grid-label-outer .grid-label .grid-label-text {
+        padding: 0;
+        border-radius: 0;
+        border: 0; }
   .grid .grid-label {
     background-color: transparent;
     left: 0;
     white-space: nowrap;
     text-align: center;
     font-family: Arial, sans-serif;
-    font-size: 0.5625rem;
+    font-size: 0.625rem;
     line-height: 1;
     font-weight: bold;
     color: #000; }

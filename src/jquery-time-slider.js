@@ -112,6 +112,11 @@ options:
             this.options.stepOffset = (value - this.options.min) % this.options.step;
         }
 
+        //Update display-element onChanging if
+        if (!this.options.onChangeOnDragging)
+            this.preOnChanging =  $.proxy( this.updateDisplay, this );
+
+
         //Create BaseSlider - dont create grid here
         var optionsGrid = this.options.grid;
         this.options.grid = false;
@@ -140,12 +145,17 @@ options:
 
     //Extend the prototype
     window.TimeSlider.prototype = {
-        //valueToTzMoment
+        /**************************************************************
+        valueToTzMoment
+        ***************************************************************/
         _valueToTzMoment: function( value, timezone ){
             return valueToMoment(value).tzMoment( timezone );
         },
 
-        //_valueToFormat - converts value to a moment.format-string or a relative text. If no timezome is given => return relative format
+        /**************************************************************
+        _valueToFormat
+        converts value to a moment.format-string or a relative text. If no timezome is given => return relative format
+        ***************************************************************/
         _valueToFormat: function( value, timezone ){
             if (timezone)
                 return this._valueToTzMoment( value, timezone ).format( this.options.format.dateHourFormat );
@@ -165,7 +175,9 @@ options:
                 return this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
             },
 
-        //adjustResult
+        /**************************************************************
+        adjustResult
+        ***************************************************************/
         adjustResult: function(){
             this.result.minMoment  = valueToMoment ( this.result.min );
             this.result.maxMoment  = valueToMoment ( this.result.max );
@@ -174,7 +186,9 @@ options:
         },
 
 
-        //appendDateGrid
+        /**************************************************************
+        appendDateGrid
+        ***************************************************************/
         appendDateGrid: function( textOptions, tickOptions ){
             var o = this.options,
                 value,
@@ -233,7 +247,7 @@ options:
                     value += 24;
                 }
 
-                //Checking if all dates dispalyed in dayFormat are samller than the max width for a day = dayRem. Setting this._prettifyLabel will force getTextWidth to use the text directly
+                //Checking if all dates displayed in dayFormat are samller than the max width for a day = dayRem. Setting this._prettifyLabel will force getTextWidth to use the text directly
                 for (var i=0; i<dateFormats.length; i++ ){
                     o.format.dateFormat = dateFormats[i];
                     dateFormatOk = (this.getTextWidth( values, textOptions ) <= dayRem);
@@ -246,12 +260,14 @@ options:
             }
 
             if (o.format.dateFormat){
-                //No text-colors on day-text
-                var textColorRec = o.textColorRec,
-                    clickable    = o.clickable;
+                //No text-colors or click on day-text
+                var textColorRec   = o.textColorRec,
+                    labelClickable = o.labelClickable,
+                    labelColorRec  = o.labelColorRec;
 
-                o.textColorRec = {};
-                o.clickable = false;
+                o.textColorRec   = {};
+                o.labelClickable = false;
+                o.labelColorRec  = {};
 
                 //Append the label/text
                 if (midnights === 0){
@@ -284,14 +300,17 @@ options:
                         }
                     }
                 }
-                o.textColorRec = textColorRec;
-                o.clickable = clickable;
+                o.textColorRec   = textColorRec;
+                o.labelClickable = labelClickable;
+                o.labelColorRec  = labelColorRec;
             }
 
             this.postAppendGrid();
         },
 
-        //appendStandardGrid
+        /**************************************************************
+        appendStandardGrid
+        ***************************************************************/
         appendStandardGrid: function(){
             //First remove all grid-container except the first one
             this.cache.$grid = this.cache.$container.find(".grid").first();
@@ -325,18 +344,17 @@ options:
                     var textOptions = {italic:true, minor:true},
                         tickOptions = {color:'#555555'};
                     this._prettify = this._prettifyAbsolute;
-//HERconsole.log('HER1', textOptions);
                     this._prettifyLabel = this._prettifyLabelAbsolute;
                     this._appendStandardGrid( textOptions, tickOptions );
-//HERconsole.log('HER2', textOptions);
                     this.appendDateGrid( textOptions, tickOptions );
-//HERconsole.log('HER3', textOptions);
                     this.options.format.timezone = saveTimezone;
                 }
             }
         },
 
-        //_updateOptionsFormat
+        /**************************************************************
+        _updateOptionsFormat
+        ***************************************************************/
         _updateOptionsFormat: function( format ){
             $.extend( true, this.options.format, format || {}  );
 
@@ -361,14 +379,19 @@ options:
 
 
 
-        //setFormat
+        /**************************************************************
+        setFormat
+        ***************************************************************/
         setFormat: function( format ){
             this._updateOptionsFormat( format );
             this.update();
             this.updateDisplay();
         },
 
-        //updateDisplay - updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
+        /**************************************************************
+        updateDisplay
+        Updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
+        ***************************************************************/
         updateDisplay: function(){
             var i, attr, value;
             function setText( $elem, text ){
@@ -385,6 +408,7 @@ options:
         },
 
         preOnChange: function(){ this.updateDisplay(); }
+
     };
     window.TimeSlider.prototype = $.extend( {}, window.BaseSlider.prototype, window.TimeSlider.prototype );
 

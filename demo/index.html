@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html lang="en" style="font-size:16px">
+<html lang="en" style="font-size:200%">
  <head>
 	<meta charset="iso-8859-1" />
 	<meta charset="iso-8859-1" /> <!-- OR "utf-8" -->
@@ -16,7 +16,7 @@
 			width: 25rem;
 			height: 8rem;
 			border:0.12rem solid red;
-			padding:0.25rem;
+			padding:1rem;
 		}
 		.date-box {
 			display: inline-block;
@@ -177,17 +177,19 @@ DEBUG: test('START');
                 mousewheel: true,
                 width: 14*400,
                 showLineColor: false,
-
-//                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
-                textColors: [
+                resizable: true,
+ticksOnLine: true,
+/*
+                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
+                labelColors: [
                     {value: 0, color:'white', backgroundColor: 'green' },
                     {value: 2, color:'white', backgroundColor: 'red' }
                 ],
-
+*/
 		    })
             .data('timeSlider');
-Debug: test('END');
-		var timeSlider1 =
+
+        var timeSlider1 =
 		    $("#example_01").timeSlider({
 			    format: { showUTC: true},
     			min: -4,
@@ -245,6 +247,7 @@ Debug: test('END');
 				grid: true,
 			}).data('timeSlider');
 
+Debug: test('END');
 
         var lang = 'en_gb';
 		$('#btnSlider1Format').click( function() {
