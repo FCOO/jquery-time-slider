@@ -1,12 +1,12 @@
 {
   "name": "jquery-time-slider",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "package.json is only use for building the package. see bower.json for more info",
   "author": "Niels Holt nho@fcoo.dk",
   "license": "MIT",
   "devDependencies": {
     "grunt": "^1.0.0",
-    "grunt-fcoo-grunt-plugin": "^2.0.0"
+    "grunt-fcoo-grunt-plugin": "^3.0.0"
   },
   "repository": {
     "type": "git",
