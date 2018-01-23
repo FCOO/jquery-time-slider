@@ -14288,7 +14288,9 @@ if (typeof define === 'function' && define.amd) {
         init: function () {
             var _this = this;
 
-            this.initializing = true;
+            this.initializing     = true;
+            this.currentHandle    = null;
+            this.isRepeatingClick = false;
 
             /*******************************************************************
             Set and adjust options
