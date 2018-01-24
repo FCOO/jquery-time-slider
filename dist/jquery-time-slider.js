@@ -74,24 +74,24 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "5.0.2";
+        var _this = this;
+
+        this.VERSION = "5.0.3";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
         this._updateOptionsFormat();
 
-        //Setting display- and text-options
-        function setAndGet( obj, attrName, attrList ){
-            obj[attrName] = obj[attrName] || {};
-            for (var i=0; i<attrList.length; i++ ){
-                var nextAttrName = attrList[i];
-                if ( $.type( obj[attrName][nextAttrName] ) === 'string' )
-                  obj[attrName][nextAttrName] = $(obj[attrName][nextAttrName]);
-            }
-        }
         this.options.display = this.options.display || {};
-        setAndGet( this.options.display, 'from', ['tzElement', 'utcElement', 'relativeElement']);
-        setAndGet( this.options.display, 'to',   ['tzElement', 'utcElement', 'relativeElement']);
+        //Convert options.display.[value | from | to] from selector-string to $-elements (if needed)
+        $.each( ['value', 'from', 'to'], function( index, id ){
+            _this.options.display[id] = _this.options.display[id] || {};
+            $.each( ['tzElement', 'utcElement', 'relativeElement'], function( index, attrId ){
+                var selector = _this.options.display[id][attrId];
+                if ($.type(selector) == 'string')
+                    _this.options.display[id][attrId] = $(selector);
+            });
+        });
 
         //Set min/minMoment, max/maxMoment, from/fromMoment, and to/toMoment
         var valMom = setValueAndMoment( this.options.min, this.options.minMoment, 1 );
@@ -393,18 +393,21 @@ options:
         Updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
         ***************************************************************/
         updateDisplay: function(){
-            var i, attr, value;
-            function setText( $elem, text ){
-                if ($elem)
-                    $elem.each( function(){ $(this).text( text ); } );
-            }
-            for (i=0; i<2; i++){
-                value = i ? this.result.to : this.result.from;
-                attr  = i ? this.options.display.to : this.options.display.from;
-                setText( attr.tzElement      , this._valueToFormat( value, this.options.format.timezone ) );
-                setText( attr.utcElement     , this._valueToFormat( value, 'utc' ) );
-                setText( attr.relativeElement, this._valueToFormat( value ) );
-            }
+            var _this = this;
+            $.each( ['value', 'from', 'to'], function(index, id){
+                var value = _this.result[id],
+                    valueList = [
+                        _this._valueToFormat( value, _this.options.format.timezone ),
+                        _this._valueToFormat( value, 'utc' ),
+                        _this._valueToFormat( value )
+                    ];
+                $.each( ['tzElement', 'utcElement', 'relativeElement'], function( index, attrId ){
+                    var $elem = _this.options.display[id][attrId],
+                        text = valueList[index];
+                    if ($elem)
+                        $elem.each( function(){ $(this).text( text ); } );
+                });
+            });
         },
 
         preOnChange: function(){ this.updateDisplay(); }

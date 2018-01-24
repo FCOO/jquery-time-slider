@@ -35,6 +35,7 @@ The `options` are the same as in [jquery-base-slider](https://github.com/FCOO/jq
 	  fromMoment:...,
 	  toMoment  :...,
 	  display: {
+		value: {...},
 		from: {...},
 		to  : {...}
       },	
@@ -46,8 +47,8 @@ The `options` are the same as in [jquery-base-slider](https://github.com/FCOO/jq
 | Option | Defaults | Type | Description |
 | :--: | :--: | :--: | :-- |
 | `minMoment`<br>`maxMoment`<br>`fromMoment`<br>`toMoment` | | `moment-object` | Same as min, max, from, to in `jquery-base-slider` but as moment-object |
-| `display.from`<br>`display.to` | `null` | JSON-object | Contains tree entries `tzElement, utcElement, relativeElement` and contains a element or a jquery search-string to the elements that would be updated with the selected moment as a string in the different 'modes': selected timezone, utc and relative  | 
-| `format.date` | `"DMY"` | `string | Date format. `"DMY"` or `"MDY"` or `"YMD"` |
+| `display.value`<br>`display.from`<br>`display.to` | `null` | `JSON-object` | Contains tree entries `tzElement, utcElement, relativeElement` and contains a element or a jquery search-string to the elements that would be updated with the selected moment as a string in the different 'modes': selected timezone, utc and relative  | 
+| `format.date` | `"DMY"` | `string` | Date format. `"DMY"` or `"MDY"` or `"YMD"` |
 | `format.time` | `"24"` | `string` | Time format. `"12"` or `"24"` |
 | `format.timezone` | `"local"` | `string` | `"local"` or `"utc"` or abbreviation of time zone. Only if `showRelative: false` |
 | `format.showUTC` | `false` | `boolean` | When true a scale for utc is also shown.Only if `showRelative: false` |

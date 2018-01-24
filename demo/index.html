@@ -1,49 +1,49 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en" style="font-size:200%">
  <head>
-	<meta charset="iso-8859-1" />
-	<meta charset="iso-8859-1" /> <!-- OR "utf-8" -->
+    <meta charset="iso-8859-1" />
+    <meta charset="iso-8859-1" /> <!-- OR "utf-8" -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta http-equiv='x-dns-prefetch-control' content='on'>
-	<meta name='copyright' content='FCOO'>
-	<meta name='owner' content='FCOO'>
+    <meta name='copyright' content='FCOO'>
+    <meta name='owner' content='FCOO'>
     <title>jquery-time-slider - Example</title>
 
     <link  href="bower_components.css" rel="stylesheet">
     <link  href="font-awesome.css" rel="stylesheet">
-	<style>
-		.slider-container {
-			width: 25rem;
-			height: 8rem;
-			border:0.12rem solid red;
-			padding:1rem;
-		}
-		.date-box {
-			display: inline-block;
-			border:0.12rem solid green;
-			padding: 0.25rem;
-			width: 6.5rem;
-		}
-		h4 {
-			margin		: 0;
-			font-size	: 120%;
-		}
-		button {
-			font-size: 0.8rem;
-		}
-	</style>
+    <style>
+        .slider-container {
+            width: 25rem;
+            height: 8rem;
+            border:0.12rem solid red;
+            padding:1rem;
+        }
+        .date-box {
+            display: inline-block;
+            border:0.12rem solid green;
+            padding: 0.25rem;
+            width: 6.5rem;
+        }
+        h4 {
+            margin        : 0;
+            font-size    : 120%;
+        }
+        button {
+            font-size: 0.8rem;
+        }
+    </style>
 
 
 </head>
 <body style="">
     <h4>Scale</h4>
-	<div>
-	    <input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</label>
-		<input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</label>
-	    <input type="radio" class="scaleRadio" name="options" id="option3" value="100" autocomplete="off" checked>100%</label>
-		<input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</label>
-		<input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</label>
-	    <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</label>
+    <div>
+        <input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</label>
+        <input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</label>
+        <input type="radio" class="scaleRadio" name="options" id="option3" value="100" autocomplete="off" checked>100%</label>
+        <input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</label>
+        <input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</label>
+        <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</label>
     </div>
         <div>
             <select id="timezone">
@@ -71,46 +71,49 @@
 
         <br><br>
 
-		<div class="slider-container" style="width:80%">
-			<input type="text" id="example_00"/>
+        <div class="slider-container" style="width:80%">
+            <input type="text" id="example_00"/>
         </div>
 
         <div style="position: relative; width:90%;">
-			<div class="slider-container">
-				<input type="text" id="example_01" value="4" name="range" />
-			</div>
-			<div class="slider-container">
-				<input type="text" id="example_02" value="4" name="range" />
-			</div>
-			<div class="slider-container">
-				<input type="text" id="example_03" value="4" name="range" />
-			</div>
-			<div class="slider-container">
-				<input type="text" id="example_04" value="" name="range" />
-			</div>
-			<button id="btnPrevFrom">Previous</button>
-			<button id="btnNowFrom">Now</button>
-			<button id="btnNextFrom">Next</button>
-			<br>
-			<button id="btnPrevTo">Previous</button>
-			<button id="btnNowTo">Now</button>
-			<button id="btnNextTo">Next</button>
-			<br>
-			<button id="btnSlider1Format">Toggle format</button>
-			<br>
-			<div class="divUtc date-box"></div>
-			<div class="divTz date-box"></div>
-			<div class="divRel date-box"></div>
-			<br>
-			<div class="divToUtc date-box"></div>
-			<div class="divToTz date-box"></div>
-			<div class="divToRel date-box"></div>
+            <div class="slider-container">
+                <input type="text" id="example_01" value="4" name="range" />
+            </div>
+            <div class="slider-container">
+                <input type="text" id="example_02" value="4" name="range" />
+            </div>
+            <div class="divValueTz date-box"></div>
+            <div class="divValueRel date-box"></div>
+            <div class="slider-container">
+                <input type="text" id="example_03" value="4" name="range" />
+            </div>
 
-		</div>
+            <div class="slider-container">
+                <input type="text" id="example_04" value="" name="range" />
+            </div>
+            <button id="btnPrevFrom">Previous</button>
+            <button id="btnNowFrom">Now</button>
+            <button id="btnNextFrom">Next</button>
+            <br>
+            <button id="btnPrevTo">Previous</button>
+            <button id="btnNowTo">Now</button>
+            <button id="btnNextTo">Next</button>
+            <br>
+            <button id="btnSlider1Format">Toggle format</button>
+            <br>
+            <div class="divUtc date-box"></div>
+            <div class="divTz date-box"></div>
+            <div class="divRel date-box"></div>
+            <br>
+            <div class="divToUtc date-box"></div>
+            <div class="divToTz date-box"></div>
+            <div class="divToRel date-box"></div>
+
+        </div>
 
 
 
-	<script>
+    <script>
         var start = (new Date()).getTime(),
             last = start;
         function test(txt){
@@ -119,14 +122,14 @@
             last = now;
         }
     </script>
-	<script src="modernizr-custom.js"></script>
-	<script src="bower_components.js"></script>
+    <script src="modernizr-custom.js"></script>
+    <script src="bower_components.js"></script>
 
     <script src="da.js"></script>
-	<script src="en-gb.js"></script>
-	<script src="../src/jquery-time-slider.js"></script>
+    <script src="en-gb.js"></script>
+    <script src="../src/jquery-time-slider.js"></script>
 
-	<script type="text/javascript">
+    <script type="text/javascript">
         moment.sfAddTimezone([
             { id:'Atlantic/Faeroe' },
             { id:'Europe/Copenhagen' },
@@ -150,28 +153,30 @@
             moment.sfSetFormat({ timezone: timezoneId });
             timeSlider0.setFormat();
             timeSlider1.setFormat();
+            timeSlider2.setFormat();
+            timeSlider3.setFormat();
             timeSlider4.setFormat();
         });
-		$('.scaleRadio').on( 'change', function(event) {
-			var percent = 16*parseInt($(event.target).attr('value'))/100;
-			$('html').css('font-size', percent+'px');
-		});
+        $('.scaleRadio').on( 'change', function(event) {
+            var percent = 16*parseInt($(event.target).attr('value'))/100;
+            $('html').css('font-size', percent+'px');
+        });
 
 
 DEBUG: test('START');
-		var timeSlider0 =
+        var timeSlider0 =
             $("#example_00").timeSlider({
-	        //type: "double",
-			    format: {
+            //type: "double",
+                format: {
                     showRelative:false,
                     showUTC: true,
                 },
-		    	min: -24*7,
-			    max: +24*7,
+                min: -24*7,
+                max: +24*7,
                 step: 1,
-	    		from: 0,
-		    	to:24,
-			    grid: true,
+                from: 0,
+                to:24,
+                grid: true,
                 handleFixed: true,
                 slider:"fixed",
                 mousewheel: true,
@@ -186,71 +191,77 @@ ticksOnLine: true,
                     {value: 2, color:'white', backgroundColor: 'red' }
                 ],
 */
-		    })
+            })
             .data('timeSlider');
 
         var timeSlider1 =
-		    $("#example_01").timeSlider({
-			    format: { showUTC: true},
-    			min: -4,
-	    		max: +24,
-			    from: 0,
-    			to:24,
-	    		grid: true,
+            $("#example_01").timeSlider({
+                format: { showUTC: true},
+                min: -4,
+                max: +24,
+                from: 0,
+                to:24,
+                grid: true,
                 mousewheel: true
-			}).data('timeSlider');
+            }).data('timeSlider');
 
-		$("#example_02").timeSlider({
-	    //type: "double",
-			format: { showRelative:true },
-			min: -24,
-			max: +48,
-			from: 0,
-			to:24,
-			grid: true,
-            mousewheel: true,
+        var timeSlider2 =
+            $("#example_02").timeSlider({
+                format: { showRelative:true },
+                min: -24,
+                max: +48,
+                from: 0,
+                to:24,
+                grid: true,
+                mousewheel: true,
                 pinValue: 10,
-		});
+                display: {
+                    value: {
+                        tzElement      :'.divValueTz',
+                        relativeElement:'.divValueRel'
+                    }
+                }
+            }).data('timeSlider');
 
-		var timeSlider3 =
+        var timeSlider3 =
             $("#example_03").timeSlider({
-        	    type: "double",
-		        	format: { showRelative:true },
-        			min: -24,
-		        	max: +48,
-        			from: 0,
-		        	to:24,
-        			grid: true,
-		        	showImpactLineColor: true
-			}).data('timeSlider');
+                type: "double",
+                    format: { showRelative:true },
+                    min: -24,
+                    max: +48,
+                    from: 0,
+                    to:24,
+                    grid: true,
+                    showImpactLineColor: true
+            }).data('timeSlider');
 
 
-		var timeSlider4 =
-			$("#example_04").timeSlider({
-				onChange: function(result){ console.log('onChange',result);},
-				onChangeOnDragging: false,
-				slider: 'round',
-				type: "double",
-				format: { showUTC: true},
-				display: {
-					from: {	tzElement:'.divTz',		utcElement:'.divUtc',		relativeElement:'.divRel'		},
-					to	: {	tzElement:'.divToTz',	utcElement:'.divToUtc',	relativeElement:'.divToRel' }
-				},
-				buttons: {
-					from: {	previousBtn: 'btnPrevFrom',	nowBtn: 'btnNowFrom', nextBtn: 'btnNextFrom'	},
-					to	: {	previousBtn: 'btnPrevTo',		nowBtn: 'btnNowTo',		nextBtn: 'btnNextTo'		}
-				},
-				min: -7,
-				max: +15 + 2*24,
-				from: 0,
-				to:24,
-				grid: true,
-			}).data('timeSlider');
+        var timeSlider4 =
+            $("#example_04").timeSlider({
+                onChange: function(result){ console.log('onChange',result);},
+                onChangeOnDragging: false,
+                slider: 'round',
+                type: "double",
+                format: { showUTC: true},
+                display: {
+                    from: { tzElement:'.divTz',   utcElement:'.divUtc',   relativeElement:'.divRel'   },
+                    to  : { tzElement:'.divToTz', utcElement:'.divToUtc', relativeElement:'.divToRel' }
+                },
+                buttons: {
+                    from: { previousBtn: 'btnPrevFrom', nowBtn: 'btnNowFrom', nextBtn: 'btnNextFrom' },
+                    to  : { previousBtn: 'btnPrevTo',   nowBtn: 'btnNowTo',   nextBtn: 'btnNextTo'   }
+                },
+                min: -7,
+                max: +15 + 2*24,
+                from: 0,
+                to:24,
+                grid: true,
+            }).data('timeSlider');
 
 Debug: test('END');
 
         var lang = 'en_gb';
-		$('#btnSlider1Format').click( function() {
+        $('#btnSlider1Format').click( function() {
             lang = (lang == 'en_gb' ? 'da' : 'en_gb');
             var isEn = lang == 'en_gb',
                 date = moment.sfGetOptions().date,
@@ -265,12 +276,12 @@ Debug: test('END');
                     to: isEn ? 'to' : 'til'
                 }
              } );
-			timeSlider3.setFormat();
-			timeSlider4.setFormat();
-		});
+            timeSlider3.setFormat();
+            timeSlider4.setFormat();
+        });
 
-	</script>
+    </script>
 
 
-	</body>
+    </body>
 </html>
