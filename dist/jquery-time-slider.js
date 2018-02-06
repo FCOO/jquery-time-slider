@@ -78,7 +78,7 @@ options:
     window.TimeSlider = function (input, options, pluginCount) {
         var _this = this;
 
-        this.VERSION = "5.0.7";
+        this.VERSION = "5.0.8";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -111,8 +111,6 @@ options:
         valMom = setValueAndMoment( this.options.value, this.options.valueMoment || this.options.fromMoment);
         this.options.value = valMom.value; this.options.valueMoment = valMom.m;
 
-
-
         if ((this.options.step > 1) && this.options.stepOffsetMoment){
           //Use options.stepOffsetMoment to calculate stepOffset
             var value = setValueAndMoment( undefined, moment( this.options.stepOffsetMoment ) ).value;
@@ -129,11 +127,13 @@ options:
         this.options.grid = false;
         window.BaseSlider.call(this, input, this.options, pluginCount );
 
-        //Set from/fromMoment and to/toMoment
-        this.setFromValue( setValueAndMoment( this.options.from, this.options.fromMoment ).value );
-
-        if (options.isInterval)
-            this.setToValue( setValueAndMoment( this.options.to, this.options.toMoment ).value );
+        if (this.options.isSingle)
+            this.setValue( setValueAndMoment( this.options.value, this.options.valueMoment ).value );
+        else {
+            //Set from/fromMoment and to/toMoment
+            this.setFromValue( setValueAndMoment( this.options.from, this.options.fromMoment ).value );
+            this.setToValue  ( setValueAndMoment( this.options.to,   this.options.toMoment   ).value );
+        }
 
         //Sets the format and create the grids
         this.options.grid = optionsGrid;
