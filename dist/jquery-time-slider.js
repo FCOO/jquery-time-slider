@@ -15,6 +15,8 @@ options:
     ** SAME AS IN JQUERY-BASE-SLIDER PLUS **
 
     display:
+        value:
+            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
         from:
             tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
         to:
@@ -76,7 +78,7 @@ options:
     window.TimeSlider = function (input, options, pluginCount) {
         var _this = this;
 
-        this.VERSION = "5.0.6";
+        this.VERSION = "5.0.7";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -93,18 +95,23 @@ options:
             });
         });
 
-        //Set min/minMoment, max/maxMoment, from/fromMoment, and to/toMoment
-        var valMom = setValueAndMoment( this.options.min, this.options.minMoment, 1 );
+        //Set min/minMoment, max/maxMoment, from/fromMoment, to/toMoment, and value/valueMoment
+        var valMom = setValueAndMoment( this.options.min, this.options.minMoment );
         this.options.min = valMom.value; this.options.minMoment = valMom.m;
 
-        valMom = setValueAndMoment( this.options.max, this.options.maxMoment, 2 );
-        this.options.max = valMom.value; options.maxMoment = valMom.m;
+        valMom = setValueAndMoment( this.options.max, this.options.maxMoment );
+        this.options.max = valMom.value; this.options.maxMoment = valMom.m;
 
-        valMom = setValueAndMoment( this.options.from, this.options.fromMoment);
-        this.options.from = valMom.value; options.fromMoment = valMom.m;
+        valMom = setValueAndMoment( this.options.from, this.options.fromMoment || this.options.minMoment );
+        this.options.from = valMom.value; this.options.fromMoment = valMom.m;
 
         valMom = setValueAndMoment( this.options.to, this.options.toMoment || this.options.maxMoment );
-        this.options.to = valMom.value; options.toMoment = valMom.m;
+        this.options.to = valMom.value; this.options.toMoment = valMom.m;
+
+        valMom = setValueAndMoment( this.options.value, this.options.valueMoment || this.options.fromMoment);
+        this.options.value = valMom.value; this.options.valueMoment = valMom.m;
+
+
 
         if ((this.options.step > 1) && this.options.stepOffsetMoment){
           //Use options.stepOffsetMoment to calculate stepOffset
@@ -179,10 +186,11 @@ options:
         adjustResult
         ***************************************************************/
         adjustResult: function(){
-            this.result.minMoment  = valueToMoment ( this.result.min );
-            this.result.maxMoment  = valueToMoment ( this.result.max );
-            this.result.fromMoment = valueToMoment ( this.result.from );
-            this.result.toMoment   = valueToMoment ( this.result.to );
+            this.result.minMoment   = valueToMoment ( this.result.min );
+            this.result.maxMoment   = valueToMoment ( this.result.max );
+            this.result.fromMoment  = valueToMoment ( this.result.from );
+            this.result.toMoment    = valueToMoment ( this.result.to );
+            this.result.valueMoment = valueToMoment ( this.result.value );
         },
 
 

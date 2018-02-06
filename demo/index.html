@@ -131,6 +131,12 @@
     <script src="../src/jquery-time-slider.js"></script>
 
     <script type="text/javascript">
+        window.bsIsTouch = false;
+        window.bsIsTouch = (window.location.search =='?touch');
+
+        i18next.init();
+        i18next.changeLanguage('da');
+
         moment.sfAddTimezone([
             { id:'Atlantic/Faeroe' },
             { id:'Europe/Copenhagen' },
@@ -175,8 +181,7 @@ DEBUG: test('START');
                 min: -24*7,
                 max: +24*7,
                 step: 1,
-                from: 0,
-                to:24,
+                value: 0,
                 grid: true,
                 handleFixed: true,
                 slider:"fixed",
@@ -197,6 +202,7 @@ ticksOnLine: true,
 
         var timeSlider1 =
             $("#example_01").timeSlider({
+                onChange: function(result){ console.log('1:onChange',result.valueMoment.toISOString());},
                 format: { showUTC: true},
                 min: -4,
                 max: +24,
@@ -239,7 +245,7 @@ ticksOnLine: true,
 
         var timeSlider4 =
             $("#example_04").timeSlider({
-                onChange: function(result){ console.log('onChange',result);},
+                onChange: function(result){ console.log('4:onChange',result);},
                 onChangeOnDragging: false,
                 slider: 'round',
                 type: "double",

@@ -34,6 +34,7 @@ The `options` are the same as in [jquery-base-slider](https://github.com/FCOO/jq
 	  maxMoment :..., 
 	  fromMoment:...,
 	  toMoment  :...,
+	  valueMoment  :...,
 	  display: {
 		value: {...},
 		from: {...},
