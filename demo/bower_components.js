@@ -16874,7 +16874,8 @@ if (typeof define === 'function' && define.amd) {
                 func = param ? $.proxy( func, _this, param) : $.proxy( func, _this );
 
                 $.each( eventNames.split(' '), function( index, eventName ){
-                    $elem.on( eventName + ".irs_" + _this.pluginCount,  func );
+                    $elem.off( eventName + ".irs_" + _this.pluginCount,  func );
+                    $elem.on ( eventName + ".irs_" + _this.pluginCount,  func );
                 });
                 return $elem;
             }
@@ -16897,9 +16898,14 @@ if (typeof define === 'function' && define.amd) {
 
             var $panElement = this.options.isFixed ? this.cache.$fullWidthContainer : this.cache.$container;
             addEvents( $panElement, 'panstart',         this.onPanstart );
-            addEvents( $panElement, 'pan',              this.onPan      );
+            addEvents( $panElement, 'panleft panright', this.onPan      );
             addEvents( $panElement, 'panend pancancel', this.onPanend   );
 
+            var threshold = 1;
+            //If the distance between steps is set and fixed => use it as threshold
+            if (!this.options.resizable && this.gridOptions && this.gridOptions.stepRem)
+                threshold = Math.floor(this.gridOptions.stepRem*16);
+            $panElement.data('hammer').get('pan').set({threshold:threshold});
 
             //Add onResize to the container
             if (this.options.resizable){
