@@ -17867,14 +17867,13 @@ if (typeof define === 'function' && define.amd) {
             result.tickDistanceNum = result.gridDistanceStep * o.step;          //The numerical distance between each ticks
             result.tickDistanceRem = result.gridDistanceStep * result.stepRem;  //The rem distance between each ticks
 
-//            if (inclMaxLabelWidthRem){
             if (o.maxLabelWidthRem)
                 result.maxLabelWidthRem = o.maxLabelWidthRem;
             else {
                 //Find widest label
                 var value = o.min,
-                valueList = [],
-                step = o.step;
+                    valueList = [],
+                    step = 1;
 
                 while (value <= o.max){
                     //if value corrected by o.majorTicksOffset and o.majorTicksFactor is a DIV of the tick distance => calculate the width of the tick
@@ -17926,11 +17925,10 @@ if (typeof define === 'function' && define.amd) {
             //Add all the minor and major ticks
             var o     = this.options,
                 value = o.min,
-                step  = o.step,
+                step  = 1,
                 valueP, valueOffset;
 
             while (value <= o.max){
-
                 valueOffset = (value - o.majorTicksOffset)*o.majorTicksFactor;
                 if (valueOffset % o.tickDistanceNum === 0){
                     valueP = (value-o.min)*o.percentProValue;
