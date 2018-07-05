@@ -286,9 +286,7 @@ var EventEmitter = function () {
     if (this.observers['*']) {
       var _cloned = [].concat(this.observers['*']);
       _cloned.forEach(function (observer) {
-        var _ref;
-
-        observer.apply(observer, (_ref = [event]).concat.apply(_ref, args));
+        observer.apply(observer, [event].concat(args));
       });
     }
   };
@@ -414,6 +412,9 @@ var ResourceStore = function (_EventEmitter) {
 
     _this.data = data || {};
     _this.options = options;
+    if (_this.options.keySeparator === undefined) {
+      _this.options.keySeparator = '.';
+    }
     return _this;
   }
 
@@ -433,8 +434,7 @@ var ResourceStore = function (_EventEmitter) {
   ResourceStore.prototype.getResource = function getResource(lng, ns, key) {
     var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-    var keySeparator = options.keySeparator || this.options.keySeparator;
-    if (keySeparator === undefined) keySeparator = '.';
+    var keySeparator = options.keySeparator !== undefined ? options.keySeparator : this.options.keySeparator;
 
     var path = [lng, ns];
     if (key && typeof key !== 'string') path = path.concat(key);
@@ -564,6 +564,10 @@ var Translator = function (_EventEmitter) {
     copy(['resourceStore', 'languageUtils', 'pluralResolver', 'interpolator', 'backendConnector', 'i18nFormat'], services, _this);
 
     _this.options = options;
+    if (_this.options.keySeparator === undefined) {
+      _this.options.keySeparator = '.';
+    }
+
     _this.logger = baseLogger.create('translator');
     return _this;
   }
@@ -582,7 +586,8 @@ var Translator = function (_EventEmitter) {
   Translator.prototype.extractFromKey = function extractFromKey(key, options) {
     var nsSeparator = options.nsSeparator || this.options.nsSeparator;
     if (nsSeparator === undefined) nsSeparator = ':';
-    var keySeparator = options.keySeparator || this.options.keySeparator || '.';
+
+    var keySeparator = options.keySeparator !== undefined ? options.keySeparator : this.options.keySeparator;
 
     var namespaces = options.ns || this.options.defaultNS;
     if (nsSeparator && key.indexOf(nsSeparator) > -1) {
@@ -613,7 +618,7 @@ var Translator = function (_EventEmitter) {
     if (typeof keys === 'string') keys = [keys];
 
     // separators
-    var keySeparator = options.keySeparator || this.options.keySeparator || '.';
+    var keySeparator = options.keySeparator !== undefined ? options.keySeparator : this.options.keySeparator;
 
     // get namespace(s)
 
@@ -654,7 +659,7 @@ var Translator = function (_EventEmitter) {
 
       // if we got a separator we loop over children - else we just return object as is
       // as having it set to false means no hierarchy so no lookup for nested values
-      if (options.keySeparator || this.options.keySeparator) {
+      if (keySeparator) {
         var copy$$1 = resType === '[object Array]' ? [] : {}; // apply child translation on a copy
 
         /* eslint no-restricted-syntax: 0 */
@@ -745,8 +750,8 @@ var Translator = function (_EventEmitter) {
     var _this3 = this;
 
     if (this.i18nFormat && this.i18nFormat.parse) {
-      res = this.i18nFormat.parse(res, options, resolved.usedLng, resolved.usedNS, resolved.usedKey);
-    } else {
+      res = this.i18nFormat.parse(res, options, resolved.usedLng, resolved.usedNS, resolved.usedKey, { resolved: resolved });
+    } else if (!options.skipInterpolation) {
       // i18next.parsing
       if (options.interpolation) this.interpolator.init(_extends({}, options, { interpolation: _extends({}, this.options.interpolation, options.interpolation) }));
 
@@ -1249,8 +1254,7 @@ var Interpolator = function () {
     // regular escape on demand
     while (match = this.regexp.exec(str)) {
       value = handleFormat(match[1].trim());
-      if (typeof value !== 'string') value = makeString(value);
-      if (!value) {
+      if (value === undefined) {
         if (typeof this.options.missingInterpolationHandler === 'function') {
           var temp = this.options.missingInterpolationHandler(str, match);
           value = typeof temp === 'string' ? temp : '';
@@ -1258,6 +1262,8 @@ var Interpolator = function () {
           this.logger.warn('missed to pass in variable ' + match[1] + ' for interpolating ' + str);
           value = '';
         }
+      } else if (typeof value !== 'string') {
+        value = makeString(value);
       }
       value = this.escapeValue ? regexSafe(this.escape(value)) : regexSafe(value);
       str = str.replace(match[0], value);
@@ -1590,7 +1596,6 @@ function get$1() {
       if (args[2]) ret.tDescription = args[2];
       return ret;
     },
-
     interpolation: {
       escapeValue: true,
       format: function format(value, _format, lng) {
@@ -15652,48 +15657,41 @@ if (typeof define === 'function' && define.amd) {
     Create a Modernizr-test named 'mouse-hover' to mark if hover "events" is fired. Can be use to prevent :hover {...} css to fail on touch devices
     */
 
-	/******************************************
-	Initialize/ready
-	*******************************************/
-	$(function() {
-        var mouseTest         = 'mouse',
-            mouseHoverTest    = 'mouse-hover',
-            mouseEventPostfix = '.modernizr.mouse.events',
-            hasModernizr = !!window.Modernizr,
-            hasTouchEventsTest = hasModernizr && (jQuery.type( window.Modernizr['touchevents'] ) === "boolean"),
-            hasTouchEvents = hasTouchEventsTest ? window.Modernizr['touchevents'] : true;
+    var mouseTest         = 'mouse',
+        mouseHoverTest    = 'mouse-hover',
+        mouseEventPostfix = '.modernizr.mouse.events',
+        hasModernizr = !!window.Modernizr,
+        hasTouchEventsTest = hasModernizr && (jQuery.type( window.Modernizr['touchevents'] ) === "boolean"),
+        hasTouchEvents = hasTouchEventsTest ? window.Modernizr['touchevents'] : true;
 
-        if (hasModernizr)
-            window.Modernizr.addTest(mouseTest, false);
-        window.modernizrOff(mouseTest);
+    if (hasModernizr)
+        window.Modernizr.addTest(mouseTest, false);
+    window.modernizrOff(mouseTest);
 
-        //If Modernizr-test "touchevents" is included => use if to set "mouse-hover" else set "mouse-hover" = "mouse"
-        if (hasModernizr)
-            window.Modernizr.addTest( mouseHoverTest, !hasTouchEvents );
-        window.modernizrToggle( mouseHoverTest, !hasTouchEvents );
+    //If Modernizr-test "touchevents" is included => use if to set "mouse-hover" else set "mouse-hover" = "mouse"
+    if (hasModernizr)
+        window.Modernizr.addTest( mouseHoverTest, !hasTouchEvents );
+    window.modernizrToggle( mouseHoverTest, !hasTouchEvents );
 
-        $(window)
-            //Check for mouse
-            .bind('mousemove'+mouseEventPostfix,function(){
-                $(window).unbind(mouseEventPostfix);
+    $(window)
+        //Check for mouse
+        .bind('mousemove'+mouseEventPostfix,function(){
+            $(window).unbind(mouseEventPostfix);
+            if (hasModernizr)
+                window.Modernizr[mouseTest] = true;
+            window.modernizrOn(mouseTest);
+            if (!hasTouchEventsTest){
                 if (hasModernizr)
-                    window.Modernizr[mouseTest] = true;
-                window.modernizrOn(mouseTest);
-                if (!hasTouchEventsTest){
-                    if (hasModernizr)
-                        window.Modernizr.addTest( mouseHoverTest, true );
-                    window.modernizrOn(mouseHoverTest);
-                }
-            })
-            .bind('touchstart'+mouseEventPostfix,function(){
-                $(window).unbind(mouseEventPostfix);
-                if (hasModernizr)
-                    window.Modernizr[mouseTest] = false;
-                window.modernizrOff(mouseTest);
-            });
-    });
-
-    //******************************************
+                    window.Modernizr.addTest( mouseHoverTest, true );
+                window.modernizrOn(mouseHoverTest);
+            }
+        })
+        .bind('touchstart'+mouseEventPostfix,function(){
+            $(window).unbind(mouseEventPostfix);
+            if (hasModernizr)
+                window.Modernizr[mouseTest] = false;
+            window.modernizrOff(mouseTest);
+        });
 
 }(jQuery, this, document));
 ;
@@ -16064,7 +16062,7 @@ if (typeof define === 'function' && define.amd) {
     *******************************************************************/
     var defaultOptions = {
         //Type and handle
-        type        : "single", // Choose single or double, could be "single" - for one handle, or "double" for two handles
+        double      : false,    // Choose single or double, could be false - for one handle, or true for two handles
         handle      : "down",   // Choose handle type, could be "horizontal", "vertical", "down", "up", "left", "right", "round", "range", or "fixed"
         readOnly    : false,    // Locks slider and makes it inactive.
         disable     : false,    // Locks slider and makes it disable ("dissy")
@@ -16101,9 +16099,9 @@ if (typeof define === 'function' && define.amd) {
 
         //Steps
         step        : 1,    // Set sliders step. Always > 0. Could be fractional.
-        stepOffset  : 0,    // When  step  > 1: Offset for the allowed values. Eq. Min=0, max=100, step=5, stepOffset=3 => allowed values=3,8,13,...,92,97 (3+N*5)<br>Only tested for  type="single"
-        intervalMin : 0,    // Minimum interval between left and right handles. Only in "double" type
-        intervalMax : 0,    // Maximum interval between left and right handles. Only in "double" type
+        stepOffset  : 0,    // When  step  > 1: Offset for the allowed values. Eq. Min=0, max=100, step=5, stepOffset=3 => allowed values=3,8,13,...,92,97 (3+N*5). Only tested for options.single: true
+        intervalMin : 0,    // Minimum interval between left and right handles. Only for options.double: true
+        intervalMax : 0,    // Maximum interval between left and right handles. Only for options.double: true
 
         keyboardShiftStepFactor: 5,  //Factor when pressing etc. shift-left compare to left
         keyboardPageStepFactor : 20, //Step-factor when pressing pgUp or PgDn
@@ -16146,7 +16144,7 @@ if (typeof define === 'function' && define.amd) {
         prettifyLabel  : null,  // As  prettify  but for the labels in the grid.
         prefix          : "",    // Set prefix for values. Will be set up right before the number: $100
         postfix         : "",    // Set postfix for values. Will be set up right after the number: 100k
-        decorateBoth   : true,  // Used for "double" type and only if prefix or postfix was set up. Determine how to decorate close values. For example: $10k - $100k or $10 - 100k
+        decorateBoth   : true,  // Used for options.double:true and only if prefix or postfix was set up. Determine how to decorate close values. For example: $10k - $100k or $10 - 100k
         decorateLabel  : false, // The labels in the grid also gets  prefix  and/or  postfix
         valuesSeparator: " - ", // Text between min and max value when labels are combined. valuesSeparator:" to " => "12 to 24"
 
@@ -16317,13 +16315,13 @@ if (typeof define === 'function' && define.amd) {
         this.options = $.extend( {}, defaultOptions, options );
 
         if (this.options.handleFixed){
-            this.options.type   = 'single'; //TODO Allow double slider when fixed (how??)
+            this.options.double = false;
             this.options.handle = 'fixed';
         }
 
-        this.options.isSingle   = (this.options.type == 'single');
-        this.options.isInterval = (this.options.type == 'double');
-        this.options.isFixed    = this.options.isSingle &&  this.options.handleFixed;
+        this.options.isSingle = !this.options.double;
+        this.options.isDouble = this.options.double;
+        this.options.isFixed  = this.options.isSingle && this.options.handleFixed;
 
         this.options.singleHandleId =
             this.options.isSingle ? (this.options.handleFixed ? 'fixed' : 'single') : 'from-to';
@@ -16766,7 +16764,7 @@ if (typeof define === 'function' && define.amd) {
             }
 
             //1. double-handle with impact- or reverse-impact-colors
-            if (this.options.isInterval && this.options.showImpactLineColor){
+            if (this.options.isDouble && this.options.showImpactLineColor){
                 appendLineColor( true, true, true );
                 this.setImpactLineColors();
             }
@@ -16794,7 +16792,7 @@ if (typeof define === 'function' && define.amd) {
                 else
                     //3. Normal line-color to the left of handle (single) or between handles (double)
                     if (this.options.showLineColor)
-                        appendLineColor( this.options.isSingle, this.options.isInterval, false )
+                        appendLineColor( this.options.isSingle, this.options.isDouble, false )
                             .css('background-color', this.options.lineColor);
 
 
@@ -17209,7 +17207,7 @@ if (typeof define === 'function' && define.amd) {
             }
 
             //If the slider has two handle and both handles are moved: Move euqal distance to keep the distance between them constant
-            if (!options.handleId && this.options.isInterval){
+            if (!options.handleId && this.options.isDouble){
                 var _this = this;
                 //1: Find possible max delta for both from- and to-value
                 var fromValue = this.handles.from.value,
@@ -26416,9 +26414,9 @@ return index;
 
             mom = createUTC([2000, 1]).day(i);
             if (strict && !this._fullWeekdaysParse[i]) {
-                this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\.?') + '$', 'i');
-                this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\.?') + '$', 'i');
-                this._minWeekdaysParse[i] = new RegExp('^' + this.weekdaysMin(mom, '').replace('.', '\.?') + '$', 'i');
+                this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\\.?') + '$', 'i');
+                this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\\.?') + '$', 'i');
+                this._minWeekdaysParse[i] = new RegExp('^' + this.weekdaysMin(mom, '').replace('.', '\\.?') + '$', 'i');
             }
             if (!this._weekdaysParse[i]) {
                 regex = '^' + this.weekdays(mom, '') + '|^' + this.weekdaysShort(mom, '') + '|^' + this.weekdaysMin(mom, '');
@@ -27221,7 +27219,7 @@ return index;
 
     function preprocessRFC2822(s) {
         // Remove comments and folding whitespace and replace multiple-spaces with a single space
-        return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').trim();
+        return s.replace(/\([^)]*\)|[\n\t]/g, ' ').replace(/(\s\s+)/g, ' ').replace(/^\s\s*/, '').replace(/\s\s*$/, '');
     }
 
     function checkWeekday(weekdayStr, parsedInput, config) {
@@ -28603,7 +28601,7 @@ return index;
 
     addUnitAlias('date', 'D');
 
-    // PRIOROITY
+    // PRIORITY
     addUnitPriority('date', 9);
 
     // PARSING
@@ -29400,7 +29398,7 @@ return index;
     // Side effect imports
 
 
-    hooks.version = '2.22.0';
+    hooks.version = '2.22.2';
 
     setHookCallback(createLocal);
 
@@ -31182,7 +31180,7 @@ return index;
 }).call(this);
 ;
 //! moment-timezone.js
-//! version : 0.5.14
+//! version : 0.5.17
 //! Copyright (c) JS Foundation and other contributors
 //! license : MIT
 //! github.com/moment/moment-timezone
@@ -31207,7 +31205,7 @@ return index;
 	// 	return moment;
 	// }
 
-	var VERSION = "0.5.14",
+	var VERSION = "0.5.17",
 		zones = {},
 		links = {},
 		names = {},
@@ -31783,7 +31781,7 @@ return index;
 	}
 
 	loadData({
-		"version": "2017c",
+		"version": "2018e",
 		"zones": [
 			"Africa/Abidjan|GMT|0|0||48e5",
 			"Africa/Nairobi|EAT|-30|0||47e5",
@@ -31795,8 +31793,9 @@ return index;
 			"Europe/Paris|CET CEST|-10 -20|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|11e6",
 			"Africa/Johannesburg|SAST|-20|0||84e5",
 			"Africa/Khartoum|EAT CAT|-30 -20|01|1Usl0|51e5",
+			"Africa/Sao_Tome|GMT WAT|0 -10|01|1UQN0",
 			"Africa/Tripoli|EET CET CEST|-20 -10 -20|0120|1IlA0 TA0 1o00|11e5",
-			"Africa/Windhoek|WAST WAT CAT|-20 -10 -20|0101010101012|1GQo0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0|32e4",
+			"Africa/Windhoek|CAT WAT|-20 -10|0101010101010|1GQo0 11B0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0|32e4",
 			"America/Adak|HST HDT|a0 90|01010101010101010101010|1GIc0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|326",
 			"America/Anchorage|AKST AKDT|90 80|01010101010101010101010|1GIb0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|30e4",
 			"America/Santo_Domingo|AST|40|0||29e5",
@@ -31804,13 +31803,13 @@ return index;
 			"America/Fortaleza|-03|30|0||34e5",
 			"America/Asuncion|-03 -04|30 40|01010101010101010101010|1GTf0 1cN0 17b0 1ip0 17b0 1ip0 17b0 1ip0 19X0 1fB0 19X0 1fB0 19X0 1ip0 17b0 1ip0 17b0 1ip0 19X0 1fB0 19X0 1fB0|28e5",
 			"America/Panama|EST|50|0||15e5",
-			"America/Bahia|-02 -03|20 30|01|1GCq0|27e5",
 			"America/Mexico_City|CST CDT|60 50|01010101010101010101010|1GQw0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0|20e6",
+			"America/Bahia|-02 -03|20 30|01|1GCq0|27e5",
 			"America/Managua|CST|60|0||22e5",
 			"America/La_Paz|-04|40|0||19e5",
 			"America/Lima|-05|50|0||11e6",
 			"America/Denver|MST MDT|70 60|01010101010101010101010|1GI90 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|26e5",
-			"America/Campo_Grande|-03 -04|30 40|01010101010101010101010|1GCr0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1C10 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0|77e4",
+			"America/Campo_Grande|-03 -04|30 40|01010101010101010101010|1GCr0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0|77e4",
 			"America/Cancun|CST CDT EST|60 50 50|01010102|1GQw0 1nX0 14p0 1lb0 14p0 1lb0 Dd0|63e4",
 			"America/Caracas|-0430 -04|4u 40|01|1QMT0|29e5",
 			"America/Chicago|CST CDT|60 50|01010101010101010101010|1GI80 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|92e5",
@@ -31831,10 +31830,10 @@ return index;
 			"America/Port-au-Prince|EST EDT|50 40|010101010101010101010|1GI70 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 3iN0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|23e5",
 			"Antarctica/Palmer|-03 -04|30 40|010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0|40",
 			"America/Santiago|-03 -04|30 40|010101010101010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Dd0 1Nb0 Ap0|62e5",
-			"America/Sao_Paulo|-02 -03|20 30|01010101010101010101010|1GCq0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1C10 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0|20e6",
+			"America/Sao_Paulo|-02 -03|20 30|01010101010101010101010|1GCq0 1zd0 Lz0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0|20e6",
 			"Atlantic/Azores|-01 +00|10 0|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|25e4",
 			"America/St_Johns|NST NDT|3u 2u|01010101010101010101010|1GI5u 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0|11e4",
-			"Antarctica/Casey|+11 +08|-b0 -80|010|1GAF0 blz0|10",
+			"Antarctica/Casey|+11 +08|-b0 -80|0101|1GAF0 blz0 3m10|10",
 			"Antarctica/Davis|+05 +07|-50 -70|01|1GAI0|70",
 			"Pacific/Port_Moresby|+10|-a0|0||25e4",
 			"Pacific/Guadalcanal|+11|-b0|0||11e4",
@@ -31859,7 +31858,7 @@ return index;
 			"Asia/Dili|+09|-90|0||19e4",
 			"Asia/Dubai|+04|-40|0||39e5",
 			"Asia/Famagusta|EET EEST +03|-20 -30 -30|0101010101201010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0",
-			"Asia/Gaza|EET EEST|-20 -30|01010101010101010101010|1GPy0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0|18e5",
+			"Asia/Gaza|EET EEST|-20 -30|01010101010101010101010|1GPy0 1a00 1fA0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1qL0 WN0 1qL0 WN0 1qL0|18e5",
 			"Asia/Hong_Kong|HKT|-80|0||73e5",
 			"Asia/Hovd|+07 +08|-70 -80|01010|1O8H0 1cJ0 1cP0 1cJ0|81e3",
 			"Asia/Irkutsk|+09 +08|-90 -80|01|1N7t0|60e4",
@@ -31877,7 +31876,7 @@ return index;
 			"Europe/Athens|EET EEST|-20 -30|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|35e5",
 			"Asia/Novosibirsk|+07 +06|-70 -60|010|1N7v0 4eN0|15e5",
 			"Asia/Omsk|+07 +06|-70 -60|01|1N7v0|12e5",
-			"Asia/Pyongyang|KST KST|-90 -8u|01|1P4D0|29e5",
+			"Asia/Pyongyang|KST KST|-90 -8u|010|1P4D0 6BAu|29e5",
 			"Asia/Rangoon|+0630|-6u|0||48e5",
 			"Asia/Sakhalin|+11 +10|-b0 -a0|010|1N7r0 3rd0|58e4",
 			"Asia/Seoul|KST|-90|0||23e6",
@@ -31898,6 +31897,10 @@ return index;
 			"Australia/Perth|AWST|-80|0||18e5",
 			"Pacific/Easter|-05 -06|50 60|010101010101010101010|1H3D0 Op0 1zb0 Rd0 1wn0 Rd0 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1Nb0 Dd0 1Nb0 Ap0|30e2",
 			"Europe/Dublin|GMT IST|0 -10|01010101010101010101010|1GNB0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0|12e5",
+			"Etc/GMT-1|+01|-10|0|",
+			"Pacific/Fakaofo|+13|-d0|0||483",
+			"Pacific/Kiritimati|+14|-e0|0||51e2",
+			"Etc/GMT-2|+02|-20|0|",
 			"Pacific/Tahiti|-10|a0|0||18e4",
 			"Pacific/Niue|-11|b0|0||12e2",
 			"Etc/GMT+12|-12|c0|0|",
@@ -31905,10 +31908,6 @@ return index;
 			"Etc/GMT+7|-07|70|0|",
 			"Pacific/Pitcairn|-08|80|0||56",
 			"Pacific/Gambier|-09|90|0||125",
-			"Etc/GMT-1|+01|-10|0|",
-			"Pacific/Fakaofo|+13|-d0|0||483",
-			"Pacific/Kiritimati|+14|-e0|0||51e2",
-			"Etc/GMT-2|+02|-20|0|",
 			"Etc/UCT|UCT|0|0|",
 			"Etc/UTC|UTC|0|0|",
 			"Europe/Astrakhan|+04 +03|-40 -30|010|1N7y0 3rd0",
@@ -31943,7 +31942,6 @@ return index;
 			"Africa/Abidjan|Africa/Monrovia",
 			"Africa/Abidjan|Africa/Nouakchott",
 			"Africa/Abidjan|Africa/Ouagadougou",
-			"Africa/Abidjan|Africa/Sao_Tome",
 			"Africa/Abidjan|Africa/Timbuktu",
 			"Africa/Abidjan|America/Danmarkshavn",
 			"Africa/Abidjan|Atlantic/Reykjavik",
