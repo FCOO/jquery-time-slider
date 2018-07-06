@@ -1136,9 +1136,9 @@ var PluralResolver = function () {
         if (suffix === 1) return '';
         if (typeof suffix === 'number') return '_plural_' + suffix.toString();
         return returnSuffix();
-      } else if ( /* v2 */this.options.compatibilityJSON === 'v2' || rule.numbers.length === 2 && rule.numbers[0] === 1) {
+      } else if ( /* v2 */this.options.compatibilityJSON === 'v2' && rule.numbers.length === 2 && rule.numbers[0] === 1) {
         return returnSuffix();
-      } else if ( /* v3 - gettext index */rule.numbers.length === 2 && rule.numbers[0] === 1) {
+      } else if ( /* v3 - gettext index */this.options.simplifyPluralSuffix && rule.numbers.length === 2 && rule.numbers[0] === 1) {
         return returnSuffix();
       }
       return this.options.prepend && idx.toString() ? this.options.prepend + idx.toString() : idx.toString();
@@ -1416,8 +1416,6 @@ var Connector = function (_EventEmitter) {
   };
 
   Connector.prototype.loaded = function loaded(name, err, data) {
-    var _this3 = this;
-
     var _name$split = name.split('|'),
         _name$split2 = slicedToArray(_name$split, 2),
         lng = _name$split2[0],
@@ -1432,6 +1430,9 @@ var Connector = function (_EventEmitter) {
     // set loaded
     this.state[name] = err ? -1 : 2;
 
+    // consolidated loading done in this run - only emit once for a loaded namespace
+    var loaded = {};
+
     // callback if ready
     this.queue.forEach(function (q) {
       pushPath(q.loaded, [lng], ns);
@@ -1440,7 +1441,16 @@ var Connector = function (_EventEmitter) {
       if (err) q.errors.push(err);
 
       if (q.pending.length === 0 && !q.done) {
-        _this3.emit('loaded', q.loaded);
+        // only do once per loaded -> this.emit('loaded', q.loaded);
+        Object.keys(q.loaded).forEach(function (l) {
+          if (!loaded[l]) loaded[l] = [];
+          if (q.loaded[l].length) {
+            q.loaded[l].forEach(function (ns) {
+              if (loaded[l].indexOf(ns) < 0) loaded[l].push(ns);
+            });
+          }
+        });
+
         /* eslint no-param-reassign: 0 */
         q.done = true;
         if (q.errors.length) {
@@ -1451,6 +1461,9 @@ var Connector = function (_EventEmitter) {
       }
     });
 
+    // emit consolidated loaded event
+    this.emit('loaded', loaded);
+
     // remove done load requests
     this.queue = this.queue.filter(function (q) {
       return !q.done;
@@ -1460,7 +1473,7 @@ var Connector = function (_EventEmitter) {
   Connector.prototype.read = function read(lng, ns, fcName) {
     var tried = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
-    var _this4 = this;
+    var _this3 = this;
 
     var wait = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 250;
     var callback = arguments[5];
@@ -1470,7 +1483,7 @@ var Connector = function (_EventEmitter) {
     return this.backend[fcName](lng, ns, function (err, data) {
       if (err && data /* = retryFlag */ && tried < 5) {
         setTimeout(function () {
-          _this4.read.call(_this4, lng, ns, fcName, tried + 1, wait * 2, callback);
+          _this3.read.call(_this3, lng, ns, fcName, tried + 1, wait * 2, callback);
         }, wait);
         return;
       }
@@ -1482,7 +1495,7 @@ var Connector = function (_EventEmitter) {
 
 
   Connector.prototype.load = function load(languages, namespaces, callback) {
-    var _this5 = this;
+    var _this4 = this;
 
     if (!this.backend) {
       this.logger.warn('No backend was added via i18next.use. Will not load resources.');
@@ -1499,12 +1512,12 @@ var Connector = function (_EventEmitter) {
     }
 
     toLoad.toLoad.forEach(function (name) {
-      _this5.loadOne(name);
+      _this4.loadOne(name);
     });
   };
 
   Connector.prototype.reload = function reload(languages, namespaces) {
-    var _this6 = this;
+    var _this5 = this;
 
     if (!this.backend) {
       this.logger.warn('No backend was added via i18next.use. Will not load resources.');
@@ -1515,13 +1528,13 @@ var Connector = function (_EventEmitter) {
 
     languages.forEach(function (l) {
       namespaces.forEach(function (n) {
-        _this6.loadOne(l + '|' + n, 're');
+        _this5.loadOne(l + '|' + n, 're');
       });
     });
   };
 
   Connector.prototype.loadOne = function loadOne(name) {
-    var _this7 = this;
+    var _this6 = this;
 
     var prefix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
@@ -1531,10 +1544,10 @@ var Connector = function (_EventEmitter) {
         ns = _name$split4[1];
 
     this.read(lng, ns, 'read', null, null, function (err, data) {
-      if (err) _this7.logger.warn(prefix + 'loading namespace ' + ns + ' for language ' + lng + ' failed', err);
-      if (!err && data) _this7.logger.log(prefix + 'loaded namespace ' + ns + ' for language ' + lng, data);
+      if (err) _this6.logger.warn(prefix + 'loading namespace ' + ns + ' for language ' + lng + ' failed', err);
+      if (!err && data) _this6.logger.log(prefix + 'loaded namespace ' + ns + ' for language ' + lng, data);
 
-      _this7.loaded(name, err, data);
+      _this6.loaded(name, err, data);
     });
   };
 
@@ -15746,6 +15759,7 @@ if (typeof define === 'function' && define.amd) {
         this.$handle = !!options.$handle; //Set to boolean. Created in this.append
         this.handleClassName = options.handleClassName || '';
         this.handleCSS = options.handleCSS || {};
+this.appended = false,
 
         this.markerData = options.markerData || {};
 
@@ -15803,11 +15817,13 @@ if (typeof define === 'function' && define.amd) {
                             .attr( this.markerData )
                             .appendTo(this.marker.$inner);
             }
+            this.appended = true;
             return this;
         },
 
         //remove
         remove: function(){
+            if (!this.appended) return;
             if (this.$handle){
                 this.$handle.remove();
                 this.$handle = true;
@@ -15816,11 +15832,13 @@ if (typeof define === 'function' && define.amd) {
                 this.marker.$outer.remove();
                 this.marker = true;
             }
+            this.appended = false;
         },
 
         //update()
         //Set the position of $handle and $marker and update the content of $marker
         update: function( force ){
+            if (!this.appended) return;
             var leftPercent = this.getLeftPosition() + '%';
 
             if (force || (leftPercent != this.lastLeftPercent)){
@@ -15850,6 +15868,7 @@ if (typeof define === 'function' && define.amd) {
 
         //onFocus - overwriten for individual handle-types
         onFocus: function(){
+            if (!this.appended) return;
             this.$handle.addClass('hover');
             if (this.marker && this.marker.$outer)
                 this.marker.$outer.addClass('hover');
@@ -15858,6 +15877,7 @@ if (typeof define === 'function' && define.amd) {
 
         //onBlur - overwriten for individual handle-types
         onBlur: function(){
+            if (!this.appended) return;
             this.$handle.removeClass('hover');
             if (this.marker && this.marker.$outer)
                 this.marker.$outer.removeClass('hover');
@@ -16796,6 +16816,9 @@ if (typeof define === 'function' && define.amd) {
                             .css('background-color', this.options.lineColor);
 
 
+            //Update the height of the slider
+            this.cache.$container.css('height', pxToRem( this.cache.$lineBackground.height(), true) );
+
             /****************************************************
             Append grid with ticks and optional labels
             ****************************************************/
@@ -17682,6 +17705,7 @@ if (typeof define === 'function' && define.amd) {
                 this.$currentGridContainer = this.cache.$grid;
                 this.totalGridContainerTop = this.$currentGridContainer.position().top;
             }
+
             this.cache.$grid = this.cache.$container.find(".grid");
             return this.$currentGridContainer;
         },
@@ -17859,6 +17883,10 @@ if (typeof define === 'function' && define.amd) {
             this.$currentGridContainer.insertBefore( this.$currentGridContainerMarker );
             this.$currentGridContainer.css('width', this.currentGridContainerWidth );
             this.$currentGridContainerMarker.remove();
+
+            //Update the height of the slider
+            this.cache.$container.css('height', pxToRem( this.totalGridContainerTop + this.$currentGridContainer.height(), true) );
+
         },
 
 
