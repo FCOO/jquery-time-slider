@@ -1,35 +1,35 @@
 {
-    "name": "jquery-time-slider",
-    "version": "6.1.0",
-    "homepage": "https://github.com/FCOO/jquery-time-slider",
-    "authors": [
-        "Niels Holt <niels@steenbuchholt.dk>"
-    ],
-    "description": "A extention to jquery-base-slider with selection of time and date",
-    "main": [
-        "dist/jquery-time-slider.js"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/FCOO/jquery-time-slider.git"
-    },
-    "dependencies": {
-        "jquery-base-slider": "FCOO/jquery-base-slider#^5.0.0",
-        "moment": "latest",
-        "moment-timezone": "latest",
-        "moment-simple-format": "fcoo/moment-simple-format#latest",
-        "i18next": "latest",
-        "jquery-i18next-phrases": "fcoo/jquery-i18next-phrases#latest"
-    },
-    "license": "MIT",
-    "ignore": [
-        "**/.*",
-        "node_modules",
-        "bower_components",
-        "test",
-        "tests"
-    ],
-    "moduleType": [
-        "es6"
-    ]
+  "name": "jquery-time-slider",
+  "version": "6.1.1",
+  "homepage": "https://github.com/FCOO/jquery-time-slider",
+  "authors": [
+    "Niels Holt <niels@steenbuchholt.dk>"
+  ],
+  "description": "A extention to jquery-base-slider with selection of time and date",
+  "main": [
+    "dist/jquery-time-slider.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/FCOO/jquery-time-slider.git"
+  },
+  "dependencies": {
+    "jquery-base-slider": "FCOO/jquery-base-slider#^5.0.0",
+    "moment": "latest",
+    "moment-timezone": "latest",
+    "moment-simple-format": "fcoo/moment-simple-format#latest",
+    "i18next": "latest",
+    "jquery-i18next-phrases": "fcoo/jquery-i18next-phrases#latest"
+  },
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "moduleType": [
+    "es6"
+  ]
 }

@@ -78,7 +78,7 @@ options:
     window.TimeSlider = function (input, options, pluginCount) {
         var _this = this;
 
-        this.VERSION = "6.1.0";
+        this.VERSION = "6.1.1";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -238,7 +238,7 @@ options:
             dayRem = valueRem * (
                                   midnights === 0 ? o.range :
                                   midnights == 1  ? Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
-                                                    24
+                                                    20  //Setting a full day to 20 hours to allow date-string on days up to 20 hours at the ends
                                 ) - this.options.minDistanceRem; // = margin
 
             if (!o.format.dateFormat){
