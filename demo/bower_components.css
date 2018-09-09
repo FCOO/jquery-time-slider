@@ -32,6 +32,14 @@ html.no-mouse-hover .show-for-mouse-hover {
 html.no-mouse-hover .hide-for-no-mouse-hover {
   display: none !important; }
 
+._test-for-hover_ {
+  display: none;
+  font-family: "__NO_HOVER_SUPPORT__"; }
+
+@media (hover: hover) {
+  ._test-for-hover_ {
+    font-family: "__HOVER_SUPPORT__"; } }
+
 /***********************************************
 jquery-base-slider.scss, Description from README.md
 
