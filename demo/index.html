@@ -140,7 +140,7 @@
             { id:'America/Danmarkshavn', name:"East Greenland/Danmarkshavn" },
             { id:'Atlantic/Reykjavik', name:"Iceland" }
         ] );
-        moment.sfSetFormat({ timezone: 'America/Thule' });
+        moment.sfSetFormat({ timezone: 'local' });
 
         $('#timezone option').each( function( index, elem ){
             var timezone = moment.sfGetTimezone( elem.value );
@@ -197,8 +197,8 @@ ticksOnLine: true,
             $("#example_01").timeSlider({
                 onChange: function(result){ console.log('1:onChange',result.valueMoment.toISOString());},
                 format: { showUTC: true},
-                min: -4,
-                max: +24,
+                min: -0+5,
+                max: +4*24+5,
                 from: 0,
                 to:24,
                 grid: true,
@@ -208,7 +208,7 @@ ticksOnLine: true,
         var timeSlider2 =
             $("#example_02").timeSlider({
                 format: { showRelative:true },
-                min: -24,
+                min: -1*24,
                 max: +48,
                 from: 0,
                 to:24,
