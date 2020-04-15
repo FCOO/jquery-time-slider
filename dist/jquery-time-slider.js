@@ -78,7 +78,7 @@ options:
     window.TimeSlider = function (input, options, pluginCount) {
         var _this = this;
 
-        this.VERSION = "6.1.4";
+        this.VERSION = "6.1.5";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -396,6 +396,9 @@ options:
         setFormat
         ***************************************************************/
         setFormat: function( format ){
+            //Reset label-width in case time-format is changed (12h <-> 24h)
+            this.options.maxLabelWidthRem = 0;
+
             this._updateOptionsFormat( format );
             this.update();
             this.updateDisplay();
