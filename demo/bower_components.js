@@ -17101,7 +17101,7 @@ if (typeof define === 'function' && define.amd) {
 
 ;
 /****************************************************************************
-	modernizr-javascript.js,
+	modernizr-javascript.js, 
 
 	(c) 2016, FCOO
 
@@ -17112,20 +17112,20 @@ if (typeof define === 'function' && define.amd) {
 
 (function ($, window, document, undefined) {
 	"use strict";
-
+	
 	var ns = window;
 
     //Extend the jQuery prototype
     $.fn.extend({
-        modernizrOn : function( test ){
-            return this.modernizrToggle( test, true );
+        modernizrOn : function( test ){ 
+            return this.modernizrToggle( test, true ); 
         },
 
-        modernizrOff: function( test ){
-            return this.modernizrToggle( test, false );
+        modernizrOff: function( test ){ 
+            return this.modernizrToggle( test, false ); 
         },
-
-        modernizrToggle: function( test, on ){
+        
+        modernizrToggle: function( test, on ){ 
 		if ( on === undefined )
             return this.modernizrToggle( test, !this.hasClass( test ) );
 
@@ -18585,7 +18585,6 @@ jquery-base-slider-events
         containerOnResize: function(){
             if (this.initializing || !this.isBuild)
                 return;
-
             this.parentOnResize();
         },
 
@@ -18631,25 +18630,13 @@ jquery-base-slider-events
 
             if (!this.initializing && this.isBuild){
                 //Update the slider if the width has changed
-                if (this.dimentions.containerWidth && objectsAreDifferent( this.dimentions, this.dimentions_old))
+                if (this.dimentions.containerWidth && objectsAreDifferent( this.dimentions, this.dimentions_old)){
                     updateSlider = true;
 
-                    //Check if the grid of a resizable slider has changed
-                    if (this.options.resizable){
-                        var _this = this,
-                            rebuild = true, //false,
-                            newGridOptions = this.getGridOptions(),
-                            idList = ['gridDistanceStep', 'majorTickDistanceNum']; //List of options-id to compare for changes
-
-                        $.each( idList, function( index, id ){
-                            rebuild = rebuild || (newGridOptions[id] != _this.gridOptions[id]);
-                        });
-
-                        if (rebuild){
-                            this.update();
-                            return;
-                        }
-                    }
+                    //If it is a resizable slider :  Update it
+                    if (this.options.resizable)
+                        this.update();
+                }
             }
             else {
                 //Reset timeout and try to build the slider
@@ -19569,19 +19556,19 @@ jquery-base-slider-public.js
 ;
 /* @preserve
  * The MIT License (MIT)
- *
+ * 
  * Copyright (c) 2013-2018 Petka Antonov
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -19589,7 +19576,7 @@ jquery-base-slider-public.js
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *
+ * 
  */
 /**
  * bluebird build version 3.7.2
@@ -23181,28 +23168,28 @@ _dereq_('./using.js')(Promise, apiRejection, tryConvertToPromise, createContext,
 _dereq_('./any.js')(Promise);
 _dereq_('./each.js')(Promise, INTERNAL);
 _dereq_('./filter.js')(Promise, INTERNAL);
-
-    util.toFastProperties(Promise);
-    util.toFastProperties(Promise.prototype);
-    function fillTypes(value) {
-        var p = new Promise(INTERNAL);
-        p._fulfillmentHandler0 = value;
-        p._rejectionHandler0 = value;
-        p._promise0 = value;
-        p._receiver0 = value;
-    }
-    // Complete slack tracking, opt out of field-type tracking and
-    // stabilize map
-    fillTypes({a: 1});
-    fillTypes({b: 2});
-    fillTypes({c: 3});
-    fillTypes(1);
-    fillTypes(function(){});
-    fillTypes(undefined);
-    fillTypes(false);
-    fillTypes(new Promise(INTERNAL));
-    debug.setBounds(Async.firstLineError, util.lastLineError);
-    return Promise;
+                                                         
+    util.toFastProperties(Promise);                                          
+    util.toFastProperties(Promise.prototype);                                
+    function fillTypes(value) {                                              
+        var p = new Promise(INTERNAL);                                       
+        p._fulfillmentHandler0 = value;                                      
+        p._rejectionHandler0 = value;                                        
+        p._promise0 = value;                                                 
+        p._receiver0 = value;                                                
+    }                                                                        
+    // Complete slack tracking, opt out of field-type tracking and           
+    // stabilize map                                                         
+    fillTypes({a: 1});                                                       
+    fillTypes({b: 2});                                                       
+    fillTypes({c: 3});                                                       
+    fillTypes(1);                                                            
+    fillTypes(function(){});                                                 
+    fillTypes(undefined);                                                    
+    fillTypes(false);                                                        
+    fillTypes(new Promise(INTERNAL));                                        
+    debug.setBounds(Async.firstLineError, util.lastLineError);               
+    return Promise;                                                          
 
 };
 
@@ -35871,7 +35858,7 @@ return index;
 
     var keys = ['Hours', 'Minutes', 'Seconds', 'Milliseconds'];
     var maxValues = [24, 60, 60, 1000];
-
+    
     // Capitalize first letter
     key = key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
 
