@@ -68,12 +68,12 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.0.1";
+        this.VERSION = "7.0.2";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
 
-        this.useMomentDateFormat = !options.format.date;
+        this.useMomentDateFormat = !(options.format && options.format.date);
 
         this._updateOptionsFormat();
 

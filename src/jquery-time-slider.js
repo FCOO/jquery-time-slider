@@ -73,7 +73,7 @@ options:
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
 
-        this.useMomentDateFormat = !options.format.date;
+        this.useMomentDateFormat = !(options.format && options.format.date);
 
         this._updateOptionsFormat();
 
