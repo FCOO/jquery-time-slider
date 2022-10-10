@@ -14,14 +14,6 @@ options:
 
     ** SAME AS IN JQUERY-BASE-SLIDER PLUS **
 
-    display:
-        value:
-            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
-        from:
-            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
-        to:
-            tzElement, utcElement, relativeElement  //jQuery-object or String (=search)
-
     format:
         showRelative: boolean; If true the grid etc show the relative time ('Now + 2h') Default = false
         showUTC     : boolean; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
@@ -76,24 +68,14 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        var _this = this;
-
         this.VERSION = "{VERSION}";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
-        this._updateOptionsFormat();
 
-        this.options.display = this.options.display || {};
-        //Convert options.display.[value | from | to] from selector-string to $-elements (if needed)
-        $.each( ['value', 'from', 'to'], function( index, id ){
-            _this.options.display[id] = _this.options.display[id] || {};
-            $.each( ['tzElement', 'utcElement', 'relativeElement'], function( index, attrId ){
-                var selector = _this.options.display[id][attrId];
-                if ($.type(selector) == 'string')
-                    _this.options.display[id][attrId] = $(selector);
-            });
-        });
+        this.useMomentDateFormat = !options.format.date;
+
+        this._updateOptionsFormat();
 
         //Set min/minMoment, max/maxMoment, from/fromMoment, to/toMoment, and value/valueMoment
         var valMom = setValueAndMoment( this.options.min, this.options.minMoment );
@@ -116,11 +98,6 @@ options:
             var value = setValueAndMoment( undefined, moment( this.options.stepOffsetMoment ) ).value;
             this.options.stepOffset = (value - this.options.min) % this.options.step;
         }
-
-        //Update display-element onChanging if
-        if (!this.options.onChangeOnDragging)
-            this.preOnChanging =  $.proxy( this.updateDisplay, this );
-
 
         //Create BaseSlider - dont create grid here
         var optionsGrid = this.options.grid;
@@ -193,7 +170,6 @@ options:
             this.result.valueMoment = valueToMoment ( this.result.value );
         },
 
-
         /**************************************************************
         appendDateGrid
         ***************************************************************/
@@ -201,29 +177,25 @@ options:
             var o = this.options,
                 value,
                 valueP = 0,
-                valueRem = o.stepRem/o.step,
+                valuePx = o.stepPx/o.step,
                 midnights = 0,
                 isFirstMidnight = true,
                 firstMidnightValue = 0,
                 lastMidnightValue = 0,
-                dayRem,
+                dayPx,
                 values = [],
                 dateFormats,
                 dateFormatOk,
                 textWidth;
 
-            this.preAppendGrid();
+            this.preAppendGrid( {labelBetweenTicks: true} );
 
-            this.$currentGridContainer.addClass("label-between-ticks");
             this._prettifyLabel = this._prettifyLabelAbsoluteDate;
 
             //Setting tick at midnight
             value = o.min;
             while (value <= o.max){
-                //Old version: Force midnights tag to be on minor-tick => error on shift to/from DST (Daylight Saving Time)
-                //if ( ((value - this.options.majorTicksOffset) % o.tickDistanceNum === 0) && (this._valueToTzMoment( value, this.options.format.timezone ).hour() === 0) ){
-
-                //New version: Allow midnights tags on every hour regardless if there are a tag
+                //Allow midnights tags on every hour regardless if there are a tag
                 if (this._valueToTzMoment( value, this.options.format.timezone ).hour() === 0){
 
                     midnights++;
@@ -239,15 +211,15 @@ options:
                 valueP += o.percentProValue;
             }
 
-            //Find the max width (in rem) of a date-label = dayRem
-            dayRem = valueRem * (
+            //Find the max width (in Px) of a date-label = dayPx
+            dayPx = valuePx * (
                                   midnights === 0 ? o.range :
                                   midnights == 1  ? Math.max( firstMidnightValue - o.min, o.max - firstMidnightValue ) :
                                                     20  //Setting a full day to 20 hours to allow date-string on days up to 20 hours at the ends
-                                ) - this.options.minDistanceRem; // = margin
+                                ) - this.options.minDistance; // = margin
 
             if (!o.format.dateFormat){
-                //Find the format for the date, where all dates is smaller than dayRem
+                //Find the format for the date, where all dates is smaller than dayPx
                 dateFormats = moment.sfDateFormatList( function( code ){
                                 //Include all formats except full weekday or full month
                                 return (code.charAt(0) != 'F') && (code.charAt(1) != 'F');
@@ -260,10 +232,10 @@ options:
                     value += 24;
                 }
 
-                //Checking if all dates displayed in dayFormat are samller than the max width for a day = dayRem. Setting this._prettifyLabel will force getTextWidth to use the text directly
+                //Checking if all dates displayed in dayFormat are samller than the max width for a day = dayPx. Setting this._prettifyLabel will force getTextWidth to use the text directly
                 for (var i=0; i<dateFormats.length; i++ ){
                     o.format.dateFormat = dateFormats[i];
-                    dateFormatOk = (this.getTextWidth( values, textOptions ) <= dayRem);
+                    dateFormatOk = (this.getTextWidth( values, textOptions ) <= dayPx);
 
                     if (dateFormatOk)
                       break;
@@ -290,17 +262,17 @@ options:
                 else {
                     //first day - check if there are space to put a date-label
                     textWidth = this.getTextWidth( o.min, textOptions );
-                    if ( valueRem*(firstMidnightValue - o.min) >= textWidth ){
+                    if ( valuePx*(firstMidnightValue - o.min) >= textWidth ){
                         //Try to place the date-text under 12 o'clock (noon) but always keep inside the left edge
-                        var minTextValue = o.min + textWidth/2/valueRem;
+                        var minTextValue = o.min + textWidth/2/valuePx;
                         this.appendLabel( o.percentProValue * ( Math.max( minTextValue, firstMidnightValue-12 ) - o.min ), o.min, textOptions );
                     }
 
                     //last day - check if there are space to put a date-label
                     textWidth = this.getTextWidth( o.max, textOptions );
-                    if ( valueRem*(o.max - lastMidnightValue) >= textWidth ){
+                    if ( valuePx*(o.max - lastMidnightValue) >= textWidth ){
                         //Try to place the date-text under 12 o'clock (noon) but always keep inside the right edge
-                        var maxTextValue = o.max - textWidth/2/valueRem;
+                        var maxTextValue = o.max - textWidth/2/valuePx;
                         this.appendLabel( o.percentProValue * ( Math.min( maxTextValue, lastMidnightValue+12 ) - o.min ), o.max, textOptions );
                     }
 
@@ -368,16 +340,30 @@ options:
         /**************************************************************
         _updateOptionsFormat
         ***************************************************************/
-        _updateOptionsFormat: function( format ){
-            $.extend( true, this.options.format, format || {}  );
+        _updateOptionsFormat: function( format = {} ){
+            $.extend( true, this.options.format, format );
+
+            var forceFormat = this.useMomentDateFormat ? null : this.options.format.date;
 
             //Merge current moment.simpleFormat.options into this.options.format
             $.extend( true, this.options.format, moment.sfGetOptions() );
 
+            if (forceFormat)
+                this.options.format.date = forceFormat;
+
             //Create the format for the label over the 'dragger'
-            this.options.format.dateHourFormat =
-                (this.options.format.date == 'DMY' ? 'DD-MMM' : 'MMM-DD') + //Dec-24 / 24-Dec
-                ' ' + moment.sfGetTimeFormat();
+            var dateFormat = '';
+
+            switch (this.options.format.date + (this.options.format.showYear ? '_Y' : '')){
+                case 'DMY'  : dateFormat = 'DD. MMM';       break;
+                case 'DMY_Y': dateFormat = 'DD. MMM YYYY';  break;
+                case 'MDY'  : dateFormat = 'MMM DD';        break;
+                case 'MDY_Y': dateFormat = 'MMM DD YYYY';   break;
+                case 'YMD'  : dateFormat = 'MMM DD';        break;
+                case 'YMD_Y': dateFormat = 'YYYY MMM DD';   break;
+            }
+
+            this.options.format.dateHourFormat = dateFormat + ' ' + moment.sfGetTimeFormat();
 
             //Set dateformat = '' to make appendDateGrid find new format
             this.options.format.dateFormat = '';
@@ -397,37 +383,11 @@ options:
         ***************************************************************/
         setFormat: function( format ){
             //Reset label-width in case time-format is changed (12h <-> 24h)
-            this.options.maxLabelWidthRem = 0;
+            this.options.maxLabelWidth = 0;
 
             this._updateOptionsFormat( format );
             this.update();
-            this.updateDisplay();
         },
-
-        /**************************************************************
-        updateDisplay
-        Updates the elements with text versions of from-value and to-value as timezone-date, utc-date and relative time
-        ***************************************************************/
-        updateDisplay: function(){
-            var _this = this;
-            $.each( ['value', 'from', 'to'], function(index, id){
-                var value = _this.result[id],
-                    valueList = [
-                        _this._valueToFormat( value, _this.options.format.timezone ),
-                        _this._valueToFormat( value, 'utc' ),
-                        _this._valueToFormat( value )
-                    ];
-                $.each( ['tzElement', 'utcElement', 'relativeElement'], function( index, attrId ){
-                    var $elem = _this.options.display[id][attrId],
-                        text = valueList[index];
-                    if ($elem)
-                        $elem.each( function(){ $(this).text( text ); } );
-                });
-            });
-        },
-
-        preOnChange: function(){ this.updateDisplay(); }
-
     };
     window.TimeSlider.prototype = $.extend( {}, window.BaseSlider.prototype, window.TimeSlider.prototype );
 

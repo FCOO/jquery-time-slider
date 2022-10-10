@@ -12,9 +12,11 @@
     <style>
         .slider-container {
             width: 25rem;
-            _height: 8rem;
-            border:0.12rem solid red;
+            border:2px solid red;
             padding:1rem;
+        }
+        .slider-container.resizable {
+            width: 80%;
         }
         .date-box {
             display: inline-block;
@@ -34,15 +36,6 @@
 
 </head>
 <body style="">
-    <h4>Scale</h4>
-    <div>
-        <input type="radio" class="scaleRadio" name="options" id="option1" value="60" autocomplete="off">60%</input>
-        <input type="radio" class="scaleRadio" name="options" id="option2" value="80" autocomplete="off">80%</input>
-        <input type="radio" class="scaleRadio" name="options" id="option3" value="100" autocomplete="off" checked>100%</input>
-        <input type="radio" class="scaleRadio" name="options" id="option4" value="120" autocomplete="off">120%</input>
-        <input type="radio" class="scaleRadio" name="options" id="option5" value="150" autocomplete="off">150%</input>
-        <input type="radio" class="scaleRadio" name="options" id="option6" value="300" autocomplete="off">300%</input>
-    </div>
         <div>
             <select id="timezone">
                 <optgroup label="Standard">
@@ -69,7 +62,7 @@
 
         <br><br>
 
-        <div class="slider-container" style="width:80%">
+        <div class="slider-container resizable">
             <input type="text" id="example_00"/>
         </div>
 
@@ -77,35 +70,19 @@
             <div class="slider-container">
                 <input type="text" id="example_01" value="4" name="range" />
             </div>
-            <div class="slider-container">
+            <div class="slider-container resizable">
                 <input type="text" id="example_02" value="4" name="range" />
             </div>
-            <div class="divValueTz date-box"></div>
-            <div class="divValueRel date-box"></div>
-            <div class="slider-container">
+                <div class="slider-container">
                 <input type="text" id="example_03" value="4" name="range" />
             </div>
 
             <div class="slider-container">
                 <input type="text" id="example_04" value="" name="range" />
             </div>
-            <button id="btnPrevFrom">Previous</button>
-            <button id="btnNowFrom">Now</button>
-            <button id="btnNextFrom">Next</button>
-            <br>
-            <button id="btnPrevTo">Previous</button>
-            <button id="btnNowTo">Now</button>
-            <button id="btnNextTo">Next</button>
             <br>
             <button id="btnSlider1Format">Toggle format</button>
             <br>
-            <div class="divUtc date-box"></div>
-            <div class="divTz date-box"></div>
-            <div class="divRel date-box"></div>
-            <br>
-            <div class="divToUtc date-box"></div>
-            <div class="divToTz date-box"></div>
-            <div class="divToRel date-box"></div>
 
         </div>
 
@@ -157,10 +134,6 @@
             timeSlider3.setFormat();
             timeSlider4.setFormat();
         });
-        $('.scaleRadio').on( 'change', function(event) {
-            var percent = 16*parseInt($(event.target).attr('value'))/100;
-            $('html').css('font-size', percent+'px');
-        });
 
 
 DEBUG: test('START');
@@ -170,16 +143,17 @@ DEBUG: test('START');
                 format: {
                     showRelative:false,
                     showUTC: true,
+                    showYear: true 
                 },
-                min: -24*7,
-                max: +24*7,
+                min: 0,
+                max: 120*24,
                 step: 1,
                 value: 0,
                 grid: true,
                 handleFixed: true,
                 slider:"fixed",
                 mousewheel: true,
-                width: 14*400,
+                width: 120*400,
                 showLineColor: false,
                 resizable: true,
 ticksOnLine: true,
@@ -195,7 +169,7 @@ ticksOnLine: true,
 
         var timeSlider1 =
             $("#example_01").timeSlider({
-                onChange: function(result){ console.log('1:onChange',result.valueMoment.toISOString());},
+                onChange: function(result){ console.log('1:onChange',result) },
                 format: { showUTC: true},
                 min: -0+5,
                 max: +4*24+5,
@@ -215,12 +189,7 @@ ticksOnLine: true,
                 grid: true,
                 mousewheel: true,
                 pinValue: 10,
-                display: {
-                    value: {
-                        tzElement      :'.divValueTz',
-                        relativeElement:'.divValueRel'
-                    }
-                }
+                resizable: true
             }).data('timeSlider');
 
         var timeSlider3 =
@@ -243,14 +212,6 @@ ticksOnLine: true,
                 slider: 'round',
                 type: "double",
                 format: { showUTC: true},
-                display: {
-                    from: { tzElement:'.divTz',   utcElement:'.divUtc',   relativeElement:'.divRel'   },
-                    to  : { tzElement:'.divToTz', utcElement:'.divToUtc', relativeElement:'.divToRel' }
-                },
-                buttons: {
-                    from: { previousBtn: 'btnPrevFrom', nowBtn: 'btnNowFrom', nextBtn: 'btnNextFrom' },
-                    to  : { previousBtn: 'btnPrevTo',   nowBtn: 'btnNowTo',   nextBtn: 'btnNextTo'   }
-                },
                 min: -2*24 + 5,
                 max:  2*24 + 5,
                 from: 0,
@@ -276,7 +237,8 @@ Debug: test('END');
                     to: isEn ? 'to' : 'til'
                 }
              } );
-            timeSlider3.setFormat();
+            timeSlider0.setFormat();
+            timeSlider1.setFormat();
             timeSlider4.setFormat();
         });
 
