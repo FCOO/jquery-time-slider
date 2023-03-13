@@ -11,6 +11,6 @@
   "homepage": "https://github.com/FCOO/jquery-time-slider",
   "dependencies": {},
   "devDependencies": {
-    "grunt-fcoo-grunt-plugin": "^6.0.0"
+    "grunt-fcoo-grunt-plugin": "^6.3.0"
   }
 }

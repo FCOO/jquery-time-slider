@@ -147,7 +147,7 @@ options:
                 return this.options.format.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.format.text.hourAbbr;
         },
 
-        _prettifyRelative      : function( value ){ return this._valueToFormat( value ); },
+        _prettifyRelative     : function( value ){ return this._valueToFormat( value ); },
         _prettifyLabelRelative: function( value ){ return value;                        },
 
         _prettifyAbsolute: function( value ){ return this._valueToFormat( value, this.options.format.timezone ); },
