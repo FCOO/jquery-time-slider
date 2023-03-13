@@ -14,9 +14,13 @@ options:
 
     ** SAME AS IN JQUERY-BASE-SLIDER PLUS **
 
+    noDateLabels    : boolean; If true no labels with the date are shown;
+    dateAtMidnight  : boolean; If true the time-LABEL for midnight is replaced with a short date-label. Normally used together noDateLabels: true
     format:
-        showRelative: boolean; If true the grid etc show the relative time ('Now + 2h') Default = false
-        showUTC     : boolean; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
+        showRelative    : boolean; If true the grid etc show the relative time ('Now + 2h') Default = false
+        showUTC         : boolean; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
+
+
 
     NB: Using moment-simple-format to set and get text and format for date and time
 
@@ -68,7 +72,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.0.2";
+        this.VERSION = "7.1.0";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -129,6 +133,12 @@ options:
 
     //Extend the prototype
     window.TimeSlider.prototype = {
+
+        //getNow: return "now". Moved to method to allow test of "now" changing
+        _getNow: function(){ return moment(); },
+
+
+
         /**************************************************************
         valueToTzMoment
         ***************************************************************/
@@ -147,12 +157,25 @@ options:
                 return this.options.format.text.nowUC + (value >= 0 ? ' + ' : ' - ') + Math.abs(value) + this.options.format.text.hourAbbr;
         },
 
-        _prettifyRelative      : function( value ){ return this._valueToFormat( value ); },
+        _prettifyRelative     : function( value ){ return this._valueToFormat( value ); },
         _prettifyLabelRelative: function( value ){ return value;                        },
 
-        _prettifyAbsolute: function( value ){ return this._valueToFormat( value, this.options.format.timezone ); },
+        _prettifyAbsolute: function( value ){
+            return this._valueToFormat( value, this.options.format.timezone );
+        },
+
         _prettifyLabelAbsolute: function( value ){
-            return this._valueToTzMoment( value, this.options.format.timezone ).hourFormat();
+                var o      = this.options,
+                    m      = this._valueToTzMoment( value, this.options.format.timezone ),
+                    result = m.hourFormat();
+
+            //If options.dateAtMidnight is set and it is midnight => return short date format
+            if ( ((result == '00') || (result == '12am')) && o.dateAtMidnight){
+                result = m.format( o.format.dateFormat_small );
+
+            }
+
+            return result;
         },
 
         _prettifyLabelAbsoluteDate: function( value ){
@@ -187,6 +210,8 @@ options:
                 dateFormats,
                 dateFormatOk,
                 textWidth;
+
+            if (o.noDateLabels) return;
 
             this.preAppendGrid( {labelBetweenTicks: true} );
 
@@ -313,7 +338,7 @@ options:
             }
             else {
                 //Absolute time: Set the prettify-functions
-                var now = moment();
+                var now = this._getNow(); //moment();
                 //Create the hour-grid and the date-grid for selected timezone
                 this._prettify = this._prettifyAbsolute;
                 this._prettifyLabel = this._prettifyLabelAbsolute;
@@ -367,6 +392,9 @@ options:
 
             //Set dateformat = '' to make appendDateGrid find new format
             this.options.format.dateFormat = '';
+
+            //Find small date format used on hour grid
+            this.options.format.dateFormat_small = this.options.format.date == 'DMY' ? 'DD-MM' : 'MM-DD';
 
             //Set special versions of moment.simpleFormat.text
             var now =  this.options.format.text.now;

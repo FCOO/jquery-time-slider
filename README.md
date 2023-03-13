@@ -30,18 +30,22 @@ where `options` are described below
 The `options` are the same as in [jquery-base-slider](https://github.com/FCOO/jquery-base-slider) with the following extensions 
 
 	{
-	  minMoment :...,
-	  maxMoment :..., 
-	  fromMoment:...,
-	  toMoment  :...,
-	  valueMoment  :...,
-	  format: {...},
-	  text  : {...}
+        noDateLabels    :...,
+        dateAtMidnight  :..., 
+        minMoment :...,
+	    maxMoment :..., 
+	    fromMoment:...,
+	    toMoment  :...,
+	    valueMoment  :...,
+	    format: {...},
+	    text  : {...}
 	}
    
 
 | Option | Defaults | Type | Description |
 | :--: | :--: | :--: | :-- |
+| `noDateLabels` | `false` | `boolean` | If `true` no labels with the date are shown |
+| `dateAtMidnight` | `false` | `boolean` | If `true` the time-label for midnight is replaced with a short date-label. Normally used together `noDateLabels: true` |
 | `minMoment`<br>`maxMoment`<br>`fromMoment`<br>`toMoment` | | `moment-object` | Same as min, max, from, to in `jquery-base-slider` but as moment-object |
 | `format.date` | `""` | `string` | Date format. `"DMY"` or `"MDY"` or `"YMD"` If none is given the format is set by [moment-simple-format](https://github.com/FCOO/moment-simple-format) |
 | `format.showYear` | `false` | `boolean` | If `true` the date-time info in handler includes the year |

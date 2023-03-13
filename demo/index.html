@@ -63,12 +63,12 @@
         <br><br>
 
         <div class="slider-container resizable">
-            <input type="text" id="example_00_NOT"/>
+            <input type="text" id="example_00"/>
         </div>
 
         <div style="position: relative; width:90%;">
             <div class="slider-container">
-                <input type="text" id="example_01_NOY" value="4" name="range" />
+                <input type="text" id="example_01" value="4" name="range" />
             </div>
             <div class="slider-container resizable">
                 <input type="text" id="example_02" value="4" name="range" />
@@ -78,7 +78,10 @@
             </div>
 
             <div class="slider-container">
-                <input type="text" id="example_04_NOT" value="" name="range" />
+                <input type="text" id="example_04" value="" name="range" />
+            </div>
+            <div class="slider-container">
+                <input type="text" id="example_05" value="" name="range" />
             </div>
             <br>
             <button id="btnSlider1Format">Toggle format</button>
@@ -156,7 +159,7 @@ DEBUG: test('START');
                 width: 120*400,
                 showLineColor: false,
                 resizable: true,
-ticksOnLine: true,
+                ticksOnLine: true,
 /*
                 gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
                 labelColors: [
@@ -219,6 +222,24 @@ ticksOnLine: true,
                 grid: true,
             }).data('timeSlider');
 
+        var timeSlider5 =
+            $("#example_05").timeSlider({
+                onChange: function(result){ console.log('5:onChange',result);},
+                onChangeOnDragging: false,
+                slider: 'round',
+                format: { 
+
+                },
+                min: -2*24,
+                max:  2*24,
+                from: 0,
+                to:24,
+                grid: true,
+                ticksOnLine: true,
+                noDateLabels: true,
+                +dateAtMidnight: true,
+            }).data('timeSlider');
+
 Debug: test('END');
 
         var lang = 'en_gb';
@@ -237,9 +258,11 @@ Debug: test('END');
                     to: isEn ? 'to' : 'til'
                 }
              } );
+
             timeSlider0.setFormat();
             timeSlider1.setFormat();
             timeSlider4.setFormat();
+            timeSlider5.setFormat();
         });
 
     </script>
