@@ -170,6 +170,10 @@ DEBUG: test('START');
             })
             .data('timeSlider');
 
+console.log(
+timeSlider0.moveByButtonOrKeyboardOrMouseWheel
+);
+
         var timeSlider1 =
             $("#example_01").timeSlider({
                 onChange: function(result){ console.log('1:onChange',result) },
@@ -237,7 +241,7 @@ DEBUG: test('START');
                 grid: true,
                 ticksOnLine: true,
                 noDateLabels: true,
-                +dateAtMidnight: true,
+                dateAtMidnight: true,
             }).data('timeSlider');
 
 Debug: test('END');
