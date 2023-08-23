@@ -79,7 +79,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.2.0";
+        this.VERSION = "7.2.1";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
