@@ -14,12 +14,19 @@ options:
 
     ** SAME AS IN JQUERY-BASE-SLIDER PLUS **
 
-    noDateLabels    : boolean; If true no labels with the date are shown;
-    dateAtMidnight  : boolean; If true the time-LABEL for midnight is replaced with a short date-label. Normally used together noDateLabels: true
+    noDateLabels    : BOOLEAN; If true no labels with the date are shown;
+    dateAtMidnight  : BOOLEAN; If true the time-LABEL for midnight is replaced with a short date-label. Normally used together noDateLabels: true
     format:
-        showRelative    : boolean; If true the grid etc show the relative time ('Now + 2h') Default = false
-        showUTC         : boolean; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
+        showRelative        : BOOLEAN; If true the grid etc show the relative time ('Now + 2h') Default = false
+        showUTC             : BOOLEAN; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
+        noGridColorsOnUTC   : BOOLEAN; If true the UTC-grid will not get any grid colors
+        UTCGridClassName    : STRING; Class-name(s) for the grids use for UTC time-lime
 
+
+    showRelative        : as format.showRelative
+    showUTC             : as format.showUTC
+    noGridColorsOnUTC   : as format.noGridColorsOnUTC
+    UTCGridClassName    : as format.UTCGridClassName
 
 
     NB: Using moment-simple-format to set and get text and format for date and time
@@ -72,7 +79,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.1.2";
+        this.VERSION = "7.2.0";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -329,7 +336,7 @@ options:
             this.$currentGridContainer = null;
 
             //Create all grid
-            if (this.options.format.showRelative){
+            if (this.options.format.showRelative || this.options.showRelative){
                 //Relative time: Set the prettify-functions and create the grid needed
                 this._prettify = this._prettifyRelative;
                 this._prettifyLabel = this._prettifyLabelRelative;
@@ -346,7 +353,7 @@ options:
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
-                if ((this.options.format.timezone != 'utc') && this.options.format.showUTC){
+                if ((this.options.format.timezone != 'utc') && (this.options.format.showUTC || this.options.showUTC)){
                     //Create the hour-grid and the date-grid for utc
                     this.options.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
                     var saveTimezone = this.options.format.timezone;
@@ -355,8 +362,27 @@ options:
                         tickOptions = {color:'#555555'};
                     this._prettify = this._prettifyAbsolute;
                     this._prettifyLabel = this._prettifyLabelAbsolute;
+
+                    //If noGridColorsOnUTC is save and remove grid-colors
+                    var noGridColors     = this.options.format.noGridColorsOnUTC || this.options.noGridColorsOnUTC,
+                        UTCGridClassName = this.options.format.UTCGridClassName || this.options.UTCGridClassName || 'DAVS';
+
+                    if (noGridColors){
+                        this.options.saveGridColors = this.options.gridColors;
+                        this.options.gridColors = null;
+                    }
+
                     this._appendStandardGrid( textOptions, tickOptions );
+                    this.$currentGrid.addClass(UTCGridClassName);
+
+                    if (noGridColors){
+                        this.options.gridColors = this.options.saveGridColors;
+                        this.options.saveGridColors = null;
+                    }
+
                     this.appendDateGrid( textOptions, tickOptions );
+                    this.$currentGrid.addClass(UTCGridClassName);
+
                     this.options.format.timezone = saveTimezone;
                 }
             }

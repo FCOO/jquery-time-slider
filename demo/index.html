@@ -175,11 +175,17 @@ DEBUG: test('START');
             $("#example_01").timeSlider({
                 onChange: function(result){ console.log('1:onChange',result) },
                 format: { showUTC: true},
+                noGridColorsOnUTC: true,
                 min: -0+5,
                 max: +4*24+5,
                 from: 0,
                 to:24,
                 grid: true,
+                gridColors: [
+                    {              value: 12   , color: 'red'  },
+                    {fromValue: 12, value: 2*24, color: 'pink'}
+        ],
+
                 mousewheel: true
             }).data('timeSlider');
 

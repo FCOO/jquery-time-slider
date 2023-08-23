@@ -16302,357 +16302,6 @@ if (typeof define === 'function' && define.amd) {
 }(jQuery, this, document));
 ;
 /****************************************************************************
-    jquery-base-slider-handle,
-
-    (c) 2015, FCOO
-
-    https://github.com/fcoo/jquery-base-slider
-    https://github.com/fcoo
-
-****************************************************************************/
-(function (window/*, document, undefined*/) {
-    "use strict";
-
-    //Create baseSlider-namespace
-	window._baseSlider = window._baseSlider || {};
-	var ns = window._baseSlider;
-
-    /*******************************************************************
-    elementsOverlapping
-    Return true if $element1 and $element2 is overlapping horizontal
-    *******************************************************************/
-    function elementsOverlapping( $element1, $element2 ){
-        if ($element1 && $element2){
-            var rect1 = $element1.get(0).getBoundingClientRect(),
-                rect2 = $element2.get(0).getBoundingClientRect();
-            return ((rect1.left >= rect2.left) && (rect1.left <= rect2.right)) ||
-                    ((rect2.left >= rect1.left) && (rect2.left <= rect1.right));
-        }
-        return false;
-    }
-
-    /*******************************************************************
-    SliderHandle
-    Object to reprecent a 'handle' on the slider
-    The handle don't need to have a actual DOM-handle. The min and max-value of the slider
-    is also reprecented as a SliderHandle
-    The object contains the following items:
-        value   : A SliderValue-object reprecenting the value
-        $handle : $-object = the DOM handle (optional)
-        marker  : Object containing of tree $-object: $outer and $text (optional)
-
-    options
-        marker: [string] = class-name of the marker
-    *******************************************************************/
-    var SliderHandle = function( options ){
-        this.id      = options.id;
-        this.slider  = options.slider || options.value.slider;
-        options.value.slider = this.slider;
-        this.value   = ns.sliderValue( options.value );
-        this.$handle = !!options.$handle; //Set to boolean. Created in this.append
-        this.handleClassName = options.handleClassName || '';
-        this.handleCSS = options.handleCSS || {};
-        this.appended = false,
-
-        this.markerData = options.markerData || {};
-
-        this.markerClassName = options.marker;
-        this.marker  = !!this.markerClassName;
-
-        //overlappingHandleList = list of SliderHandle. If any of the marker in overlappingHandleList[xx] is overlapping this => this is hidden
-        this.overlappingHandleList = [];
-
-        //overlapHandleList = list of SliderHandle. this is overlapping all the marker in overlapHandleList[xx]
-        this.overlapHandleList = [];
-
-
-        this.draggingClassName = options.draggingClassName; //Classname for handler when it is being dragged MANGLER
-        this.lastLeftPercent = '';
-    };
-
-    SliderHandle.prototype = {
-        //addOverlap( handle ) - Set this to overlap handle
-        addOverlap: function( handle ){
-            if (this.marker && handle && handle.marker ){
-                this.overlapHandleList.push( handle );
-                handle.overlappingHandleList.push( this );
-            }
-        },
-
-        //append() - Create and append this.$handle and $.marker
-        append: function( $container ){
-            //Append handle
-            if (this.$handle)
-                this.$handle =
-                    $('<span/>')
-                        .addClass('handle '+this.id)
-                        .addClass(this.handleClassName)
-                        .css( this.handleCSS )
-                        .appendTo( $container );
-
-            //Append marker
-            if (this.marker){
-                this.marker = {};
-                //Outer div
-                this.marker.$outer =
-                    $('<div/>')
-                        .addClass('marker-outer')
-                        .addClass(this.markerClassName)
-                        .appendTo($container);
-                //Inner div
-                this.marker.$inner =
-                        $('<div/>')
-                            .addClass('marker')
-                            .appendTo(this.marker.$outer);
-                this.marker.$text =
-                        $('<span/>')
-                            .addClass('marker-text')
-                            .attr( this.markerData )
-                            .appendTo(this.marker.$inner);
-            }
-            this.appended = true;
-            return this;
-        },
-
-        //remove
-        remove: function(){
-            if (!this.appended) return;
-            if (this.$handle){
-                this.$handle.remove();
-                this.$handle = true;
-            }
-            if (this.marker.$outer){
-                this.marker.$outer.remove();
-                this.marker = true;
-            }
-            this.appended = false;
-        },
-
-        //update()
-        //Set the position of $handle and $marker and update the content of $marker
-        update: function( force ){
-            if (!this.appended) return;
-            var leftPercent = this.getLeftPosition() + '%';
-
-            if (force || (leftPercent != this.lastLeftPercent)){
-                this.lastLeftPercent = leftPercent;
-                if (this.$handle){
-                    this.$handle.css('left', leftPercent);
-                }
-                if (this.marker){
-                    //Set marker content
-                    this.marker.$text.html( this.getMarkerText() );
-
-                    //Set marker position
-                    this.marker.$outer.css('left', leftPercent);
-
-                    //Force all handles overlapped by this to update
-                    if (!force)
-                        $.each( this.overlapHandleList, function( index, handle ){
-                            handle.update( true );
-                        });
-
-                    //Set marker visibility
-                    this.marker.$outer.css('visibility', this.markerIsHidden() ? 'hidden' : 'visible');
-                }
-            }
-            return this;
-        },
-
-        //onFocus - overwriten for individual handle-types
-        onFocus: function(){
-            if (!this.appended) return;
-            this.$handle.addClass('hover');
-            if (this.marker && this.marker.$outer)
-                this.marker.$outer.addClass('hover');
-
-        },
-
-        //onBlur - overwriten for individual handle-types
-        onBlur: function(){
-            if (!this.appended) return;
-            this.$handle.removeClass('hover');
-            if (this.marker && this.marker.$outer)
-                this.marker.$outer.removeClass('hover');
-        },
-
-        //getMarkerText
-        getLeftPosition: function(){
-            return this.value.getPercent();
-        },
-
-        //getMarkerText
-        getMarkerText: function(){
-            return this.slider.decorate( this.slider._prettify( this.value.getValue() ) );
-        },
-
-        //markerIsHidden: return true if the marker is overlapping any of the markers in YYY
-        markerIsHidden: function(){
-            var thisMarker$text = this.marker.$text,
-                result = false;
-            $.each( this.overlappingHandleList, function( index, handle ){
-                result = result || elementsOverlapping( thisMarker$text, handle.marker.$text );
-            });
-            return result;
-        }
-
-    };
-
-
-    ns.SliderHandle = SliderHandle;
-    ns.sliderHandle = function( options ){
-        return new ns.SliderHandle( options );
-    };
-
-}(this/*, document*/));
-
-;
-/****************************************************************************
-    jquery-base-slider-value,
-
-    (c) 2015, FCOO
-
-    https://github.com/fcoo/jquery-base-slider
-    https://github.com/fcoo
-
-****************************************************************************/
-(function (window/*, document, undefined*/) {
-    "use strict";
-
-    //Create baseSlider-namespace
-	window._baseSlider = window._baseSlider || {};
-	var ns = window._baseSlider;
-
-    /*******************************************************************
-    toFixed
-    Round num to 5 digits
-    *******************************************************************/
-    function toFixed( num ) {
-        return +num.toFixed(5);
-    }
-
-
-    /*******************************************************************
-    SliderValue
-    Object to store and alter "value" releated to the slider
-    The object contains the following items:
-        value   : The actual value ,
-        percent : The value as percent of the total slider width
-        rem     : The value converted to rem
-    *******************************************************************/
-    var SliderValue = function( options ){
-        this.slider = options.slider;
-        this.valueOffset = this.slider.options.min;
-        this.valueRange = this.slider.options.max - this.valueOffset;
-        this.percentOffset = 0;
-        this.percentRange = 100;
-        this.adjustToStep = !!options.adjustToStep;
-        this.fixed = !!options.fixed;
-        this.fixedValue = options.value;
-        this.value   = 0;
-        this.rem     = 0;
-        this.percent = 0;
-        this.minList = [];
-        this.maxList = [];
-
-        var _this = this;
-        $.each( options.minList || [], function( index, sliderValueMin ){ _this.addMin( sliderValueMin ); });
-        $.each( options.maxList || [], function( index, sliderValueMax ){ _this.addMax( sliderValueMax ); });
-
-        this.setValue( options.value );
-    };
-
-    SliderValue.prototype = {
-        //addMin( sliderValue, minDistance )
-        //Add sliderValue to list of SliderValue that this must allways be greater than or equal to
-        addMin: function( sliderValue, minDistance ){
-            if (sliderValue === null) return this;
-            if ($.isNumeric(sliderValue))
-                sliderValue = new SliderValue({ value: sliderValue, slider: this.slider });
-            this.minList.push( {sliderValue: sliderValue, minDistance: minDistance || 0} );
-            this.update();
-            return this;
-        },
-
-        //addMax( sliderValue, minDistance )
-        //Add sliderValue to list of SliderValue that this must allways be less than or equal to
-        addMax: function( sliderValue, minDistance ){
-            if (sliderValue === null) return this;
-            if ($.isNumeric(sliderValue))
-                sliderValue = new SliderValue({ value: sliderValue, slider: this.slider });
-            this.maxList.push( {sliderValue: sliderValue, minDistance: minDistance || 0} );
-            this.update();
-            return this;
-        },
-
-        setValue: function( newValue, isFixed ){
-            this.value = newValue;
-            if (isFixed && this.fixed)
-                this.fixedValue = newValue;
-            this.update();
-            return this;
-        },
-
-        setPercent: function( newPercent ){
-            this.setValue( this.valueRange*(newPercent - this.percentOffset)/this.percentRange + this.valueOffset );
-        },
-
-        update: function(){
-
-            if (this.fixed)
-                this.value = this.fixedValue;
-            else {
-                //Adjust this.value with respect to {sliderValue,minDistance} in this.minList
-                var _this = this;
-                $.each( this.minList, function( index, rec ){
-                    if (rec.sliderValue)
-                        _this.value = Math.max( _this.value, rec.sliderValue.value + rec.minDistance );
-                });
-                //Adjust this.value with respect to {sliderValue,minDistance} in this.maxList
-                $.each( this.maxList, function( index, rec ){
-                    if (rec.sliderValue)
-                        _this.value = Math.min( _this.value, rec.sliderValue.value - rec.minDistance );
-                });
-
-                //Adjust this.value with respect to step and stepOffset
-                if (this.adjustToStep){
-                    var offset = this.slider.options.min + this.slider.options.stepOffset;
-                    this.value -= offset;
-                    this.value = this.slider.options.step * Math.round( this.value/this.slider.options.step );
-                    this.value += offset;
-                }
-            }
-
-            //Calculate precent
-            this.percent = this.percentRange*(this.value - this.valueOffset)/this.valueRange + this.percentOffset;
-
-            return this;
-        },
-
-        getValue: function(){
-            return toFixed( this.value );
-        },
-
-        getPercent: function( inclUnit ){
-            return toFixed( this.percent ) + (inclUnit ? '%' : 0);
-        },
-
-        getRem: function( inclUnit ){
-            return toFixed( this.rem ) + (inclUnit ? 'rem' : 0);
-        }
-
-    };
-
-
-    ns.SliderValue = SliderValue;
-    ns.sliderValue = function( options ){
-        return new ns.SliderValue( options );
-    };
-
-}(this/*, document*/));
-
-;
-/****************************************************************************
     jquery-base-slider, Description from README.md
 
     (c) 2015, FCOO
@@ -16685,8 +16334,8 @@ if (typeof define === 'function' && define.amd) {
         resizable   : false,    //If true the container of the slider can be resized and the grid will automatic redraw to adjust number of ticks and labels to the new width
 
         //Dimensions (only for options.handleFixed: true)
-        width         : 0,  // The total width of the slider (in px for 1rem = 16px)
-        valueDistances: 3,  // The distance between each value on the slider (in px for 1rem = 16px). Width will be valueDistances*( max - min )
+        width         : 0,  // The total width of the slider (px)
+        valueDistances: 3,  // The distance between each value on the slider (px). Width will be valueDistances*( max - min )
 
         //Ranges and value
         min  : 0,           // Set slider minimum value
@@ -16710,6 +16359,11 @@ if (typeof define === 'function' && define.amd) {
         pinColor: 'black',          // The color of the pin. Use  setPin( value , color )  to change the color dynamical
         pinIcon : 'fa-map-marker',  // The class-name from Fontawasome setting the icon used as pin
 
+
+        //Ticks and labels
+        majorColor  : '#000000',
+        minorColor  : '#555555',
+
         //Steps
         step        : 1,    // Set sliders step. Always > 0. Could be fractional.
         stepOffset  : 0,    // When  step  > 1: Offset for the allowed values. Eq. Min=0, max=100, step=5, stepOffset=3 => allowed values=3,8,13,...,92,97 (3+N*5). Only tested for options.single: true
@@ -16729,6 +16383,24 @@ if (typeof define === 'function' && define.amd) {
         impactLineColors      : {green: "green", yellow: "yellow", red: "red"}, //The line colors used when showImpactLineColor: true
         reverseImpactLineColor: false, // The line on a double slider is colored as red-[handle]-yellow-[handle]-green. Must have showImpactLineColor: true
 
+        //Size
+        sizeFactor: 1, //Factor to re-size default sizes
+        fixedSize: {
+            borderWidth: 1,
+        },
+        size: {
+            fontSize        : 10,
+            majorTickLength : 9,
+            minorTickLength : 6,
+
+            lineHeight      : 6,
+
+
+            lineBorderRadius: 2,
+            textPadding     : 2,
+
+            labelInnerHeight: 10,
+        },
 
         //Grid (ticks and label)
         grid            : false,                      // Enables grid of values.
@@ -16742,10 +16414,9 @@ if (typeof define === 'function' && define.amd) {
         gridColors      : null, //Array of { [fromValue, ]value, color } to set colors on the line. If no fromValue is given the the previous value is used.
                                 //If value == null or < min => A triangle is added to the left indicating 'below min'.
                                 //If value > max            =>  A triangle is added to the right indicating 'above max'.
-        labelColors     : null, //Array of {value, className, color, backgroundColor} to set frame around and className, color, backgroundColor for the label and with value
+        labelColors     : null, //Array of {value, color, backgroundColor} to set frame around and color, backgroundColor for the label and with value
 
         labelClickable         : true, //Allows click on labels to select value of label. If false a click on a label is equal to a click on the line (e.q. find nearest value
-        labelClickableFullWidth: true, //If true and options.labelClickable: true and the value of the label is selectable (with respect to options.step and options.stepOffset) the clickable width of the label is expanded to half the distance to the neighbour labels
 
         //Marker above handle
         showMinMax : false,    // Show min and max markers
@@ -16770,47 +16441,7 @@ if (typeof define === 'function' && define.amd) {
         onChangeOnDragging: true, // If false onChange-function is only called when dragging the sliding is finish.
         onChangeDelay     : 500,  // If onChangeOnDragging == false the callback-function is called when the slider has been on the same tick for onChangeDelay milliseconds
 
-
-        //Buttons
-        buttons      : {value:{}, from:{}, to:{} },
-        /*
-        JSON-record with id or buttons for first, previousPage, previousShift, previous, (now,) next, nextShift, nextPage and last value
-            options.buttons = {
-                value: {buttonList},
-                from : {buttonList},
-                to   : {buttonList}
-            }
-            {buttonList} = {
-                firstBtn        : element or string,
-                previousPageBtn : element or string,
-                previousShiftBtn: element or string,
-                previousBtn     : element or string,
-                nowBtn          : element or string,
-                nextBtn         : element or string,
-                nextShiftBtn    : element or string,
-                nextPageBtn     : element or string,
-                lastBtn         : element or string
-            }
-        */
-
-
-        /****************************************
-        Internal options
-        ****************************************/
-        //The standard button-ids are firstBtn, previousBtn, nowBtn, nextBtn, lastBtn with the following steps
-        buttonOptions: {
-            'firstBtn'        : { sign: -1, delta: 99 },
-            'previousPageBtn' : { sign: -1, delta:  3 },
-            'previousShiftBtn': { sign: -1, delta:  2 },
-            'previousBtn'     : { sign: -1, delta:  1 },
-            'nowBtn'          : { sign: +1, delta:  0 },
-            'nextBtn'         : { sign: +1, delta:  1 },
-            'nextShiftBtn'    : { sign: +1, delta:  2 },
-            'nextPageBtn'     : { sign: +1, delta:  3 },
-            'lastBtn'         : { sign: +1, delta: 99 }
-        },
-
-        minDistanceRem: 4/16 //Minimum distance between ticks and between labels
+        minDistance: 4 //Minimum distance between ticks and between labels
 
     };
 
@@ -16821,68 +16452,12 @@ if (typeof define === 'function' && define.amd) {
     *******************************************************************/
 
     /*******************************************************************
-    Get font-size for the html
-    *******************************************************************/
-    var htmlFontSize = parseFloat( $('html').css('font-size') || $('body').css('font-size') || $.DEFAULT_BROWSER_FONT_SIZE || '16px' );
-
-    function onFontSizeChange( event, fontSize ){
-        htmlFontSize = parseFloat( fontSize.fontSizePx ) || htmlFontSize;
-    }
-
-    $.onFontSizeChanged( onFontSizeChange );
-
-    /*******************************************************************
     toFixed
     Round num to 5 digits
     *******************************************************************/
     function toFixed( num ) {
         return +num.toFixed(5);
     }
-
-    /*******************************************************************
-    pxToRem
-    *******************************************************************/
-    function pxToRem( valuePx, inclUnit ){
-        return valuePx / htmlFontSize + (inclUnit ? 'rem' : 0);
-    }
-
-    /*******************************************************************
-    getEventLeft
-    Return the left (= x) position of an event
-    *******************************************************************/
-    function getEventLeft( event ){
-        return  event.gesture && event.gesture.center ? event.gesture.center.x :
-                event.pageX ? event.pageX :
-                event.originalEvent && event.originalEvent.touches && event.originalEvent.touches.length ? event.originalEvent.touches[0].pageX :
-                event.touches && event.touches.length ? event.touches[0].pageX :
-                0;
-    }
-
-    /*******************************************************************
-    objectsAreDifferent
-    Return true if obj1 and obj2 are not equal
-    *******************************************************************/
-    function objectsAreDifferent( obj1, obj2 ){
-        var result = false,
-            props = Object.getOwnPropertyNames(obj1).concat( Object.getOwnPropertyNames(obj2) );
-
-        $.each( props, function( index, id ){
-            var type1 = $.type(obj1[id]),
-                type2 = $.type(obj2[id]);
-
-            result =
-                result ||
-                (   ((type1 == 'number') || (type2 == 'number')) && //One or both are number AND
-                    ((type1 != type2) || (obj1[id] != obj2[id]))    //type are different OR value are different
-                );
-        });
-        return result;
-    }
-
-    //'Global' text-element to be used by getTextWidth
-    var $outerTextElement = null,
-        textElement       = null;
-
 
     /*******************************************************************
     ********************************************************************
@@ -16896,29 +16471,9 @@ if (typeof define === 'function' && define.amd) {
         this.input          = input;
         this.pluginCount   = pluginCount;
 
-        this.htmlFontSize = htmlFontSize;
-
         this.initializing     = true;
         this.currentHandle    = null;
         this.isRepeatingClick = false;
-
-
-        //Create element outside DOM used to calc width of text-elements
-        this.$outerTextElement =
-            $outerTextElement ||
-            $('<div/>')
-                .addClass('grid')
-                .css({ position: 'absolute', top: -10000, left: -10000 })
-                .appendTo( $('body') );
-        $outerTextElement = this.$outerTextElement;
-
-        this.textElement =
-            textElement ||
-            $('<span/>')
-                .addClass('grid-label')
-                .appendTo( this.$outerTextElement )
-                .get(0);
-        textElement = this.textElement;
 
         /*******************************************************************
         Set and adjust options that can't be changed by this.update(options)
@@ -16928,7 +16483,7 @@ if (typeof define === 'function' && define.amd) {
 
         if (this.options.handleFixed){
             this.options.double = false;
-            this.options.handle = 'fixed';
+            this.options.handle = options.handle || 'fixed';
         }
 
         this.options.isSingle = !this.options.double;
@@ -16937,7 +16492,6 @@ if (typeof define === 'function' && define.amd) {
 
         this.options.singleHandleId =
             this.options.isSingle ? (this.options.handleFixed ? 'fixed' : 'single') : 'from-to';
-
 
         /*******************************************************************
         this.events contains event-functions and options
@@ -16953,8 +16507,23 @@ if (typeof define === 'function' && define.amd) {
             //Add resize-event to window
             $(window).on('resize', this.events.containerOnResize );
 
-        //Update slider when browser font-size is changed
-        $.onFontSizeChanged( this.onFontSizeChange, this );
+        /*******************************************************************
+        Adjust different sizes
+        *******************************************************************/
+        var size       = this.options.size,
+            sizeFactor = this.options.sizeFactor;
+
+        $.each(size, function(index, id){
+            if ( size[id] && $.isNumeric(size[id]) )
+                size[id] = sizeFactor * parseFloat( size[id] );
+        });
+
+        $.each(this.options.fixedSize, function(id, value){
+            size[id] = value;
+        });
+
+        //Calc sizes
+        size.labelHeight = size.borderWidth + size.textPadding + size.fontSize + size.textPadding + size.borderWidth;
 
         /*******************************************************************
         this.result = record with the current result from the slider
@@ -16984,7 +16553,6 @@ if (typeof define === 'function' && define.amd) {
         *******************************************************************/
         this.cache = {
             $input : $(this.input),
-            buttons: { value:{}, from:{}, to:{} }
         };
 
         //Hide the input
@@ -17057,9 +16625,8 @@ if (typeof define === 'function' && define.amd) {
             this.dimentions_old is the last values
             *******************************************************************/
             this.dimentions = {
-                containerWidth          :  0,   //Width of the container [px]
-                containerWidthRem       :  0,   //Width of the container [rem]
-                outerContainerWidthRem  :  0    //Width of outer container [rem]
+                containerWidth     :  0, //Width of the container [px]
+                outerContainerWidth:  0  //Width of outer container [px]
             };
 
             this.dimentions_old = $.extend({}, this.dimentions );
@@ -17312,7 +16879,7 @@ if (typeof define === 'function' && define.amd) {
                 //Sets the width of the container with full width
                 var width = this.options.width || this.options.valueDistances*(this.options.max - this.options.min);
 
-                this.cache.$fullWidthContainer.width( Math.ceil(pxToRem(width))+'rem' );
+                this.cache.$fullWidthContainer.width( width +'px' );
 
                 this.cache.$fullWidthContainer.wrap('<div/>');
                 this.cache.$outerContainer = this.cache.$fullWidthContainer.parent();
@@ -17416,14 +16983,11 @@ if (typeof define === 'function' && define.amd) {
 
 
             //Update the height of the slider
-            this.cache.$container.css('height', pxToRem( this.cache.$lineBackground.height(), true) );
+            this.cache.$container.css('height', this.cache.$lineBackground.height()+'px' );
 
             /****************************************************
             Append grid with ticks and optional labels
             ****************************************************/
-            if (this.options.grid)
-                this.cache.$grid = $span('grid', this.cache.$container);
-
             //Adjust top-position if no marker is displayed
             if (!this.options.showMinMax && !this.options.showFromTo)
                 this.cache.$container.addClass("no-marker");
@@ -17436,21 +17000,8 @@ if (typeof define === 'function' && define.amd) {
             if (this.options.hasPin)
                 this.cache.$container.addClass("has-pin");
 
-            //Append buttons
-            function getButton( id ){
-                return $.type( id ) === 'string' ? $('#' +  id ) : id;
-            }
-            this.options.buttons.value = this.options.buttons.value || {};
-            this.options.buttons.from = this.options.buttons.from || {};
-            this.options.buttons.to   = this.options.buttons.to   || {};
-            $.each( this.options.buttonOptions, function( id ){
-                _this.cache.buttons.value[ id ] = getButton( _this.options.buttons.value[ id ] );
-                _this.cache.buttons.from[ id ]  = getButton( _this.options.buttons.from[ id ] );
-                _this.cache.buttons.to[ id ]    = getButton( _this.options.buttons.to  [ id ] );
-            });
-
             //Append grid(s)
-            this.$currentGridContainer = null;
+            this.$currentGrid = null;
             if (this.options.grid)
                 this.appendGrid();
 
@@ -17477,16 +17028,6 @@ if (typeof define === 'function' && define.amd) {
         remove
         *******************************************************************/
         remove: function () {
-            var _this = this;
-            //************************************************
-            function offEvents( $elem, eventNames ){
-                if (!$elem) return;
-                $.each( eventNames.split(' '), function( index, eventName ){
-                    $elem.off( eventName + ".irs_" + _this.pluginCount );
-                });
-            }
-            //************************************************
-
             if (this.cache.$outerContainer){
                 this.cache.$outerContainer.remove();
                 this.cache.$outerContainer = null;
@@ -17497,16 +17038,561 @@ if (typeof define === 'function' && define.amd) {
             }
 
             this.eachHandle('remove');
+        },
 
-            //Unbind click on buttons
-            $.each( this.cache.buttons, function( valueOrToOrFrom, buttonRecord ){
-                $.each( buttonRecord, function( id, $btn ){
-                    offEvents( $btn, 'mousedown mouseup mouseleave click' );
-                });
-            });
+        /*******************************************************************
+        ********************************************************************
+        ADJUST ELEMENTS
+        ********************************************************************
+        *******************************************************************/
+
+        /*******************************************************************
+        setImpactLineColors
+        Sets the color of the line when line colors are impact (green-yellow-red)
+        *******************************************************************/
+        setImpactLineColors: function(){
+            this.cache.$leftLineColor.css  ( 'background-color', this.options.impactLineColors[ this.options.reverseImpactLineColor ? 'red' : 'green' ] );
+            this.cache.$centerLineColor.css( 'background-color', this.options.impactLineColors.yellow );
+            this.cache.$rightLineColor.css ( 'background-color', this.options.impactLineColors[ this.options.reverseImpactLineColor ? 'green' : 'red' ] );
+        },
+
+        /*******************************************************************
+        currentHandleBlur
+        *******************************************************************/
+        currentHandleBlur: function () {
+            if (this.currentHandle)
+                this.currentHandle.onBlur();
+            this.currentHandle = null;
         },
 
 
+        /*******************************************************************
+        updateHandlesAndLines
+        *******************************************************************/
+        updateHandlesAndLines: function () {
+            //***********************************************
+            function setLeftAndWidth( $elem, left, width ){
+                if (!$elem) return;
+                var css = {};
+                if (left !== null)
+                    css.left = toFixed(left) + (left ? '%' : '');
+                if (width !== null)
+                    css.width = toFixed(width) + (width ? '%' : '');
+                $elem.css( css );
+            }
+            //***********************************************
+
+            /*****************************************************
+            Adjust left-position and width of all lineColor-elements (if any)
+            *****************************************************/
+            if (this.options.isSingle) {
+                var singlePercent = this.handles[this.options.singleHandleId].value.getPercent();
+                setLeftAndWidth( this.cache.$leftLineColor,  null,          singlePercent       );
+                setLeftAndWidth( this.cache.$rightLineColor, singlePercent, 100 - singlePercent );
+            }
+            else {
+                var fromPercent = this.handles.from.value.getPercent(),
+                    toPercent   = this.handles.to.value.getPercent();
+                setLeftAndWidth( this.cache.$leftLineColor,   null,        fromPercent             );
+                setLeftAndWidth( this.cache.$centerLineColor, fromPercent, toPercent - fromPercent );
+                setLeftAndWidth( this.cache.$rightLineColor,  toPercent,   100 - toPercent         );
+            }
+
+            /*****************************************************
+            Set position of all handles
+            *****************************************************/
+            this.eachHandle('update');
+
+            //Special case for fixed-mode: Keep the handle centered in container
+            if (this.options.isFixed){
+                var containerLeft =
+                        -1.0 * this.dimentions.containerWidth * this.handles.fixed.value.percent/100 +
+                         0.5 * this.dimentions.outerContainerWidth;
+
+                this.cache.$container.css('left', toFixed(containerLeft) + 'px');
+            }
+
+            /*****************************************************
+            Callback and reset
+            *****************************************************/
+            this.onChanging();
+
+        },
+
+        /*******************************************************************
+        ********************************************************************
+        SERVICE METHODS
+        ********************************************************************
+        *******************************************************************/
+
+        /*******************************************************************
+        _prettify
+        *******************************************************************/
+        _prettify: function (num) {
+            return $.isFunction(this.options.prettify) ? this.options.prettify(num) : num;
+        },
+
+        /*******************************************************************
+        PrettifyLabel
+        *******************************************************************/
+        _prettifyLabel: function(text) {
+            return $.isFunction(this.options.prettifyLabel) ? this.options.prettifyLabel(text) : text;
+        },
+
+        /*******************************************************************
+        decorate
+        *******************************************************************/
+        decorate: function ( content ) {
+            return this.options.prefix + content + this.options.postfix;
+        },
+
+        /*******************************************************************
+        ********************************************************************
+        GRID
+        Use appendGridContainer to create new grids. Use appendLabel(text, left[, value]) to add a grid-label
+        ********************************************************************
+        *******************************************************************/
+
+        /*******************************************************************
+        getTextWidth
+        Get width of value as text OR max width of all values in array of value
+        *******************************************************************/
+        getTextWidth: function( value, options = {} ){
+            var _this = this,
+                ctx = this.cache.ctx,
+                ctx_font = ctx.font,
+                valueList = $.isArray( value ) ? value : [value],
+                result = 0;
+
+            if (options.italic)
+                ctx.font = 'italic ' + ctx.font;
+            if (options.bold)
+                ctx.font = 'bold ' + ctx.font;
+
+            valueList.forEach( function(txt){
+                result = Math.max( result, ctx.measureText( _this._valueToText(txt) ).width );
+            });
+
+            ctx.font = ctx_font;
+
+            return result;
+        },
+
+        /*******************************************************************
+        appendGridContainer
+        *******************************************************************/
+        appendGridContainer: function( options = {} ){
+            //options.labelBetweenTicks = true => special version where the labels are placed up and between the ticks
+            this.options.labelBetweenTicks = !!options.labelBetweenTicks;
+
+            var $newGrid = $('<span class="grid"></span>'),
+                $newCanvas =
+                    $('<canvas/>')
+                        .addClass('grid-canvas')
+                        .appendTo($newGrid),
+                size = this.options.size,
+                ctx = this.cache.ctx = $newCanvas.get(0).getContext("2d"),
+                canvasMargin = this.cache.canvasMargin = Math.ceil( this.getTextWidth([this._valueToText(this.options.min), this._valueToText(this.options.max)] ) ),
+                canvasWidth = this.dimentions.containerWidth + 2 * canvasMargin,
+                canvasHeight = this.options.labelBetweenTicks ?
+                                Math.max(size.majorTickLength, size.fontSize) :
+                                size.majorTickLength + size.labelHeight;
+
+            $newCanvas
+                .css('left', '-'+canvasMargin+'px')
+                .attr('width', canvasWidth)
+                .attr('height', canvasHeight);
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            ctx.translate(0.5, 0.5);
+            ctx.lineWidth    = 1;
+            ctx.textAlign    = "center";
+            ctx.textBaseline = "top";       //"bottom" or "middle" or "alphabetic" or "hanging"
+
+            ctx.strokeStyle = this.options.majorColor;
+            ctx.font = size.fontSize + 'px Arial';
+
+            if (this.options.labelClickable && !this.options.disable && !this.options.readOnly){
+                this.canvasId = this.canvasId || 0;
+                this.canvasId++;
+                $newCanvas.data('canvasId', this.canvasId);
+                this.canvasLabels = this.canvasLabels || {};
+                this.canvasLabels[this.canvasId] = [];
+            }
+
+            if (this.$currentGrid){
+                this.nextGridTop += this.$currentGrid.height();
+                this.$currentGrid = $newGrid.insertAfter( this.$currentGrid );
+                this.$currentGrid.css('top', this.nextGridTop+'px' );
+            }
+            else {
+                this.$currentGrid = $newGrid.appendTo(this.cache.$container);
+                this.nextGridTop = this.$currentGrid.position().top;
+            }
+
+            this.cache.$grid = this.cache.$container.find(".grid");
+
+            //Special case: If the labels for the current grid shall be placed between the ticks instead of under..
+            if (this.options.labelBetweenTicks){
+                this.$currentGrid.addClass("label-between-ticks");
+            }
+        },
+
+
+        /*******************************************************************
+        appendTick
+        *******************************************************************/
+        appendTick: function( leftPercent, options ){
+            if (!this.$currentGrid) return;
+
+            options = $.extend( {minor: false, color: ''}, options );
+
+            var left = this.cache.canvasMargin + (this.dimentions.containerWidth * leftPercent / 100),
+                ctx  = this.cache.ctx,
+                size = this.options.size,
+                length = options.minor ? size.minorTickLength : size.majorTickLength;
+
+
+            ctx.beginPath();
+
+            ctx.shadowColor   = 'rgba(255, 255, 255, .75)';
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 0;
+            ctx.lineWidth     = 1;
+            ctx.strokeStyle   = options.minor ? this.options.minorColor : this.options.majorColor;
+            ctx.moveTo(left, 0);
+            ctx.lineTo(left, length );
+            ctx.stroke();
+
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+      },
+
+        /*******************************************************************
+        _valueToText
+        *******************************************************************/
+        _valueToText: function( value ){
+            var result = this._prettifyLabel( value );
+            return this.options.decorateLabel ? this.decorate(result) : result;
+        },
+
+        /*******************************************************************
+        appendLabel
+        *******************************************************************/
+        appendLabel: function( leftPercent, value, options ){
+            if (!this.$currentGrid) return;
+
+            options = $.extend( {color: ''}, options );
+
+            //Check if the value for the label is a selectable one
+            options.labelClickable = options.labelClickable &&  ((value - this.options.stepOffset) % this.options.step) === 0;
+
+            var text = this._valueToText( value ),
+                size   = this.options.size,
+                ctx    = this.cache.ctx,
+                left   = this.cache.canvasMargin + (this.dimentions.containerWidth * leftPercent / 100),
+                textWidth = this.getTextWidth(text),
+                top, width, height, boxLeft, textTop;
+
+            if (this.options.labelBetweenTicks){
+                //Special case where the labels are placed up between the ticks
+                top     = 0;
+                textTop = 0;
+                width   = textWidth;
+                height  = size.fontSize;
+            }
+            else {
+                top     = size.majorTickLength;
+                textTop = top + size.borderWidth + size.textPadding;
+                width   = size.borderWidth + size.textPadding + textWidth + size.textPadding + size.borderWidth,
+                height  = size.labelHeight;
+            }
+            boxLeft = left - width/2;
+
+            //Find bg-color and text-color
+            var color = options.minor ? this.options.minorColor : this.options.majorColor,
+                textColor = color,
+                labelColorRec = this.options.labelColorRec[value],
+                canvasLabels = this.canvasLabels[this.canvasId];
+
+            if (labelColorRec){
+                //Label with individual background- and text-color
+                var bgColor   = labelColorRec.backgroundColor;
+                textColor = labelColorRec.color;
+
+                //Draw border and background (if any)
+                ctx.fillStyle = color;
+                ctx.fillRect(boxLeft, top, width, height);
+                ctx.fillStyle = bgColor;
+
+                ctx.beginPath();
+                ctx.fillRect(boxLeft + size.borderWidth, top + size.borderWidth, width - 2*size.borderWidth, height - 2*size.borderWidth);
+                ctx.stroke();
+            }
+
+            //ctx.fillStyle = 'pink';                     //Only test
+            //ctx.fillRect(boxLeft, top, width, height);  //Only test
+
+            if (options.labelClickable && !this.options.disable && !this.options.readOnly)
+                canvasLabels.push( {top: top, left: boxLeft, right: boxLeft+width, bottom: top+height, percent: leftPercent} );
+
+            //Draw the text
+            var ctx_font = ctx.font;
+            if (!options.minor)
+                ctx.font = 'bold ' + ctx.font;
+            if (options.italic)
+                ctx.font = 'italic ' + ctx.font;
+            ctx.fillStyle = textColor;
+
+            ctx.beginPath();
+            ctx.fillText(text, left, textTop);
+            ctx.stroke();
+
+            ctx.font = ctx_font;
+        },
+
+
+        /*******************************************************************
+        appendGrid
+        *******************************************************************/
+        appendGrid: function () {
+            if (!this.options.grid) return;
+            this.appendStandardGrid();
+        },
+
+        /*******************************************************************
+        appendStandardGrid
+        Simple call _appendStandardGrid. Can be overwriten in decending classes
+        *******************************************************************/
+        appendStandardGrid: function ( textOptions ) {
+            this._appendStandardGrid( textOptions );
+        },
+
+
+        /*******************************************************************
+        preAppendGrid and postAppendGrid
+        must be called as first and last when creating a grid - used if a new appendStandardGrid is used
+        *******************************************************************/
+        preAppendGrid: function( options = {} ){
+            this.appendGridContainer( options );
+        },
+
+        postAppendGrid: function(){
+            //Update the height of the slider
+            this.cache.$container.css('height', (this.nextGridTop + this.$currentGrid.height())+'px' );
+        },
+
+
+        /*******************************************************************
+        getGridOptions
+        Get options needed for building the grid
+        *******************************************************************/
+        getGridOptions: function(){
+            var o = this.options,
+                result = {},
+                gridDistanceIndex = 0;
+
+            result.gridContainerWidth = this.cache.$grid.outerWidth(false);
+            result.gridDistanceStep = o.gridDistances[gridDistanceIndex]; // = number of steps between each tick
+            result.stepPx = o.step * result.gridContainerWidth / o.range / o.majorTicksFactor;
+
+            //Increse grid-distance until the space between two ticks are more than 4px
+            while ( (result.stepPx*result.gridDistanceStep) <= o.minDistance){
+                gridDistanceIndex++;
+                if (gridDistanceIndex < o.gridDistances.length)
+                    result.gridDistanceStep = o.gridDistances[gridDistanceIndex];
+                else
+                    result.gridDistanceStep = result.gridDistanceStep*2;
+            }
+
+            result.tickDistanceNum = result.gridDistanceStep * o.step;          //The numerical distance between each ticks
+            result.tickDistancePx  = result.gridDistanceStep * result.stepPx;   //The px distance between each ticks
+
+            if (o.maxLabelWidth)
+                result.maxLabelWidth = o.maxLabelWidth;
+            else {
+                //Find widest label
+                var value = o.min,
+                    valueList = [],
+                    step = 1;
+
+                while (value <= o.max){
+                    //if value corrected by o.majorTicksOffset and o.majorTicksFactor is a DIV of the tick distance => calculate the width of the tick
+                    if ((value - o.majorTicksOffset)*o.majorTicksFactor % result.tickDistanceNum === 0){
+                        valueList.push( value );
+                        step = result.tickDistanceNum;
+                    }
+                    value += step;
+                }
+                result.maxLabelWidth = this.getTextWidth( valueList ) + o.minDistance; //Adding min space between text/labels
+            }
+
+            //Calculate automatic distances between major ticks
+            var majorTicks = o.majorTicks;
+            if (!majorTicks){
+                //Find ticks between each major tick
+                gridDistanceIndex = 0;
+                majorTicks = o.gridDistances[gridDistanceIndex];
+                while (majorTicks * result.tickDistancePx < result.maxLabelWidth){
+                    gridDistanceIndex++;
+                    if (gridDistanceIndex < o.gridDistances.length)
+                        majorTicks = o.gridDistances[gridDistanceIndex];
+                    else
+                        majorTicks = majorTicks*2;
+                }
+            }
+
+            result.majorTickDistanceNum = result.tickDistanceNum * majorTicks;
+            result.majorTickDistancePx  = result.tickDistancePx  * majorTicks;
+
+            return result;
+        },
+
+
+        /*******************************************************************
+        _appendStandardGrid
+        *******************************************************************/
+        _appendStandardGrid: function ( textOptions, tickOptions ) {
+            this.preAppendGrid();
+
+            textOptions = $.extend( {labelClickable: this.options.labelClickable}, textOptions || {}  );
+            tickOptions = tickOptions || {};
+
+            //Get all options regarding the grid
+            this.gridOptions = this.getGridOptions();
+            $.extend( this.options, this.gridOptions );
+
+            //Add all the minor and major ticks
+            var o     = this.options,
+                value = o.min,
+                step  = 1,
+                valueP, valueOffset;
+
+            while (value <= o.max){
+                valueOffset = (value - o.majorTicksOffset)*o.majorTicksFactor;
+                if (valueOffset % o.tickDistanceNum === 0){
+                    valueP = (value-o.min)*o.percentProValue;
+                    if (valueOffset % o.majorTickDistanceNum === 0){
+                        //add major tick and text/label
+                        this.appendTick( valueP, tickOptions );
+                        this.appendLabel( valueP, value, textOptions );
+                    }
+                    else
+                        if (o.showMinorTicks)
+                            //Add minor tick
+                            this.appendTick( valueP, { minor:true } );
+                    step = o.tickDistanceNum;
+                }
+                value += step;
+            }
+
+            //Append colors on the grid
+            if (this.options.gridColors)
+                this.appendGridColors( this.options.gridColors );
+
+            this.postAppendGrid();
+        },
+
+        /*******************************************************************
+        addGridColor
+        *******************************************************************/
+        appendGridColors: function( gridColors ){
+            var fromValue,
+                toValue  = this.options.min,
+                i,
+                gridColor,
+                percentFactor = 100 / (this.options.max - this.options.min);
+
+
+            for (i=0; i<gridColors.length; i++ ){
+                gridColor = gridColors[i];
+                if ( (gridColor.value === null) || (gridColor.value < this.options.min) || (gridColor.value > this.options.max) ){
+                    //add triangle to the left or right
+                    var $span = $('<span/>')
+                                    .addClass( 'grid-color')
+                                    .appendTo( this.$currentGrid );
+                    if (gridColor.value > this.options.max)
+                        $span
+                            .addClass('gt-max')
+                            .css('border-left-color', gridColor.color);
+                    else
+                        $span
+                            .addClass('lt-min')
+                            .css('border-right-color', gridColor.color);
+                }
+                else {
+                    fromValue = gridColor.fromValue !== undefined ? gridColor.fromValue : toValue;
+                    toValue = gridColor.value;
+
+                    $('<span/>')
+                        .addClass('grid-color' + (i%2?' to':' from'))
+                        .css({
+                            'left'            : percentFactor*(fromValue - this.options.min) + '%',
+                            'width'           : percentFactor*(toValue-fromValue) + '%',
+                            'background-color': gridColor.color
+                           })
+                        .appendTo( this.$currentGrid );
+                }
+            }
+        },
+    }; //end of BaseSlider.prototype
+
+
+    $.fn.baseSlider = function (options) {
+        return this.each(function() {
+            if (!$.data(this, "baseSlider")) {
+                $.data(this, "baseSlider", new window.BaseSlider(this, options, pluginCount++));
+            }
+        });
+    };
+
+
+}(jQuery, this, document));
+
+;
+/****************************************************************************
+jquery-base-slider-events
+****************************************************************************/
+(function ($, window/*, document, undefined*/) {
+    "use strict";
+
+    /*******************************************************************
+    getEventLeft
+    Return the left (= x) position of an event
+    *******************************************************************/
+    function getEventLeft( event ){
+        return  event.gesture && event.gesture.center ? event.gesture.center.x :
+                event.pageX ? event.pageX :
+                event.originalEvent && event.originalEvent.touches && event.originalEvent.touches.length ? event.originalEvent.touches[0].pageX :
+                event.touches && event.touches.length ? event.touches[0].pageX :
+                0;
+    }
+
+
+    /*******************************************************************
+    objectsAreDifferent
+    Return true if obj1 and obj2 are not equal
+    *******************************************************************/
+    function objectsAreDifferent( obj1, obj2 ){
+        var result = false,
+            props = Object.getOwnPropertyNames(obj1).concat( Object.getOwnPropertyNames(obj2) );
+
+        $.each( props, function( index, id ){
+            var type1 = $.type(obj1[id]),
+                type2 = $.type(obj2[id]);
+
+            result =
+                result ||
+                (   ((type1 == 'number') || (type2 == 'number')) && //One or both are number AND
+                    ((type1 != type2) || (obj1[id] != obj2[id]))    //type are different OR value are different
+                );
+        });
+        return result;
+    }
+
+
+
+    $.extend(window.BaseSlider.prototype, {
         /*******************************************************************
         bindEvents
         *******************************************************************/
@@ -17565,23 +17651,6 @@ if (typeof define === 'function' && define.amd) {
 
             //Add keyboard events to the line
             addEvents( this.cache.$line, "keydown", this.key );
-
-            //Bind click on buttons
-            $.each( this.cache.buttons, function( fromOrTo, buttonRecord ){
-                $.each( buttonRecord, function( id, $btn ){
-                    var options = $.extend({handleId: fromOrTo}, _this.options.buttonOptions[id]);
-                    addEvents( $btn, 'mousedown',  _this.startRepeatingClick                         );
-                    addEvents( $btn, 'mouseup',    _this.endRepeatingClick                           );
-                    addEvents( $btn, 'mouseleave', _this.endRepeatingClick,                  true    );
-                    addEvents( $btn, 'click',      _this.moveByButtonOrKeyboardOrMouseWheel, options );
-
-                    if ( $btn && $btn.autoclickWhilePressed && options.delta && (options.delta != 99) && (!$btn.data('auto-click-when-pressed-added')) ){
-                        $btn.data('auto-click-when-pressed-added', true);
-                        $btn.autoclickWhilePressed();
-                    }
-
-                });
-            });
         },
 
 
@@ -17598,10 +17667,8 @@ if (typeof define === 'function' && define.amd) {
         containerOnResize: function(){
             if (this.initializing || !this.isBuild)
                 return;
-
             this.parentOnResize();
         },
-
 
         /*******************************************************************
         parentOnResize
@@ -17628,9 +17695,8 @@ if (typeof define === 'function' && define.amd) {
         getDimentions: function(){
             var result = {};
             result.containerWidth    = Math.max(0, this.cache.$container.innerWidth()) || this.dimentions.containerWidth;
-            result.containerWidthRem = pxToRem(result.containerWidth);
             if (this.options.isFixed)
-                result.outerContainerWidthRem = pxToRem( this.cache.$outerContainer.innerWidth() );
+                result.outerContainerWidth = this.cache.$outerContainer.innerWidth();
             return result;
         },
 
@@ -17646,25 +17712,13 @@ if (typeof define === 'function' && define.amd) {
 
             if (!this.initializing && this.isBuild){
                 //Update the slider if the width has changed
-                if (this.dimentions.containerWidthRem && objectsAreDifferent( this.dimentions, this.dimentions_old))
+                if (this.dimentions.containerWidth && objectsAreDifferent( this.dimentions, this.dimentions_old)){
                     updateSlider = true;
 
-                    //Check if the grid of a resizable slider has changed
-                    if (this.options.resizable){
-                        var _this = this,
-                            rebuild = false,
-                            newGridOptions = this.getGridOptions(),
-                            idList = ['gridDistanceStep', 'majorTickDistanceNum']; //List of options-id to compare for changes
-
-                        $.each( idList, function( index, id ){
-                            rebuild = rebuild || (newGridOptions[id] != _this.gridOptions[id]);
-                        });
-
-                        if (rebuild){
-                            this.update();
-                            return;
-                        }
-                    }
+                    //If it is a resizable slider :  Update it
+                    if (this.options.resizable)
+                        this.update();
+                }
             }
             else {
                 //Reset timeout and try to build the slider
@@ -17673,7 +17727,7 @@ if (typeof define === 'function' && define.amd) {
                     this.checkContainerDimentions_TimeoutId = null;
                 }
 
-                if (this.dimentions.containerWidthRem){
+                if (this.dimentions.containerWidth){
                     this.build();
                     updateSlider = true;
                 }
@@ -17700,39 +17754,10 @@ if (typeof define === 'function' && define.amd) {
             }
         },
 
-        /*******************************************************************
-        onFontSizeChange
-        Called when the font-size of the browser is changed
-        *******************************************************************/
-        onFontSizeChange: function( event, fontSize ){
-            onFontSizeChange( event, fontSize );
-            if (this.htmlFontSize != htmlFontSize){
-                this.htmlFontSize = htmlFontSize;
-                if (this.options.resizable)
-                    this.update();
-                else
-                    this.dimentions = this.getDimentions();
-            }
-        },
 
         /*******************************************************************
         KEY, WHEEL AND BUTTON EVENTS
         *******************************************************************/
-        /*******************************************************************
-        startRepeatingClick
-        *******************************************************************/
-        startRepeatingClick: function () {
-            this.isRepeatingClick = true;
-        },
-
-        /*******************************************************************
-        endRepeatingClick
-        *******************************************************************/
-        endRepeatingClick: function (callOnChange) {
-            this.isRepeatingClick = false;
-            if (callOnChange)
-                this.onChange();
-        },
 
         /*******************************************************************
         key
@@ -17904,9 +17929,14 @@ if (typeof define === 'function' && define.amd) {
         Called when tap and press/pressup on the slider (line and grid)
         *******************************************************************/
         onTap: function(event) {
+
+
+
             var _this = this,
                 percent = NaN, // = the percent to set this.currentHandle
                 elem    = event.gesture.target;
+
+
 
             event.preventDefault();
             event.stopImmediatePropagation();
@@ -17928,11 +17958,22 @@ if (typeof define === 'function' && define.amd) {
                 });
 
             //If not on a handle: Test if the tap was on a label
-            if (window.isNaN(percent))
-                while (window.isNaN(percent) && !!elem && elem.getAttribute){
-                    percent = parseFloat( elem.getAttribute('data-base-slider-percent') );
-                    elem = elem.parentNode;
+            if (window.isNaN(percent)){
+                //Check if the tap was on a canvas
+                var canvasId = $(elem).data('canvasId');
+                if (canvasId){
+                    var originalEvent = event.gesture.srcEvent,
+                        canvasX       = originalEvent.offsetX,
+                        canvasY       = originalEvent.offsetY;
+
+                    $.each(_this.canvasLabels[canvasId] || [], function(index, rec){
+                        if ( (canvasX >= rec.left) && (canvasX <= rec.right) && (canvasY >= rec.top) && (canvasY <= rec.bottom) ){
+                            percent = rec.percent;
+                            return false;
+                        }
+                    });
                 }
+            }
 
             //If not on a handle and not on a label: Find percent according to mouse-position
             if (window.isNaN(percent)){
@@ -18051,134 +18092,6 @@ if (typeof define === 'function' && define.amd) {
 
         /*******************************************************************
         ********************************************************************
-        ADJUST ELEMENTS
-        ********************************************************************
-        *******************************************************************/
-
-        /*******************************************************************
-        setImpactLineColors
-        Sets the color of the line when line colors are impact (green-yellow-red)
-        *******************************************************************/
-        setImpactLineColors: function(){
-            this.cache.$leftLineColor.css  ( 'background-color', this.options.impactLineColors[ this.options.reverseImpactLineColor ? 'red' : 'green' ] );
-            this.cache.$centerLineColor.css( 'background-color', this.options.impactLineColors.yellow );
-            this.cache.$rightLineColor.css ( 'background-color', this.options.impactLineColors[ this.options.reverseImpactLineColor ? 'green' : 'red' ] );
-        },
-
-        /*******************************************************************
-        currentHandleBlur
-        *******************************************************************/
-        currentHandleBlur: function () {
-            if (this.currentHandle)
-                this.currentHandle.onBlur();
-            this.currentHandle = null;
-        },
-
-
-        /*******************************************************************
-        updateHandlesAndLines
-        *******************************************************************/
-        updateHandlesAndLines: function () {
-            //***********************************************
-            function setLeftAndWidth( $elem, left, width ){
-                if (!$elem) return;
-                var css = {};
-                if (left !== null)
-                    css.left = toFixed(left) + (left ? '%' : '');
-                if (width !== null)
-                    css.width = toFixed(width) + (width ? '%' : '');
-                $elem.css( css );
-            }
-            //***********************************************
-
-            /*****************************************************
-            Adjust left-position and width of all lineColor-elements (if any)
-            *****************************************************/
-            if (this.options.isSingle) {
-                var singlePercent = this.handles[this.options.singleHandleId].value.getPercent();
-                setLeftAndWidth( this.cache.$leftLineColor,  null,          singlePercent       );
-                setLeftAndWidth( this.cache.$rightLineColor, singlePercent, 100 - singlePercent );
-            }
-            else {
-                var fromPercent = this.handles.from.value.getPercent(),
-                    toPercent   = this.handles.to.value.getPercent();
-                setLeftAndWidth( this.cache.$leftLineColor,   null,        fromPercent             );
-                setLeftAndWidth( this.cache.$centerLineColor, fromPercent, toPercent - fromPercent );
-                setLeftAndWidth( this.cache.$rightLineColor,  toPercent,   100 - toPercent         );
-            }
-
-            /*****************************************************
-            Set position of all handles
-            *****************************************************/
-            this.eachHandle('update');
-
-            //Special case for fixed-mode: Keep the handle centered in container
-            if (this.options.isFixed){
-                var containerLeft =
-                        -1.0 * this.dimentions.containerWidthRem * this.handles.fixed.value.percent/100 +
-                         0.5 * this.dimentions.outerContainerWidthRem;
-
-                this.cache.$container.css('left', toFixed(containerLeft) + 'rem');
-            }
-
-
-            /*****************************************************
-            Callback and reset
-            *****************************************************/
-            this.onChanging();
-
-        },
-
-
-        /*******************************************************************
-        ********************************************************************
-        SET VALUES (TO, FROM, PIN ETC.)
-        ********************************************************************
-        *******************************************************************/
-
-        /*******************************************************************
-        setAnyValue
-        *******************************************************************/
-        setAnyValue: function( id, value ){
-            if (this.handles[id]){
-                this.handles[id].value.setValue( value );
-
-                this.updateHandlesAndLines();
-                this.onChange();
-            }
-        },
-
-        /*******************************************************************
-        setValue, setFromValue, setToValue
-        *******************************************************************/
-        setValue    : function( value ) {this.setAnyValue( this.options.singleHandleId, value );},
-        setFromValue: function( value ) { this.setAnyValue( 'from',   value ); },
-        setToValue  : function( value ) { this.setAnyValue( 'to',     value ); },
-
-        /*******************************************************************
-        setPin
-        *******************************************************************/
-        setPin: function( value, color, icon ) {
-            if (!this.options.hasPin) return;
-            if (value !== null)
-                this.handles.pin.value.setValue( value, true );
-
-            this.options.pinColor = color || this.options.pinColor || 'black';
-
-            var oldIcon = this.options.pinIcon || '';
-            this.options.pinIcon = icon || this.options.pinIcon || 'fa-map-marker';
-
-            this.handles.pin.$handle
-                .css('color', this.options.pinColor)
-                .removeClass( oldIcon )
-                .addClass( this.options.pinIcon );
-
-            this.updateHandlesAndLines();
-        },
-
-
-        /*******************************************************************
-        ********************************************************************
         CALLBACK
         ********************************************************************
         *******************************************************************/
@@ -18246,7 +18159,6 @@ if (typeof define === 'function' && define.amd) {
 
         /*******************************************************************
         onChanging
-
         *******************************************************************/
         onChanging: function(){
             //If it is dragging and onChangeOnDragging == false => set timeout to call onChange after XX ms if the handle hasn't moved
@@ -18269,398 +18181,273 @@ if (typeof define === 'function' && define.amd) {
         },
 
 
-        /*******************************************************************
-        ********************************************************************
-        SERVICE METHODS
-        ********************************************************************
-        *******************************************************************/
 
-        /*******************************************************************
-        _prettify
-        *******************************************************************/
-        _prettify: function (num) {
-            return $.isFunction(this.options.prettify) ? this.options.prettify(num) : num;
-        },
 
-        /*******************************************************************
-        PrettifyLabel
-        *******************************************************************/
-        _prettifyLabel: function(text) {
-            return $.isFunction(this.options.prettifyLabel) ? this.options.prettifyLabel(text) : text;
-        },
 
-        /*******************************************************************
-        decorate
-        *******************************************************************/
-        decorate: function ( content ) {
-            return this.options.prefix + content + this.options.postfix;
-        },
+    }); //end of BaseSlider.prototype
 
-        /*******************************************************************
-        ********************************************************************
-        GRID
-        Use appendGridContainer to create new grids. Use appendLabel(text, left[, value]) to add a grid-label
-        ********************************************************************
-        *******************************************************************/
+}(jQuery, this, document));
 
-        /*******************************************************************
-        appendGridContainer
-        *******************************************************************/
-        appendGridContainer: function(){
-            if (this.$currentGridContainer){
-                this.totalGridContainerTop += this.$currentGridContainer.height();
-                this.$currentGridContainer =
-                    $('<span class="grid"></span>').insertAfter( this.$currentGridContainer );
-                this.$currentGridContainer.css('top', pxToRem( this.totalGridContainerTop, true) );
+;
+/****************************************************************************
+    jquery-base-slider-handle,
+
+    (c) 2015, FCOO
+
+    https://github.com/fcoo/jquery-base-slider
+    https://github.com/fcoo
+
+****************************************************************************/
+(function (window/*, document, undefined*/) {
+    "use strict";
+
+    //Create baseSlider-namespace
+	window._baseSlider = window._baseSlider || {};
+	var ns = window._baseSlider;
+
+    /*******************************************************************
+    elementsOverlapping
+    Return true if $element1 and $element2 is overlapping horizontal
+    *******************************************************************/
+    function elementsOverlapping( $element1, $element2 ){
+        if ($element1 && $element2){
+            var rect1 = $element1.get(0).getBoundingClientRect(),
+                rect2 = $element2.get(0).getBoundingClientRect();
+            return ((rect1.left >= rect2.left) && (rect1.left <= rect2.right)) ||
+                    ((rect2.left >= rect1.left) && (rect2.left <= rect1.right));
+        }
+        return false;
+    }
+
+    /*******************************************************************
+    SliderHandle
+    Object to reprecent a 'handle' on the slider
+    The handle don't need to have a actual DOM-handle. The min and max-value of the slider
+    is also reprecented as a SliderHandle
+    The object contains the following items:
+        value   : A SliderValue-object reprecenting the value
+        $handle : $-object = the DOM handle (optional)
+        marker  : Object containing of tree $-object: $outer and $text (optional)
+
+    options
+        marker: [string] = class-name of the marker
+    *******************************************************************/
+    var SliderHandle = function( options ){
+        this.id      = options.id;
+        this.slider  = options.slider || options.value.slider;
+        options.value.slider = this.slider;
+        this.value   = ns.sliderValue( options.value );
+        this.$handle = !!options.$handle; //Set to boolean. Created in this.append
+        this.handleClassName = options.handleClassName || '';
+        this.handleCSS = options.handleCSS || {};
+        this.appended = false,
+
+        this.markerData = options.markerData || {};
+
+        this.markerClassName = options.marker;
+        this.marker  = !!this.markerClassName;
+
+        //overlappingHandleList = list of SliderHandle. If any of the marker in overlappingHandleList[xx] is overlapping this => this is hidden
+        this.overlappingHandleList = [];
+
+        //overlapHandleList = list of SliderHandle. this is overlapping all the marker in overlapHandleList[xx]
+        this.overlapHandleList = [];
+
+
+        this.draggingClassName = options.draggingClassName; //Classname for handler when it is being dragged MANGLER
+        this.lastLeftPercent = '';
+    };
+
+    SliderHandle.prototype = {
+        //addOverlap( handle ) - Set this to overlap handle
+        addOverlap: function( handle ){
+            if (this.marker && handle && handle.marker ){
+                this.overlapHandleList.push( handle );
+                handle.overlappingHandleList.push( this );
             }
-            else {
-                this.$currentGridContainer = this.cache.$grid;
-                this.totalGridContainerTop = this.$currentGridContainer.position().top;
-            }
-
-            this.cache.$grid = this.cache.$container.find(".grid");
-            return this.$currentGridContainer;
         },
 
-
-        /*******************************************************************
-        appendTick
-        *******************************************************************/
-        appendTick: function( left, options ){
-            if (!this.$currentGridContainer) return;
-
-            options = $.extend( {minor: false, color: ''}, options );
-
-            var result = document.createElement("span");
-//            result.className = "grid-pol" + (options.minor ? ' minor' : '');
-            result.className = "grid-pol" + (options.minor ? '' : ' major');
-            result.style.left = left + '%';
-
-            if (options.color)
-                result.style.backgroundColor = options.color;
-
-            this.currentGridContainer.appendChild( result );
-            return result;
-
-        },
-
-        /*******************************************************************
-        _valueToText
-        *******************************************************************/
-        _valueToText: function( value ){
-            var result = this._prettifyLabel( value );
-            return this.options.decorateLabel ? this.decorate(result) : result;
-        },
-
-        /*******************************************************************
-        appendLabel
-        *******************************************************************/
-        appendLabel: function( left, value, options ){
-            if (!this.$currentGridContainer) return;
-
-            options = $.extend( {color: ''}, options );
-
-            //Check if the value for the label is a selectable one
-            options.labelClickable = options.labelClickable &&  ((value - this.options.stepOffset) % this.options.step) === 0;
-
-            var text = this._valueToText( value ),
-                outer = document.createElement("div"),
-                result = document.createElement("div"),
-                className = 'grid-label';
-
-            outer.className = 'grid-label-outer';
-            outer.style.left  = left+'%';
-            outer.appendChild(result);
-
-            if (options.minor)
-                className += ' minor';
-            if (options.italic)
-                className += ' italic';
-            if (options.color)
-                result.style.color = options.color;
-
-            //Create inner-span with the text
-            var inner = document.createElement("span"),
-                innerClassName = 'grid-label-text';
-            inner.innerHTML = text;
-
-            if (this.options.labelColorRec[value]){
-                var textOptions = this.options.labelColorRec[value];
-
-                innerClassName += ' frame';
-                if (textOptions.className)
-                    innerClassName += ' '+textOptions.className;
-                if (textOptions.color)
-                    inner.style.color = textOptions.color;
-                if (textOptions.backgroundColor)
-                    inner.style.backgroundColor = textOptions.backgroundColor;
-            }
-
-            inner.className = innerClassName;
-            result.appendChild(inner);
-
-            if (options.labelClickable && !this.options.disable && !this.options.readOnly){
-                //Can be used later: outer.setAttribute('data-base-slider-value', value);
-                outer.setAttribute('data-base-slider-percent', outer.style.left);
-                className += ' clickable';
-                if (this.options.labelClickableFullWidth)
-                    result.style.width = this.options.majorTickDistanceRem +'rem';
-
-            }
-
-            result.className = className;
-            this.currentGridContainer.appendChild( outer );
-            return result;
-        },
-
-
-        /*******************************************************************
-        getTextWidth
-        Get width of value as text OR max width of all values in array of value
-        *******************************************************************/
-        getTextWidth: function( value, options ){
-            var _this = this;
-            if ($.isArray( value )){
-                var html = '';
-                $.each( value, function(index, oneValue ){
-                    html += _this._valueToText( oneValue ) + '<br>';
-                });
-                return this.getDecorateTextWidth( html, options );
-            }
-            else
-                return this.getDecorateTextWidth( this._valueToText( value ) , options );
-        },
-
-        /*******************************************************************
-        getDecorateTextWidth
-        *******************************************************************/
-        getDecorateTextWidth: function( html, options, factor, floor ){
-            var newClassName = 'grid-label';
-            if (options){
-                if (options.minor)
-                    newClassName += ' minor';
-                if (options.italic)
-                    newClassName += ' italic';
-            }
-            if (this.textElement.className != newClassName )
-                this.textElement.className = newClassName;
-            this.textElement.innerHTML = html;
-
-            var result = parseFloat( this.textElement.offsetWidth );
-            if (factor)
-                result = factor*result;
-            if (floor)
-                result = Math.floor(result);
-
-            return pxToRem( result );
-        },
-
-
-        /*******************************************************************
-        appendGrid
-        *******************************************************************/
-        appendGrid: function () {
-            if (!this.options.grid) return;
-            this.appendStandardGrid();
-        },
-
-        /*******************************************************************
-        appendStandardGrid
-        Simple call _appendStandardGrid. Can be overwriten in decending classes
-        *******************************************************************/
-        appendStandardGrid: function ( textOptions ) {
-            this._appendStandardGrid( textOptions );
-        },
-
-
-        /*******************************************************************
-        preAppendGrid and postAppendGrid
-        must be called as first and last when creating a grid - used if a new appendStandardGrid is used
-        *******************************************************************/
-        preAppendGrid: function(){
-            this.appendGridContainer();
-            //The DOM-version of this.$currentGridContainer
-            this.currentGridContainer = this.$currentGridContainer.get(0);
-
-            //Create the grid outside the DOM
-            //Save width in % and set in in px instead of %
-            this.currentGridContainerWidth = this.currentGridContainer.style.width;
-            this.$currentGridContainer.css('width', this.$currentGridContainer.width());
-            this.$currentGridContainer.width( this.$currentGridContainer.width() );
-            this.$currentGridContainerMarker = $('<div/>').insertAfter( this.$currentGridContainer );
-            this.$currentGridContainer.detach();
-        },
-        postAppendGrid: function(){
-            //Insert the created grid into the DOM
-            this.$currentGridContainer.insertBefore( this.$currentGridContainerMarker );
-            this.$currentGridContainer.css('width', this.currentGridContainerWidth );
-            this.$currentGridContainerMarker.remove();
-
-            //Update the height of the slider
-            this.cache.$container.css('height', pxToRem( this.totalGridContainerTop + this.$currentGridContainer.height(), true) );
-
-        },
-
-
-        /*******************************************************************
-        getGridOptions
-        Get options needed for building the grid
-        *******************************************************************/
-        getGridOptions: function(){
-            var o = this.options,
-                result = {},
-                gridDistanceIndex = 0;
-
-            result.gridContainerWidthRem = pxToRem( this.cache.$grid.outerWidth(false) );
-            result.gridDistanceStep = o.gridDistances[gridDistanceIndex]; // = number of steps between each tick
-            result.stepRem = o.step * result.gridContainerWidthRem / o.range / o.majorTicksFactor;
-
-            //Increse grid-distance until the space between two ticks are more than 4px
-            while ( (result.stepRem*result.gridDistanceStep) <= o.minDistanceRem){
-                gridDistanceIndex++;
-                if (gridDistanceIndex < o.gridDistances.length)
-                    result.gridDistanceStep = o.gridDistances[gridDistanceIndex];
-                else
-                    result.gridDistanceStep = result.gridDistanceStep*2;
-            }
-
-            result.tickDistanceNum = result.gridDistanceStep * o.step;          //The numerical distance between each ticks
-            result.tickDistanceRem = result.gridDistanceStep * result.stepRem;  //The rem distance between each ticks
-
-            if (o.maxLabelWidthRem)
-                result.maxLabelWidthRem = o.maxLabelWidthRem;
-            else {
-                //Find widest label
-                var value = o.min,
-                    valueList = [],
-                    step = 1;
-
-                while (value <= o.max){
-                    //if value corrected by o.majorTicksOffset and o.majorTicksFactor is a DIV of the tick distance => calculate the width of the tick
-                    if ((value - o.majorTicksOffset)*o.majorTicksFactor % result.tickDistanceNum === 0){
-                        valueList.push( value );
-                        step = result.tickDistanceNum;
-                    }
-                    value += step;
-                }
-                result.maxLabelWidthRem = this.getTextWidth( valueList ) + o.minDistanceRem; //Adding min space between text/labels
-            }
-
-            //Calculate automatic distances between major ticks
-            var majorTicks = o.majorTicks;
-            if (!majorTicks){
-                //Find ticks between each major tick
-                gridDistanceIndex = 0;
-                majorTicks = o.gridDistances[gridDistanceIndex];
-                while (majorTicks * result.tickDistanceRem < result.maxLabelWidthRem){
-                    gridDistanceIndex++;
-                    if (gridDistanceIndex < o.gridDistances.length)
-                        majorTicks = o.gridDistances[gridDistanceIndex];
-                    else
-                        majorTicks = majorTicks*2;
-                }
-            }
-
-            result.majorTickDistanceNum = result.tickDistanceNum*majorTicks;
-            result.majorTickDistanceRem = result.tickDistanceRem*majorTicks;
-
-            return result;
-        },
-
-
-        /*******************************************************************
-        _appendStandardGrid
-        *******************************************************************/
-        _appendStandardGrid: function ( textOptions, tickOptions ) {
-            this.preAppendGrid();
-
-            textOptions = $.extend( {labelClickable: this.options.labelClickable}, textOptions || {}  );
-            tickOptions = tickOptions || {};
-
-            //Get all options regarding the grid
-            this.gridOptions = this.getGridOptions();
-            $.extend( this.options, this.gridOptions );
-
-
-            //Add all the minor and major ticks
-            var o     = this.options,
-                value = o.min,
-                step  = 1,
-                valueP, valueOffset;
-
-            while (value <= o.max){
-                valueOffset = (value - o.majorTicksOffset)*o.majorTicksFactor;
-                if (valueOffset % o.tickDistanceNum === 0){
-                    valueP = (value-o.min)*o.percentProValue;
-                    if (valueOffset % o.majorTickDistanceNum === 0){
-                        //add major tick and text/label
-                        this.appendTick( valueP, tickOptions );
-                        this.appendLabel( valueP, value, textOptions );
-                    }
-                    else
-                        if (o.showMinorTicks)
-                            //Add minor tick
-                            this.appendTick( valueP, { minor:true } );
-                    step = o.tickDistanceNum;
-                }
-                value += step;
-            }
-
-            //Append colors on the grid
-            if (this.options.gridColors)
-                this.appendGridColors( this.options.gridColors );
-
-            this.postAppendGrid();
-        },
-
-        /*******************************************************************
-        addGridColor
-        *******************************************************************/
-        appendGridColors: function( gridColors ){
-            var fromValue,
-                toValue  = this.options.min,
-                i,
-                gridColor,
-                percentFactor = 100 / (this.options.max - this.options.min);
-
-
-            for (i=0; i<gridColors.length; i++ ){
-                gridColor = gridColors[i];
-                if ( (gridColor.value === null) || (gridColor.value < this.options.min) || (gridColor.value > this.options.max) ){
-                    //add triangle to the left or right
-                    var $span = $('<span/>')
-                                    .addClass( 'grid-color')
-                                    .appendTo( this.$currentGridContainer );
-                    if (gridColor.value > this.options.max)
-                        $span
-                            .addClass('gt-max')
-                            .css('border-left-color', gridColor.color);
-                    else
-                        $span
-                            .addClass('lt-min')
-                            .css('border-right-color', gridColor.color);
-                }
-                else {
-                    fromValue = gridColor.fromValue !== undefined ? gridColor.fromValue : toValue;
-                    toValue = gridColor.value;
-
+        //append() - Create and append this.$handle and $.marker
+        append: function( $container ){
+            //Append handle
+            if (this.$handle)
+                this.$handle =
                     $('<span/>')
-                        .addClass('grid-color' + (i%2?' to':' from'))
-                        .css({
-                            'left'            : percentFactor*(fromValue - this.options.min) + '%',
-                            'width'           : percentFactor*(toValue-fromValue) + '%',
-                            'background-color': gridColor.color
-                           })
-                        .appendTo( this.$currentGridContainer );
+                        .addClass('handle '+this.id)
+                        .addClass(this.handleClassName)
+                        .css( this.handleCSS )
+                        .appendTo( $container );
+
+            //Append marker
+            if (this.marker){
+                this.marker = {};
+                //Outer div
+                this.marker.$outer =
+                    $('<div/>')
+                        .addClass('marker-outer')
+                        .addClass(this.markerClassName)
+                        .appendTo($container);
+                //Inner div
+                this.marker.$inner =
+                        $('<div/>')
+                            .addClass('marker')
+                            .appendTo(this.marker.$outer);
+                this.marker.$text =
+                        $('<span/>')
+                            .addClass('marker-text')
+                            .attr( this.markerData )
+                            .appendTo(this.marker.$inner);
+            }
+            this.appended = true;
+            return this;
+        },
+
+        //remove
+        remove: function(){
+            if (!this.appended) return;
+            if (this.$handle){
+                this.$handle.remove();
+                this.$handle = true;
+            }
+            if (this.marker.$outer){
+                this.marker.$outer.remove();
+                this.marker = true;
+            }
+            this.appended = false;
+        },
+
+        //update()
+        //Set the position of $handle and $marker and update the content of $marker
+        update: function( force ){
+            if (!this.appended) return;
+            var leftPercent = this.getLeftPosition() + '%';
+
+            if (force || (leftPercent != this.lastLeftPercent)){
+                this.lastLeftPercent = leftPercent;
+                if (this.$handle){
+                    this.$handle.css('left', leftPercent);
                 }
+                if (this.marker){
+                    //Set marker content
+                    this.marker.$text.html( this.getMarkerText() );
+
+                    //Set marker position
+                    this.marker.$outer.css('left', leftPercent);
+
+                    //Force all handles overlapped by this to update
+                    if (!force)
+                        $.each( this.overlapHandleList, function( index, handle ){
+                            handle.update( true );
+                        });
+
+                    //Set marker visibility
+                    this.marker.$outer.css('visibility', this.markerIsHidden() ? 'hidden' : 'visible');
+                }
+            }
+            return this;
+        },
+
+        //onFocus - overwriten for individual handle-types
+        onFocus: function(){
+            if (!this.appended) return;
+            this.$handle.addClass('hover');
+            if (this.marker && this.marker.$outer)
+                this.marker.$outer.addClass('hover');
+
+        },
+
+        //onBlur - overwriten for individual handle-types
+        onBlur: function(){
+            if (!this.appended) return;
+            this.$handle.removeClass('hover');
+            if (this.marker && this.marker.$outer)
+                this.marker.$outer.removeClass('hover');
+        },
+
+        //getMarkerText
+        getLeftPosition: function(){
+            return this.value.getPercent();
+        },
+
+        //getMarkerText
+        getMarkerText: function(){
+            return this.slider.decorate( this.slider._prettify( this.value.getValue() ) );
+        },
+
+        //markerIsHidden: return true if the marker is overlapping any of the markers in YYY
+        markerIsHidden: function(){
+            var thisMarker$text = this.marker.$text,
+                result = false;
+            $.each( this.overlappingHandleList, function( index, handle ){
+                result = result || elementsOverlapping( thisMarker$text, handle.marker.$text );
+            });
+            return result;
+        }
+
+    };
+
+
+    ns.SliderHandle = SliderHandle;
+    ns.sliderHandle = function( options ){
+        return new ns.SliderHandle( options );
+    };
+
+}(this/*, document*/));
+
+;
+/****************************************************************************
+jquery-base-slider-public.js
+****************************************************************************/
+(function ($, window/*, document, undefined*/) {
+    "use strict";
+
+    $.extend(window.BaseSlider.prototype, {
+        /*******************************************************************
+        SET VALUES (TO, FROM, PIN ETC.)
+        *******************************************************************/
+
+        /*******************************************************************
+        setAnyValue
+        *******************************************************************/
+        setAnyValue: function( id, value ){
+            if (this.handles[id]){
+                this.handles[id].value.setValue( value );
+
+                this.updateHandlesAndLines();
+                this.onChange();
             }
         },
 
+        /*******************************************************************
+        setValue, setFromValue, setToValue
+        *******************************************************************/
+        setValue    : function( value ) {this.setAnyValue( this.options.singleHandleId, value );},
+        setFromValue: function( value ) { this.setAnyValue( 'from',   value ); },
+        setToValue  : function( value ) { this.setAnyValue( 'to',     value ); },
 
         /*******************************************************************
-        ********************************************************************
+        setPin
+        *******************************************************************/
+        setPin: function( value, color, icon ) {
+            if (!this.options.hasPin) return;
+            if (value !== null)
+                this.handles.pin.value.setValue( value, true );
+
+            this.options.pinColor = color || this.options.pinColor || 'black';
+
+            var oldIcon = this.options.pinIcon || '';
+            this.options.pinIcon = icon || this.options.pinIcon || 'fa-map-marker';
+
+            this.handles.pin.$handle
+                .css('color', this.options.pinColor)
+                .removeClass( oldIcon )
+                .addClass( this.options.pinIcon );
+
+            this.updateHandlesAndLines();
+        },
+
+        /*******************************************************************
         PUBLIC METHODS
-        ********************************************************************
         *******************************************************************/
 
         /*******************************************************************
@@ -18705,19 +18492,148 @@ if (typeof define === 'function' && define.amd) {
             this.input = null;
             this.options = null;
         }
-    }; //end of BaseSlider.prototype
+
+    }); //end of BaseSlider.prototype
+
+}(jQuery, this, document));
+
+;
+/****************************************************************************
+    jquery-base-slider-value,
+
+    (c) 2015, FCOO
+
+    https://github.com/fcoo/jquery-base-slider
+    https://github.com/fcoo
+
+****************************************************************************/
+(function (window/*, document, undefined*/) {
+    "use strict";
+
+    //Create baseSlider-namespace
+	window._baseSlider = window._baseSlider || {};
+	var ns = window._baseSlider;
+
+    /*******************************************************************
+    toFixed
+    Round num to 5 digits
+    *******************************************************************/
+    function toFixed( num ) {
+        return +num.toFixed(5);
+    }
 
 
-    $.fn.baseSlider = function (options) {
-        return this.each(function() {
-            if (!$.data(this, "baseSlider")) {
-                $.data(this, "baseSlider", new window.BaseSlider(this, options, pluginCount++));
+    /*******************************************************************
+    SliderValue
+    Object to store and alter "value" releated to the slider
+    The object contains the following items:
+        value   : The actual value ,
+        percent : The value as percent of the total slider width
+    *******************************************************************/
+    var SliderValue = function( options ){
+        this.slider = options.slider;
+        this.valueOffset = this.slider.options.min;
+        this.valueRange = this.slider.options.max - this.valueOffset;
+        this.percentOffset = 0;
+        this.percentRange = 100;
+        this.adjustToStep = !!options.adjustToStep;
+        this.fixed = !!options.fixed;
+        this.fixedValue = options.value;
+        this.value   = 0;
+        this.percent = 0;
+        this.minList = [];
+        this.maxList = [];
+
+        var _this = this;
+        $.each( options.minList || [], function( index, sliderValueMin ){ _this.addMin( sliderValueMin ); });
+        $.each( options.maxList || [], function( index, sliderValueMax ){ _this.addMax( sliderValueMax ); });
+
+        this.setValue( options.value );
+    };
+
+    SliderValue.prototype = {
+        //addMin( sliderValue, minDistance )
+        //Add sliderValue to list of SliderValue that this must allways be greater than or equal to
+        addMin: function( sliderValue, minDistance ){
+            if (sliderValue === null) return this;
+            if ($.isNumeric(sliderValue))
+                sliderValue = new SliderValue({ value: sliderValue, slider: this.slider });
+            this.minList.push( {sliderValue: sliderValue, minDistance: minDistance || 0} );
+            this.update();
+            return this;
+        },
+
+        //addMax( sliderValue, minDistance )
+        //Add sliderValue to list of SliderValue that this must allways be less than or equal to
+        addMax: function( sliderValue, minDistance ){
+            if (sliderValue === null) return this;
+            if ($.isNumeric(sliderValue))
+                sliderValue = new SliderValue({ value: sliderValue, slider: this.slider });
+            this.maxList.push( {sliderValue: sliderValue, minDistance: minDistance || 0} );
+            this.update();
+            return this;
+        },
+
+        setValue: function( newValue, isFixed ){
+            this.value = newValue;
+            if (isFixed && this.fixed)
+                this.fixedValue = newValue;
+            this.update();
+            return this;
+        },
+
+        setPercent: function( newPercent ){
+            this.setValue( this.valueRange*(newPercent - this.percentOffset)/this.percentRange + this.valueOffset );
+        },
+
+        update: function(){
+
+            if (this.fixed)
+                this.value = this.fixedValue;
+            else {
+                //Adjust this.value with respect to {sliderValue,minDistance} in this.minList
+                var _this = this;
+                $.each( this.minList, function( index, rec ){
+                    if (rec.sliderValue)
+                        _this.value = Math.max( _this.value, rec.sliderValue.value + rec.minDistance );
+                });
+                //Adjust this.value with respect to {sliderValue,minDistance} in this.maxList
+                $.each( this.maxList, function( index, rec ){
+                    if (rec.sliderValue)
+                        _this.value = Math.min( _this.value, rec.sliderValue.value - rec.minDistance );
+                });
+
+                //Adjust this.value with respect to step and stepOffset
+                if (this.adjustToStep){
+                    var offset = this.slider.options.min + this.slider.options.stepOffset;
+                    this.value -= offset;
+                    this.value = this.slider.options.step * Math.round( this.value/this.slider.options.step );
+                    this.value += offset;
+                }
             }
-        });
+
+            //Calculate precent
+            this.percent = this.percentRange*(this.value - this.valueOffset)/this.valueRange + this.percentOffset;
+
+            return this;
+        },
+
+        getValue: function(){
+            return toFixed( this.value );
+        },
+
+        getPercent: function( inclUnit ){
+            return toFixed( this.percent ) + (inclUnit ? '%' : 0);
+        },
     };
 
 
-}(jQuery, this, document));
+    ns.SliderValue = SliderValue;
+    ns.sliderValue = function( options ){
+        return new ns.SliderValue( options );
+    };
+
+}(this/*, document*/));
 
 ;
 /* @preserve
