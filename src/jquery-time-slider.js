@@ -18,13 +18,16 @@ options:
     dateAtMidnight  : BOOLEAN; If true the time-LABEL for midnight is replaced with a short date-label. Normally used together noDateLabels: true
     format:
         showRelative        : BOOLEAN; If true the grid etc show the relative time ('Now + 2h') Default = false
-        showUTC             : BOOLEAN; When true a scale for utc is also shown.                 Default = false. Only if showRelative == false
+        showUTC             : BOOLEAN; When true a scale for utc is also shown, but only if the tiime-zone isn't utc or forceUTC is set. Default = false. Only if showRelative == false
+        forceUTC            : BOOLEAN; If true and showUTC: true the utc-scale is included
         noGridColorsOnUTC   : BOOLEAN; If true the UTC-grid will not get any grid colors
+
         UTCGridClassName    : STRING; Class-name(s) for the grids use for UTC time-lime
 
 
     showRelative        : as format.showRelative
     showUTC             : as format.showUTC
+    forceUTC            : as format.forceUTC
     noGridColorsOnUTC   : as format.noGridColorsOnUTC
     UTCGridClassName    : as format.UTCGridClassName
 
@@ -329,6 +332,9 @@ options:
         appendStandardGrid
         ***************************************************************/
         appendStandardGrid: function(){
+            var opt = this.options,
+                opt_format = opt.format;
+
             //First remove all grid-container except the first one
             this.cache.$grid = this.cache.$container.find(".grid").first();
             this.cache.$grid.siblings('.grid').remove();
@@ -336,11 +342,11 @@ options:
             this.$currentGridContainer = null;
 
             //Create all grid
-            if (this.options.format.showRelative || this.options.showRelative){
+            if (opt_format.showRelative || opt.showRelative){
                 //Relative time: Set the prettify-functions and create the grid needed
                 this._prettify = this._prettifyRelative;
                 this._prettifyLabel = this._prettifyLabelRelative;
-                this.options.majorTicksOffset = 0;
+                opt.majorTicksOffset = 0;
                 this._appendStandardGrid();
             }
             else {
@@ -349,41 +355,44 @@ options:
                 //Create the hour-grid and the date-grid for selected timezone
                 this._prettify = this._prettifyAbsolute;
                 this._prettifyLabel = this._prettifyLabelAbsolute;
-                this.options.majorTicksOffset = -1*now.tzMoment( this.options.format.timezone ).hours();
+                opt.majorTicksOffset = -1*now.tzMoment( opt_format.timezone ).hours();
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
-                if ((this.options.format.timezone != 'utc') && (this.options.format.showUTC || this.options.showUTC)){
+                if (
+                    ( (opt_format.timezone != 'utc') || opt_format.forceUTC || opt.forceUTC) &&
+                    (opt_format.showUTC || opt.showUTC)
+                    ){
                     //Create the hour-grid and the date-grid for utc
-                    this.options.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
-                    var saveTimezone = this.options.format.timezone;
-                    this.options.format.timezone = 'utc';
+                    opt.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
+                    var saveTimezone = opt_format.timezone;
+                    opt_format.timezone = 'utc';
                     var textOptions = {italic:true, minor:true},
                         tickOptions = {color:'#555555'};
                     this._prettify = this._prettifyAbsolute;
                     this._prettifyLabel = this._prettifyLabelAbsolute;
 
                     //If noGridColorsOnUTC is save and remove grid-colors
-                    var noGridColors     = this.options.format.noGridColorsOnUTC || this.options.noGridColorsOnUTC,
-                        UTCGridClassName = this.options.format.UTCGridClassName || this.options.UTCGridClassName || 'DAVS';
+                    var noGridColors     = opt_format.noGridColorsOnUTC || opt.noGridColorsOnUTC,
+                        UTCGridClassName = opt_format.UTCGridClassName || opt.UTCGridClassName || '';
 
                     if (noGridColors){
-                        this.options.saveGridColors = this.options.gridColors;
-                        this.options.gridColors = null;
+                        opt.saveGridColors = opt.gridColors;
+                        opt.gridColors = null;
                     }
 
                     this._appendStandardGrid( textOptions, tickOptions );
                     this.$currentGrid.addClass(UTCGridClassName);
 
                     if (noGridColors){
-                        this.options.gridColors = this.options.saveGridColors;
-                        this.options.saveGridColors = null;
+                        opt.gridColors = opt.saveGridColors;
+                        opt.saveGridColors = null;
                     }
 
                     this.appendDateGrid( textOptions, tickOptions );
                     this.$currentGrid.addClass(UTCGridClassName);
 
-                    this.options.format.timezone = saveTimezone;
+                    opt_format.timezone = saveTimezone;
                 }
             }
         },

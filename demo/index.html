@@ -39,8 +39,8 @@
         <div>
             <select id="timezone">
                 <optgroup label="Standard">
-                    <option value="local" selected="selected">Local</option>
-                    <option value="utc">UTC</option>
+                    <option value="local">Local</option>
+                    <option value="utc" selected="selected">UTC</option>
                 </optgroup>
                 <optgroup label="Europe">
                     <option value="Europe/Copenhagen">Europe / Copenhagen</option>
@@ -175,6 +175,8 @@ DEBUG: test('START');
             $("#example_01").timeSlider({
                 onChange: function(result){ console.log('1:onChange',result) },
                 format: { showUTC: true},
+                forceUTC: true,
+
                 noGridColorsOnUTC: true,
                 min: -0+5,
                 max: +4*24+5,
