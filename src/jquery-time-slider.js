@@ -42,17 +42,22 @@ options:
     //roundMoment( m )
     function roundMoment( m ){ return m.startOf('hour');}
 
+    //__jbs_getNowMoment = function to get current now as moment. Can be overwritten for under test
+    window.__jbs_getNowMoment = function(){
+        return roundMoment(moment());
+    };
+
 
     //valueToMoment
     function valueToMoment ( value ){
-        var result = roundMoment(moment());
+        var result = window.__jbs_getNowMoment();
         result.add( value, 'hours' );
         return result;
     }
 
     //setValueAndMoment( value, moment )
     function setValueAndMoment( value, m ){
-        var nowMoment = roundMoment(moment());
+        var nowMoment = window.__jbs_getNowMoment();
         if (value === undefined){
             roundMoment( m );
             value = m.diff(nowMoment, 'hours');
