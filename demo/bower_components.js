@@ -637,7 +637,7 @@
         res = this.i18nFormat.parse(res, {
           ...this.options.interpolation.defaultVariables,
           ...options
-        }, resolved.usedLng, resolved.usedNS, resolved.usedKey, {
+        }, options.lng || this.language || resolved.usedLng, resolved.usedNS, resolved.usedKey, {
           resolved
         });
       } else if (!options.skipInterpolation) {
@@ -1956,12 +1956,14 @@
       const usedLng = typeof language === 'string' ? language : this.language;
       if (typeof language === 'function') usedCallback = language;
       if (!this.options.resources || this.options.partialBundledLanguages) {
-        if (usedLng && usedLng.toLowerCase() === 'cimode') return usedCallback();
+        if (usedLng && usedLng.toLowerCase() === 'cimode' && (!this.options.preload || this.options.preload.length === 0)) return usedCallback();
         const toLoad = [];
         const append = lng => {
           if (!lng) return;
+          if (lng === 'cimode') return;
           const lngs = this.services.languageUtils.toResolveHierarchy(lng);
           lngs.forEach(l => {
+            if (l === 'cimode') return;
             if (toLoad.indexOf(l) < 0) toLoad.push(l);
           });
         };
@@ -2265,14 +2267,14 @@
 
 ;
 /*!
- * jQuery JavaScript Library v3.7.0
+ * jQuery JavaScript Library v3.7.1
  * https://jquery.com/
  *
  * Copyright OpenJS Foundation and other contributors
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2023-05-11T18:29Z
+ * Date: 2023-08-28T13:37Z
  */
 ( function( global, factory ) {
 
@@ -2413,7 +2415,7 @@ function toType( obj ) {
 
 
 
-var version = "3.7.0",
+var version = "3.7.1",
 
 	rhtmlSuffix = /HTML$/i,
 
@@ -2677,9 +2679,14 @@ jQuery.extend( {
 				// Do not traverse comment nodes
 				ret += jQuery.text( node );
 			}
-		} else if ( nodeType === 1 || nodeType === 9 || nodeType === 11 ) {
+		}
+		if ( nodeType === 1 || nodeType === 11 ) {
 			return elem.textContent;
-		} else if ( nodeType === 3 || nodeType === 4 ) {
+		}
+		if ( nodeType === 9 ) {
+			return elem.documentElement.textContent;
+		}
+		if ( nodeType === 3 || nodeType === 4 ) {
 			return elem.nodeValue;
 		}
 
@@ -3392,12 +3399,17 @@ function setDocument( node ) {
 		documentElement.msMatchesSelector;
 
 	// Support: IE 9 - 11+, Edge 12 - 18+
-	// Accessing iframe documents after unload throws "permission denied" errors (see trac-13936)
-	// Support: IE 11+, Edge 17 - 18+
-	// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
-	// two documents; shallow comparisons work.
-	// eslint-disable-next-line eqeqeq
-	if ( preferredDoc != document &&
+	// Accessing iframe documents after unload throws "permission denied" errors
+	// (see trac-13936).
+	// Limit the fix to IE & Edge Legacy; despite Edge 15+ implementing `matches`,
+	// all IE 9+ and Edge Legacy versions implement `msMatchesSelector` as well.
+	if ( documentElement.msMatchesSelector &&
+
+		// Support: IE 11+, Edge 17 - 18+
+		// IE/Edge sometimes throw a "Permission denied" error when strict-comparing
+		// two documents; shallow comparisons work.
+		// eslint-disable-next-line eqeqeq
+		preferredDoc != document &&
 		( subWindow = document.defaultView ) && subWindow.top !== subWindow ) {
 
 		// Support: IE 9 - 11+, Edge 12 - 18+
@@ -4960,12 +4972,12 @@ jQuery.find = find;
 jQuery.expr[ ":" ] = jQuery.expr.pseudos;
 jQuery.unique = jQuery.uniqueSort;
 
-// These have always been private, but they used to be documented
-// as part of Sizzle so let's maintain them in the 3.x line
-// for backwards compatibility purposes.
+// These have always been private, but they used to be documented as part of
+// Sizzle so let's maintain them for now for backwards compatibility purposes.
 find.compile = compile;
 find.select = select;
 find.setDocument = setDocument;
+find.tokenize = tokenize;
 
 find.escape = jQuery.escapeSelector;
 find.getText = jQuery.text;
@@ -8179,7 +8191,7 @@ function domManip( collection, args, callback, ignored ) {
 			if ( hasScripts ) {
 				doc = scripts[ scripts.length - 1 ].ownerDocument;
 
-				// Reenable scripts
+				// Re-enable scripts
 				jQuery.map( scripts, restoreScript );
 
 				// Evaluate executable scripts on first document insertion
@@ -8636,7 +8648,7 @@ var rboxStyle = new RegExp( cssExpand.join( "|" ), "i" );
 				trChild = document.createElement( "div" );
 
 				table.style.cssText = "position:absolute;left:-11111px;border-collapse:separate";
-				tr.style.cssText = "border:1px solid";
+				tr.style.cssText = "box-sizing:content-box;border:1px solid";
 
 				// Support: Chrome 86+
 				// Height set through cssText does not get applied.
@@ -8648,7 +8660,7 @@ var rboxStyle = new RegExp( cssExpand.join( "|" ), "i" );
 				// In our bodyBackground.html iframe,
 				// display for all div elements is set to "inline",
 				// which causes a problem only in Android 8 Chrome 86.
-				// Ensuring the div is display: block
+				// Ensuring the div is `display: block`
 				// gets around this issue.
 				trChild.style.display = "block";
 
@@ -12816,7 +12828,9 @@ jQuery.fn.extend( {
 	},
 
 	hover: function( fnOver, fnOut ) {
-		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
+		return this
+			.on( "mouseenter", fnOver )
+			.on( "mouseleave", fnOut || fnOver );
 	}
 } );
 
@@ -16334,8 +16348,9 @@ if (typeof define === 'function' && define.amd) {
         resizable   : false,    //If true the container of the slider can be resized and the grid will automatic redraw to adjust number of ticks and labels to the new width
 
         //Dimensions (only for options.handleFixed: true)
-        width         : 0,  // The total width of the slider (px)
-        valueDistances: 3,  // The distance between each value on the slider (px). Width will be valueDistances*( max - min )
+        width         : 0,      // The total width of the slider (px)
+        valueDistances: 3,      // The distance between each value on the slider (px). Width will be valueDistances*( max - min )
+        useParentWidth: false,  //If true the slider try using the width of the parent of the container. Useful if the container is hidden when the slider is created
 
         //Ranges and value
         min  : 0,           // Set slider minimum value
@@ -16374,14 +16389,16 @@ if (typeof define === 'function' && define.amd) {
         keyboardPageStepFactor : 20, //Step-factor when pressing pgUp or PgDn
 
         //Slide-line
-        lineBackgroundColor: '#d1d6e0', //The bakground color of the line
-
+        showLine           : true,  //If false the line with the handle is hidden
         showLineColor      : true,
         lineColor          : '#428BCA', //The color of the line left of the handle (single) or between the two handles (double)
+        lineBackgroundColor: '#d1d6e0', //The bakground color of the line
+        lineColors         : null, //[][{from, to, color}] Static colors for the line
 
         showImpactLineColor   : false, // The line on a double slider is coloured as green-[handle]-yellow-[handle]-red
         impactLineColors      : {green: "green", yellow: "yellow", red: "red"}, //The line colors used when showImpactLineColor: true
         reverseImpactLineColor: false, // The line on a double slider is colored as red-[handle]-yellow-[handle]-green. Must have showImpactLineColor: true
+
 
         //Size
         sizeFactor: 1, //Factor to re-size default sizes
@@ -16404,6 +16421,7 @@ if (typeof define === 'function' && define.amd) {
 
         //Grid (ticks and label)
         grid            : false,                      // Enables grid of values.
+        noTicks         : false,                      //If true no ticks are added, but the space are (used internally)
         majorTicks      : null,                       // Nummber of  step  between major ticks. Default=null=> Calculated automatic
         majorTicksOffset: 0,                          // Offset for the values where a major ticks is placed. Eq. Min=0, max=100 => major ticks on values=0,10,20,..,90,100. With  majorTicksOffset:4  the major ticks would be placed on values=4,14,24,...,84,94
         showMinorTicks  : true,                       // Show minor ticks.
@@ -16949,38 +16967,41 @@ if (typeof define === 'function' && define.amd) {
                 return result; //Only last added
             }
 
-            //1. double-handle with impact- or reverse-impact-colors
-            if (this.options.isDouble && this.options.showImpactLineColor){
-                appendLineColor( true, true, true );
-                this.setImpactLineColors();
-            }
-            else
-                //2. Add static colors given by options.lineColors
-                if (this.options.lineColors){
-                    var from = this.options.min,
-                        to = from,
-                        fromPercent,
-                        toPercent,
-                        sliderValue = ns.sliderValue({slider: this});
-                    $.each(this.options.lineColors, function( index, fromToColor ){
-                        from = fromToColor.from === undefined ? to : fromToColor.from;
-                        to = fromToColor.to === undefined ? _this.options.max : fromToColor.to;
-                        fromPercent = sliderValue.setValue( from ).getPercent();
-                        toPercent = sliderValue.setValue( to ).getPercent();
-                        $span('line-color', _this.cache.$line)
-                            .css({
-                                'left'              : fromPercent + '%',
-                                'width'             : (toPercent-fromPercent) + '%',
-                                'background-color'  : fromToColor.color
-                            });
-                    });
+            if (this.options.showLine){
+                //1. double-handle with impact- or reverse-impact-colors
+                if (this.options.isDouble && this.options.showImpactLineColor){
+                    appendLineColor( true, true, true );
+                    this.setImpactLineColors();
                 }
                 else
-                    //3. Normal line-color to the left of handle (single) or between handles (double)
-                    if (this.options.showLineColor)
-                        appendLineColor( this.options.isSingle, this.options.isDouble, false )
-                            .css('background-color', this.options.lineColor);
-
+                    //2. Add static colors given by options.lineColors
+                    if (this.options.lineColors){
+                        var from = this.options.min,
+                            to = from,
+                            fromPercent,
+                            toPercent,
+                            sliderValue = ns.sliderValue({slider: this});
+                        $.each(this.options.lineColors, function( index, fromToColor ){
+                            from = fromToColor.from === undefined ? to : fromToColor.from;
+                            to = fromToColor.to === undefined ? _this.options.max : fromToColor.to;
+                            fromPercent = sliderValue.setValue( from ).getPercent();
+                            toPercent = sliderValue.setValue( to ).getPercent();
+                            $span('line-color', _this.cache.$line)
+                                .css({
+                                    'left'              : fromPercent + '%',
+                                    'width'             : (toPercent-fromPercent) + '%',
+                                    'background-color'  : fromToColor.color
+                                });
+                        });
+                    }
+                    else
+                        //3. Normal line-color to the left of handle (single) or between handles (double)
+                        if (this.options.showLineColor)
+                            appendLineColor( this.options.isSingle, this.options.isDouble, false )
+                                .css('background-color', this.options.lineColor);
+            }
+            else
+                this.cache.$line.css("visibility", "hidden");
 
             //Update the height of the slider
             this.cache.$container.css('height', this.cache.$lineBackground.height()+'px' );
@@ -17243,7 +17264,7 @@ if (typeof define === 'function' && define.amd) {
         appendTick
         *******************************************************************/
         appendTick: function( leftPercent, options ){
-            if (!this.$currentGrid) return;
+            if (!this.$currentGrid || this.options.noTicks) return;
 
             options = $.extend( {minor: false, color: ''}, options );
 
@@ -17452,8 +17473,8 @@ if (typeof define === 'function' && define.amd) {
         /*******************************************************************
         _appendStandardGrid
         *******************************************************************/
-        _appendStandardGrid: function ( textOptions, tickOptions ) {
-            this.preAppendGrid();
+        _appendStandardGrid: function ( textOptions, tickOptions, gridContainerOptions ) {
+            this.preAppendGrid( gridContainerOptions );
 
             textOptions = $.extend( {labelClickable: this.options.labelClickable}, textOptions || {}  );
             tickOptions = tickOptions || {};
@@ -17692,9 +17713,22 @@ jquery-base-slider-events
         getDimentions
         Get width and left-position of different slider elements
         *******************************************************************/
+        _getAnyWidth: function( $elem ){
+            var width = 0;
+            while ($elem && $elem.length){
+                width = $elem.innerWidth();
+                if (width || !this.options.useParentWidth)
+                    $elem = null;
+                else
+                    $elem = $elem.parent();
+                }
+            return Math.max(0, width);
+        },
+
         getDimentions: function(){
             var result = {};
-            result.containerWidth    = Math.max(0, this.cache.$container.innerWidth()) || this.dimentions.containerWidth;
+            result.containerWidth = this._getAnyWidth(this.cache.$container) || this.dimentions.containerWidth;
+
             if (this.options.isFixed)
                 result.outerContainerWidth = this.cache.$outerContainer.innerWidth();
             return result;

@@ -18,11 +18,14 @@ options:
     dateAtMidnight  : BOOLEAN; If true the time-LABEL for midnight is replaced with a short date-label. Normally used together noDateLabels: true
     format:
         showRelative        : BOOLEAN; If true the grid etc show the relative time ('Now + 2h') Default = false
-        showUTC             : BOOLEAN; When true a scale for utc is also shown, but only if the tiime-zone isn't utc or forceUTC is set. Default = false. Only if showRelative == false
+        showUTC             : BOOLEAN; When true a scale for utc is also shown, but only if the time-zone isn't utc or forceUTC is set. Default = false. Only if showRelative == false
         forceUTC            : BOOLEAN; If true and showUTC: true the utc-scale is included
         noGridColorsOnUTC   : BOOLEAN; If true the UTC-grid will not get any grid colors
-
         UTCGridClassName    : STRING; Class-name(s) for the grids use for UTC time-lime
+
+        showExtraRelative          : BOOLEAN; If true and showRelative = false => A relative scale is included
+        noGridColorsOnExtraRelative: BOOLEAN; If true the extra relative-grid will not get any grid colors
+        ExtraRelativeGridClassName : STRING; Class-name(s) for the grids use for the extra relative grid
 
 
     showRelative        : as format.showRelative
@@ -30,6 +33,10 @@ options:
     forceUTC            : as format.forceUTC
     noGridColorsOnUTC   : as format.noGridColorsOnUTC
     UTCGridClassName    : as format.UTCGridClassName
+
+    showExtraRelative          : as format.showExtraRelative
+    noGridColorsOnExtraRelative: as format.noGridColorsOnExtraRelative
+    ExtraRelativeGridClassName : as format.ExtraRelativeGridClassName
 
 
     NB: Using moment-simple-format to set and get text and format for date and time
@@ -87,7 +94,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.4.0";
+        this.VERSION = "7.5.0";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -173,7 +180,15 @@ options:
         },
 
         _prettifyRelative     : function( value ){ return this._valueToFormat( value ); },
-        _prettifyLabelRelative: function( value ){ return value;                        },
+        _prettifyLabelRelative: function( value ){ return value; },
+
+
+        //_prettifyLabelRelative_full used for labels on extra relative grid
+        _prettifyLabelRelative_full: function( value ){
+            return value ? moment().add( value, 'hours' ).relativeFormat({ relativeFormat:{now:false, days:true, minutes:false} }) : this.options.format.text.nowUC;
+        },
+
+
 
         _prettifyAbsolute: function( value ){
             return this._valueToFormat( value, this.options.format.timezone );
@@ -337,8 +352,39 @@ options:
         appendStandardGrid
         ***************************************************************/
         appendStandardGrid: function(){
-            var opt = this.options,
-                opt_format = opt.format;
+            var _this = this,
+                opt = this.options,
+                opt_format = opt.format,
+
+                //text and tick options for secondary grids (relative and utc for absolute scale
+                textOptions = {italic:true, minor:true},
+                tickOptions = {color:'#555555'};
+
+
+            //*****************************************************
+            function appendSpecialGrid( noGridColorId, gridClassNameId, onlyLabels ){
+                //If noGridColors is set =>save and remove grid-colors
+                var noGridColors  = opt_format[noGridColorId] || opt[noGridColorId],
+                    gridClassName = opt_format[gridClassNameId] || opt[gridClassNameId] || '',
+                    saveGridColors = opt.gridColors,
+                    saveMaxLabelWidth = opt.maxLabelWidth;
+
+                if (noGridColors)
+                    opt.gridColors = null;
+
+                if (onlyLabels)
+                    opt.maxLabelWidth = null;   //Force recalculating label-space
+
+                opt.noTicks = !!onlyLabels;
+                _this._appendStandardGrid( textOptions, tickOptions, {labelBetweenTicks: !!onlyLabels } );
+                _this.$currentGrid.addClass(gridClassName);
+
+                //Restore options
+                opt.gridColors    = saveGridColors;
+                opt.maxLabelWidth = saveMaxLabelWidth;
+                opt.noTicks = false;
+            }
+            //*****************************************************
 
             //First remove all grid-container except the first one
             this.cache.$grid = this.cache.$container.find(".grid").first();
@@ -356,13 +402,27 @@ options:
             }
             else {
                 //Absolute time: Set the prettify-functions
-                var now = this._getNow(); //moment();
+                var now = this._getNow();
                 //Create the hour-grid and the date-grid for selected timezone
                 this._prettify = this._prettifyAbsolute;
                 this._prettifyLabel = this._prettifyLabelAbsolute;
                 opt.majorTicksOffset = -1*now.tzMoment( opt_format.timezone ).hours();
                 this._appendStandardGrid();
                 this.appendDateGrid();
+
+                //If opt.showExtraRelative => add extra grid with relative labels and no ticks
+                if (opt.showExtraRelative){
+                    this._prettify = this._prettifyRelative;
+                    this._prettifyLabel = this._prettifyLabelRelative_full;
+
+                    var saveMajorTicksOffset = opt.majorTicksOffset;
+                    opt.majorTicksOffset = 0;
+
+                    appendSpecialGrid( 'noGridColorsOnExtraRelative', 'ExtraRelativeGridClassName', true );
+
+                    opt.majorTicksOffset = saveMajorTicksOffset;
+                }
+
 
                 if (
                     ( (opt_format.timezone != 'utc') || opt_format.forceUTC || opt.forceUTC) &&
@@ -372,17 +432,15 @@ options:
                     opt.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
                     var saveTimezone = opt_format.timezone;
                     opt_format.timezone = 'utc';
-                    var textOptions = {italic:true, minor:true},
-                        tickOptions = {color:'#555555'};
                     this._prettify = this._prettifyAbsolute;
                     this._prettifyLabel = this._prettifyLabelAbsolute;
-
+/*
                     //If noGridColorsOnUTC is save and remove grid-colors
                     var noGridColors     = opt_format.noGridColorsOnUTC || opt.noGridColorsOnUTC,
                         UTCGridClassName = opt_format.UTCGridClassName || opt.UTCGridClassName || '';
 
                     if (noGridColors){
-                        opt.saveGridColors = opt.gridColors;
+                        saveGridColors = opt.gridColors;
                         opt.gridColors = null;
                     }
 
@@ -390,12 +448,15 @@ options:
                     this.$currentGrid.addClass(UTCGridClassName);
 
                     if (noGridColors){
-                        opt.gridColors = opt.saveGridColors;
-                        opt.saveGridColors = null;
+                        opt.gridColors = saveGridColors;
+                        saveGridColors = null;
                     }
+*/
+                    appendSpecialGrid( 'noGridColorsOnUTC', 'UTCGridClassName');
+
 
                     this.appendDateGrid( textOptions, tickOptions );
-                    this.$currentGrid.addClass(UTCGridClassName);
+                    this.$currentGrid.addClass(opt_format.UTCGridClassName || opt.UTCGridClassName || '');
 
                     opt_format.timezone = saveTimezone;
                 }

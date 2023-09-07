@@ -111,14 +111,14 @@
         i18next.changeLanguage('da');
 
         moment.sfAddTimezone([
-            { id:'Atlantic/Faeroe' },
-            { id:'Europe/Copenhagen' },
-            { id:'Europe/London' },
-            { id:'America/Thule' },
-            { id:'America/Scoresbysund', name:"East Greenland/Ittoqqortoormiit" },
-            { id:'America/Godthab', name:"West Greenland/Nuuk" },
-            { id:'America/Danmarkshavn', name:"East Greenland/Danmarkshavn" },
-            { id:'Atlantic/Reykjavik', name:"Iceland" }
+            { id: 'Atlantic/Faeroe' },
+            { id: 'Europe/Copenhagen' },
+            { id: 'Europe/London' },
+            { id: 'America/Thule' },
+            { id: 'America/Scoresbysund', name: "East Greenland/Ittoqqortoormiit" },
+            { id: 'America/Godthab',      name: "West Greenland/Nuuk" },
+            { id: 'America/Danmarkshavn', name: "East Greenland/Danmarkshavn" },
+            { id: 'Atlantic/Reykjavik',   name: "Iceland" }
         ] );
         moment.sfSetFormat({ timezone: 'local' });
 
@@ -140,6 +140,7 @@
 
 
 DEBUG: test('START');
+
         var timeSlider0 =
             $("#example_00").timeSlider({
             //type: "double",
@@ -156,20 +157,23 @@ DEBUG: test('START');
                 handleFixed: true,
                 slider:"fixed",
                 mousewheel: true,
-                width: 120*400,
+                //width: 120*400,
                 showLineColor: false,
                 resizable: true,
                 ticksOnLine: true,
-/*
-                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
-                labelColors: [
-                    {value: 0, color:'white', backgroundColor: 'green' },
-                    {value: 2, color:'white', backgroundColor: 'red' }
-                ],
-*/
+
+    noDateLabels    : true,
+    dateAtMidnight  : true, 
+                
+
+//                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
+//                labelColors: [
+//                    {value: 0, color:'white', backgroundColor: 'green' },
+//                    {value: 2, color:'white', backgroundColor: 'red' }
+//                ],
+
             })
             .data('timeSlider');
-
 
         var timeSlider1 =
             $("#example_01").timeSlider({
@@ -186,7 +190,12 @@ DEBUG: test('START');
                 gridColors: [
                     {              value: 12   , color: 'red'  },
                     {fromValue: 12, value: 2*24, color: 'pink'}
-        ],
+                ],
+
+                showExtraRelative          : true,
+                noGridColorsOnExtraRelative: true,
+                ExtraRelativeGridClassName : 'dette-er-en-test',
+
 
                 mousewheel: true
             }).data('timeSlider');
