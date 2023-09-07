@@ -21,10 +21,13 @@ options:
         showUTC             : BOOLEAN; When true a scale for utc is also shown, but only if the time-zone isn't utc or forceUTC is set. Default = false. Only if showRelative == false
         forceUTC            : BOOLEAN; If true and showUTC: true the utc-scale is included
         noGridColorsOnUTC   : BOOLEAN; If true the UTC-grid will not get any grid colors
+        noLabelColorsOnUTC  : BOOLEAN; If true the UTC-grid will not get any labels with colors
         UTCGridClassName    : STRING; Class-name(s) for the grids use for UTC time-lime
 
-        showExtraRelative          : BOOLEAN; If true and showRelative = false => A relative scale is included
-        noGridColorsOnExtraRelative: BOOLEAN; If true the extra relative-grid will not get any grid colors
+        showExtraRelative           : BOOLEAN; If true and showRelative = false => A relative scale is included
+        noGridColorsOnExtraRelative : BOOLEAN; If true the extra relative-grid will not get any grid colors
+        noLabelColorsOnExtraRelative: BOOLEAN; If true the extra relative-grid will not get any labels with colors
+
         ExtraRelativeGridClassName : STRING; Class-name(s) for the grids use for the extra relative grid
 
 
@@ -32,11 +35,13 @@ options:
     showUTC             : as format.showUTC
     forceUTC            : as format.forceUTC
     noGridColorsOnUTC   : as format.noGridColorsOnUTC
+    noLabelColorsOnUTC  : as format.noLabelColorsOnUTC
     UTCGridClassName    : as format.UTCGridClassName
 
-    showExtraRelative          : as format.showExtraRelative
-    noGridColorsOnExtraRelative: as format.noGridColorsOnExtraRelative
-    ExtraRelativeGridClassName : as format.ExtraRelativeGridClassName
+    showExtraRelative           : as format.showExtraRelative
+    noGridColorsOnExtraRelative : as format.noGridColorsOnExtraRelative
+    noLabelColorsOnExtraRelative: as format.noLabelColorsOnExtraRelative
+    ExtraRelativeGridClassName  : as format.ExtraRelativeGridClassName
 
 
     NB: Using moment-simple-format to set and get text and format for date and time
@@ -362,27 +367,34 @@ options:
 
 
             //*****************************************************
-            function appendSpecialGrid( noGridColorId, gridClassNameId, onlyLabels ){
-                //If noGridColors is set =>save and remove grid-colors
+            function appendSpecialGrid( noGridColorId, noLabelColorsId, gridClassNameId, newLabels ){
                 var noGridColors  = opt_format[noGridColorId] || opt[noGridColorId],
-                    gridClassName = opt_format[gridClassNameId] || opt[gridClassNameId] || '',
-                    saveGridColors = opt.gridColors,
-                    saveMaxLabelWidth = opt.maxLabelWidth;
+                    noLabelColors = opt_format[noGridColorId] || opt[noGridColorId],
 
+                    gridClassName = opt_format[gridClassNameId] || opt[gridClassNameId] || '',
+                    saveOptions   = $.extend(true, {}, _this.options);
+
+                    opt.size.majorTickLength = 3; //Normal = 9
+                    opt.size.minorTickLength = 2; //Normal = 6
+                    opt.showMinorTicks       = false;
+
+                //If noGridColors is set => remove grid-colors
                 if (noGridColors)
                     opt.gridColors = null;
 
-                if (onlyLabels)
+                //If noLabelColors is set => remove label-colors
+                if (noLabelColors)
+                    opt.labelColors = null;
+
+                if (newLabels)
                     opt.maxLabelWidth = null;   //Force recalculating label-space
 
-                opt.noTicks = !!onlyLabels;
-                _this._appendStandardGrid( textOptions, tickOptions, {labelBetweenTicks: !!onlyLabels } );
+                _this._appendStandardGrid(textOptions, tickOptions);
+
                 _this.$currentGrid.addClass(gridClassName);
 
                 //Restore options
-                opt.gridColors    = saveGridColors;
-                opt.maxLabelWidth = saveMaxLabelWidth;
-                opt.noTicks = false;
+                _this.options = saveOptions;
             }
             //*****************************************************
 
@@ -418,7 +430,7 @@ options:
                     var saveMajorTicksOffset = opt.majorTicksOffset;
                     opt.majorTicksOffset = 0;
 
-                    appendSpecialGrid( 'noGridColorsOnExtraRelative', 'ExtraRelativeGridClassName', true );
+                    appendSpecialGrid( 'noGridColorsOnExtraRelative', 'noLabelColorsOnExtraRelative', 'ExtraRelativeGridClassName', true );
 
                     opt.majorTicksOffset = saveMajorTicksOffset;
                 }
@@ -434,26 +446,8 @@ options:
                     opt_format.timezone = 'utc';
                     this._prettify = this._prettifyAbsolute;
                     this._prettifyLabel = this._prettifyLabelAbsolute;
-/*
-                    //If noGridColorsOnUTC is save and remove grid-colors
-                    var noGridColors     = opt_format.noGridColorsOnUTC || opt.noGridColorsOnUTC,
-                        UTCGridClassName = opt_format.UTCGridClassName || opt.UTCGridClassName || '';
 
-                    if (noGridColors){
-                        saveGridColors = opt.gridColors;
-                        opt.gridColors = null;
-                    }
-
-                    this._appendStandardGrid( textOptions, tickOptions );
-                    this.$currentGrid.addClass(UTCGridClassName);
-
-                    if (noGridColors){
-                        opt.gridColors = saveGridColors;
-                        saveGridColors = null;
-                    }
-*/
-                    appendSpecialGrid( 'noGridColorsOnUTC', 'UTCGridClassName');
-
+                    appendSpecialGrid( 'noGridColorsOnUTC', 'noLabelColorsOnUTC', 'UTCGridClassName');
 
                     this.appendDateGrid( textOptions, tickOptions );
                     this.$currentGrid.addClass(opt_format.UTCGridClassName || opt.UTCGridClassName || '');

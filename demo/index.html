@@ -140,7 +140,7 @@
 
 
 DEBUG: test('START');
-
+//*
         var timeSlider0 =
             $("#example_00").timeSlider({
             //type: "double",
@@ -174,7 +174,7 @@ DEBUG: test('START');
 
             })
             .data('timeSlider');
-
+//*/
         var timeSlider1 =
             $("#example_01").timeSlider({
                 onChange: function(result){ console.log('1:onChange',result) },
@@ -196,10 +196,9 @@ DEBUG: test('START');
                 noGridColorsOnExtraRelative: true,
                 ExtraRelativeGridClassName : 'dette-er-en-test',
 
-
                 mousewheel: true
             }).data('timeSlider');
-
+//*
         var timeSlider2 =
             $("#example_02").timeSlider({
                 format: { showRelative:true },
@@ -257,7 +256,7 @@ DEBUG: test('START');
                 noDateLabels: true,
                 dateAtMidnight: true,
             }).data('timeSlider');
-
+//*/
 Debug: test('END');
 
         var lang = 'en_gb';
