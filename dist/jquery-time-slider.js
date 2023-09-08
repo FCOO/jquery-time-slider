@@ -99,7 +99,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.6.0";
+        this.VERSION = "7.6.1";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -394,7 +394,7 @@ options:
                 _this.$currentGrid.addClass(gridClassName);
 
                 //Restore options
-                _this.options = saveOptions;
+                opt = _this.options = saveOptions;
             }
             //*****************************************************
 

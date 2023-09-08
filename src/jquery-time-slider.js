@@ -394,7 +394,7 @@ options:
                 _this.$currentGrid.addClass(gridClassName);
 
                 //Restore options
-                _this.options = saveOptions;
+                opt = _this.options = saveOptions;
             }
             //*****************************************************
 
