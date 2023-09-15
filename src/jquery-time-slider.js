@@ -359,7 +359,6 @@ options:
         appendStandardGrid: function(){
             var _this = this,
                 opt = this.options,
-                opt_format = opt.format,
 
                 //text and tick options for secondary grids (relative and utc for absolute scale
                 textOptions = {italic:true, minor:true},
@@ -368,10 +367,10 @@ options:
 
             //*****************************************************
             function appendSpecialGrid( noGridColorId, noLabelColorsId, gridClassNameId, newLabels ){
-                var noGridColors  = opt_format[noGridColorId] || opt[noGridColorId],
-                    noLabelColors = opt_format[noGridColorId] || opt[noGridColorId],
+                var noGridColors  = opt.format[noGridColorId] || opt[noGridColorId],
+                    noLabelColors = opt.format[noGridColorId] || opt[noGridColorId],
 
-                    gridClassName = opt_format[gridClassNameId] || opt[gridClassNameId] || '',
+                    gridClassName = opt.format[gridClassNameId] || opt[gridClassNameId] || '',
                     saveOptions   = $.extend(true, {}, _this.options);
 
                     opt.size.majorTickLength = 3; //Normal = 9
@@ -405,7 +404,7 @@ options:
             this.$currentGridContainer = null;
 
             //Create all grid
-            if (opt_format.showRelative || opt.showRelative){
+            if (opt.format.showRelative || opt.showRelative){
                 //Relative time: Set the prettify-functions and create the grid needed
                 this._prettify = this._prettifyRelative;
                 this._prettifyLabel = this._prettifyLabelRelative;
@@ -418,7 +417,7 @@ options:
                 //Create the hour-grid and the date-grid for selected timezone
                 this._prettify = this._prettifyAbsolute;
                 this._prettifyLabel = this._prettifyLabelAbsolute;
-                opt.majorTicksOffset = -1*now.tzMoment( opt_format.timezone ).hours();
+                opt.majorTicksOffset = -1*now.tzMoment( opt.format.timezone ).hours();
                 this._appendStandardGrid();
                 this.appendDateGrid();
 
@@ -437,22 +436,22 @@ options:
 
 
                 if (
-                    ( (opt_format.timezone != 'utc') || opt_format.forceUTC || opt.forceUTC) &&
-                    (opt_format.showUTC || opt.showUTC)
+                    ( (opt.format.timezone != 'utc') || opt.format.forceUTC || opt.forceUTC) &&
+                    (opt.format.showUTC || opt.showUTC)
                     ){
                     //Create the hour-grid and the date-grid for utc
                     opt.majorTicksOffset = -1*now.tzMoment( 'utc' ).hours();
-                    var saveTimezone = opt_format.timezone;
-                    opt_format.timezone = 'utc';
+                    var saveTimezone = opt.format.timezone;
+                    opt.format.timezone = 'utc';
                     this._prettify = this._prettifyAbsolute;
                     this._prettifyLabel = this._prettifyLabelAbsolute;
 
                     appendSpecialGrid( 'noGridColorsOnUTC', 'noLabelColorsOnUTC', 'UTCGridClassName');
 
                     this.appendDateGrid( textOptions, tickOptions );
-                    this.$currentGrid.addClass(opt_format.UTCGridClassName || opt.UTCGridClassName || '');
+                    this.$currentGrid.addClass(opt.format.UTCGridClassName || opt.UTCGridClassName || '');
 
-                    opt_format.timezone = saveTimezone;
+                    opt.format.timezone = saveTimezone;
                 }
             }
         },
