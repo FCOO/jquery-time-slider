@@ -491,7 +491,8 @@
               usedKey: key,
               exactUsedKey: key,
               usedLng: lng,
-              usedNS: namespace
+              usedNS: namespace,
+              usedParams: this.getUsedParamsDetails(options)
             };
           }
           return `${namespace}${nsSeparator}${key}`;
@@ -502,7 +503,8 @@
             usedKey: key,
             exactUsedKey: key,
             usedLng: lng,
-            usedNS: namespace
+            usedNS: namespace,
+            usedParams: this.getUsedParamsDetails(options)
           };
         }
         return key;
@@ -527,6 +529,7 @@
           }) : `key '${key} (${this.language})' returned an object instead of string.`;
           if (returnDetails) {
             resolved.res = r;
+            resolved.usedParams = this.getUsedParamsDetails(options);
             return resolved;
           }
           return r;
@@ -627,6 +630,7 @@
       }
       if (returnDetails) {
         resolved.res = res;
+        resolved.usedParams = this.getUsedParamsDetails(options);
         return resolved;
       }
       return res;
@@ -775,6 +779,30 @@
       let options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
       if (this.i18nFormat && this.i18nFormat.getResource) return this.i18nFormat.getResource(code, ns, key, options);
       return this.resourceStore.getResource(code, ns, key, options);
+    }
+    getUsedParamsDetails() {
+      let options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      const optionsKeys = ['defaultValue', 'ordinal', 'context', 'replace', 'lng', 'lngs', 'fallbackLng', 'ns', 'keySeparator', 'nsSeparator', 'returnObjects', 'returnDetails', 'joinArrays', 'postProcess', 'interpolation'];
+      const useOptionsReplaceForData = options.replace && typeof options.replace !== 'string';
+      let data = useOptionsReplaceForData ? options.replace : options;
+      if (useOptionsReplaceForData && typeof options.count !== 'undefined') {
+        data.count = options.count;
+      }
+      if (this.options.interpolation.defaultVariables) {
+        data = {
+          ...this.options.interpolation.defaultVariables,
+          ...data
+        };
+      }
+      if (!useOptionsReplaceForData) {
+        data = {
+          ...data
+        };
+        for (const key of optionsKeys) {
+          delete data[key];
+        }
+      }
+      return data;
     }
     static hasDefaultValue(options) {
       const prefix = 'defaultValue';
@@ -16399,6 +16427,9 @@ if (typeof define === 'function' && define.amd) {
         impactLineColors      : {green: "green", yellow: "yellow", red: "red"}, //The line colors used when showImpactLineColor: true
         reverseImpactLineColor: false, // The line on a double slider is colored as red-[handle]-yellow-[handle]-green. Must have showImpactLineColor: true
 
+        //Extention of line-color and/or grid-color when the handle is fixed (handleFixed: true)
+        extendLine          : true,     //If true and showLine: true => show light gray line before and after the line
+        extendGridColors    : true,     //If true and grid-colors are given => show light gray line before and after the grid
 
         //Size
         sizeFactor: 1, //Factor to re-size default sizes
@@ -16933,12 +16964,12 @@ if (typeof define === 'function' && define.amd) {
         build: function () {
             var _this = this;
             //**************************************
-            function $span( className, $parent ){
+            function $span( className, $parent, prepend ){
                 var result = $('<span/>');
                 if (className)
                     result.addClass( className );
                 if ($parent)
-                  result.appendTo( $parent );
+                  prepend ? result.prependTo( $parent ) : result.appendTo( $parent );
                 return result;
             }
             //**************************************
@@ -16961,6 +16992,7 @@ if (typeof define === 'function' && define.amd) {
             //this.cache.$leftColorLine, this.cache.$centerColorLine, this.cache.$rightColorLine
             function appendLineColor( left, center, right ){
                 var result;
+
                 if (left)   result = _this.cache.$leftLineColor   = $span('line-color', _this.cache.$line);
                 if (center) result = _this.cache.$centerLineColor = $span('line-color', _this.cache.$line);
                 if (right)  result = _this.cache.$rightLineColor  = $span('line-color', _this.cache.$line);
@@ -16999,6 +17031,12 @@ if (typeof define === 'function' && define.amd) {
                         if (this.options.showLineColor)
                             appendLineColor( this.options.isSingle, this.options.isDouble, false )
                                 .css('background-color', this.options.lineColor);
+
+                //For fixed slider: Add dim line before and after to have line in hole container
+                if (this.options.handleFixed && this.options.extendLine){
+                    $span('line-color pre' , _this.cache.$line, true);
+                    $span('line-color post', _this.cache.$line);
+                }
             }
             else
                 this.cache.$line.css("visibility", "hidden");
@@ -17401,6 +17439,9 @@ if (typeof define === 'function' && define.amd) {
         },
 
         postAppendGrid: function(){
+            if (this.options.handleFixed && this.options.gridColors && this.options.extendGridColors)
+                this.appendPreAndPostGridColors();
+
             //Update the height of the slider
             this.cache.$container.css('height', (this.nextGridTop + this.$currentGrid.height())+'px' );
         },
@@ -17558,6 +17599,20 @@ if (typeof define === 'function' && define.amd) {
                 }
             }
         },
+
+        appendPreAndPostGridColors: function(){
+            $('<span/>')
+                .addClass( 'grid-color pre')
+                .prependTo( this.$currentGrid );
+            $('<span/>')
+                .addClass( 'grid-color post')
+                .appendTo( this.$currentGrid );
+        }
+
+
+
+
+
     }; //end of BaseSlider.prototype
 
 

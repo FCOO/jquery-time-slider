@@ -71,6 +71,18 @@ The scss is divided in two parts: First the common part equal for all types and 
 /***************************************************************
 COMMON STYLE
 ***************************************************************/
+.pre-line, .grid .grid-color.pre, .base-slider-container .line .line-color.pre {
+  left: -50%;
+  width: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.post-line, .grid .grid-color.post, .base-slider-container .line .line-color.post {
+  left: 100%;
+  width: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
 .base-slider-container {
   position: relative;
   display: block;
@@ -82,6 +94,9 @@ COMMON STYLE
   display: block;
   width: 100%;
   top: 0;
+}
+.base-slider-container.fixed .line {
+  overflow: visible;
 }
 .base-slider-container .line {
   position: relative;
@@ -103,6 +118,14 @@ COMMON STYLE
   position: absolute;
   display: block;
   height: 100%;
+}
+.base-slider-container .line .line-color.pre {
+  top: -1px;
+  border: 1px solid rgb(175, 179, 187);
+}
+.base-slider-container .line .line-color.post {
+  top: -1px;
+  border: 1px solid rgb(175, 179, 187);
 }
 .base-slider-container .line .line-color:first-child {
   border-bottom-left-radius: 2px;
@@ -236,7 +259,6 @@ COMMON STYLE
   border-bottom-width: 4.5px;
   border-right: 9px solid black;
 }
-
 .disabled {
   opacity: 0.4;
 }

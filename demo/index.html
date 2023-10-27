@@ -144,9 +144,9 @@ DEBUG: test('START');
         var timeSlider0 =
             $("#example_00").timeSlider({
             //type: "double",
-                _format: {
+                format: {
                     showRelative:false,
-                    showUTC: true,
+// HER>                     showUTC: true,
                     showYear: true 
                 },
                 min: 0,
@@ -158,15 +158,30 @@ DEBUG: test('START');
                 slider:"fixed",
                 mousewheel: true,
                 //width: 120*400,
-                showLineColor: false,
+showLine: false,
+showLineColor: false,
+extendLine: false,                
                 resizable: true,
                 ticksOnLine: true,
 
+showUTC: true,
+noGridColorsOnUTC: true,
+noExtendedGridColorsOnUTC: true,
+
+showExtraRelative: true,
+noGridColorsOnExtraRelative: true,
+noExtendedGridColorsOnExtraRelative: true,
+
+
+
+    
     noDateLabels    : true,
     dateAtMidnight  : true, 
                 
 
-//                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
+                gridColors: [{value: 0, color: 'red'}, {fromValue: 0, value: 24*7, color: 'rgba(0,0,255, .5)'}],
+
+
 //                labelColors: [
 //                    {value: 0, color:'white', backgroundColor: 'green' },
 //                    {value: 2, color:'white', backgroundColor: 'red' }
@@ -194,7 +209,7 @@ DEBUG: test('START');
 
                 showExtraRelative          : true,
                 noGridColorsOnExtraRelative: true,
-                ExtraRelativeGridClassName : 'dette-er-en-test',
+                extraRelativeGridClassName : 'dette-er-en-test',
 
                 mousewheel: true
             }).data('timeSlider');
