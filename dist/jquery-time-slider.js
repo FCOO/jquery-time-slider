@@ -115,7 +115,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.7.0";
+        this.VERSION = "7.7.1";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -366,7 +366,11 @@ options:
                 o.labelColorRec  = labelColorRec;
             }
 
+            //date grid never has extendedGridColors
+            var save = o.extendGridColors;
+            o.extendGridColors = false;
             this.postAppendGrid();
+            o.extendGridColors = save;
         },
 
         /**************************************************************
