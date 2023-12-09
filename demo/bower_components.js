@@ -688,7 +688,10 @@
       const postProcessorNames = typeof postProcess === 'string' ? [postProcess] : postProcess;
       if (res !== undefined && res !== null && postProcessorNames && postProcessorNames.length && options.applyPostProcessor !== false) {
         res = postProcessor.handle(postProcessorNames, res, key, this.options && this.options.postProcessPassResolved ? {
-          i18nResolved: resolved,
+          i18nResolved: {
+            ...resolved,
+            usedParams: this.getUsedParamsDetails(options)
+          },
           ...options
         } : options, this);
       }
@@ -1132,7 +1135,7 @@
           return new Intl.PluralRules(getCleanedCode(code), {
             type: options.ordinal ? 'ordinal' : 'cardinal'
           });
-        } catch {
+        } catch (err) {
           return;
         }
       }
@@ -17308,7 +17311,7 @@ if (typeof define === 'function' && define.amd) {
         appendTick: function( leftPercent, options ){
             if (!this.$currentGrid || this.options.noTicks) return;
 
-            options = $.extend( {minor: false, color: ''}, options );
+            options = $.extend( {minor: false/*, color: ''*/}, options );
 
             var left = this.cache.canvasMargin + (this.dimentions.containerWidth * leftPercent / 100),
                 ctx  = this.cache.ctx,

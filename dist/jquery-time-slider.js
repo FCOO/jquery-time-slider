@@ -115,7 +115,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.7.2";
+        this.VERSION = "7.7.3";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -377,13 +377,9 @@ options:
         appendStandardGrid
         ***************************************************************/
         appendStandardGrid: function(){
-            var _this = this,
-                opt = this.options,
-
-                //text and tick options for secondary grids (relative and utc for absolute scale
-                textOptions = {italic:true, minor:true},
-                tickOptions = {color:'#555555'};
-
+            var _this       = this,
+                opt         = this.options,
+                textOptions = {italic:true, minor:true};  //Text and tick options for secondary grids (relative and utc for absolute scale)
 
             //*****************************************************
             function appendSpecialGrid( gridOpt ){
@@ -412,7 +408,7 @@ options:
                 if (gridOpt.newLabels)
                     opt.maxLabelWidth = null;   //Force recalculating label-space
 
-                _this._appendStandardGrid(textOptions, tickOptions);
+                _this._appendStandardGrid(textOptions);
 
                 _this.$currentGrid.addClass(gridClassName);
 
@@ -484,7 +480,7 @@ options:
                         newLabels           : false
                     });
 
-                    this.appendDateGrid( textOptions, tickOptions );
+                    this.appendDateGrid( textOptions);
                     this.$currentGrid.addClass(opt.format.UTCGridClassName || opt.UTCGridClassName || '');
 
                     opt.format.timezone = saveTimezone;
