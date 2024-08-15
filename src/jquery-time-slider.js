@@ -230,8 +230,9 @@ options:
         },
 
         _prettifyLabelAbsoluteDate: function( value ){
-                return this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
-            },
+            let result = this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
+            return result[0].toUpperCase() + result.slice(1);
+        },
 
         /**************************************************************
         adjustResult

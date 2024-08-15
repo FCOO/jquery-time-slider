@@ -283,6 +283,7 @@ Debug: test('END');
             var isEn = lang == 'en_gb',
                 date = moment.sfGetOptions().date,
                 time = parseInt(moment.sfGetOptions().time);
+                
             moment.locale(lang);
             moment.sfSetFormat( {
                 date: date=='DMY'?'YMD':'DMY',

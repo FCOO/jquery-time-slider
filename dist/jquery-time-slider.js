@@ -115,7 +115,7 @@ options:
         };
 
     window.TimeSlider = function (input, options, pluginCount) {
-        this.VERSION = "7.7.3";
+        this.VERSION = "7.7.4";
 
         //Setting default options
         this.options = $.extend( true, {}, defaultOptions, options );
@@ -230,8 +230,9 @@ options:
         },
 
         _prettifyLabelAbsoluteDate: function( value ){
-                return this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
-            },
+            let result = this._valueToTzMoment( value, this.options.format.timezone ).format( this.options.format.dateFormat );
+            return result[0].toUpperCase() + result.slice(1);
+        },
 
         /**************************************************************
         adjustResult
